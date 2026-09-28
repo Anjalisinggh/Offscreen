@@ -1159,7 +1159,8 @@
     "createdAt": "2026-09-28T15:09:51.457Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "you-must-burn"
   },
   {
     "id": 65,
@@ -1201,7 +1202,8 @@
     "createdAt": "2026-09-28T15:09:51.507Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "into-the-pink-deep"
   },
   {
     "id": 67,
@@ -1222,7 +1224,8 @@
     "createdAt": "2026-09-28T15:09:51.531Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "in-the-right-eyes"
   },
   {
     "id": 68,
@@ -1243,11 +1246,12 @@
     "createdAt": "2026-09-28T15:09:51.556Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "too-lazy-orange"
   },
   {
     "id": 69,
-    "title": "Too Lazy to Explain (Wide)",
+    "title": "Too Lazy to Explain",
     "filename": "too-lazy-to-explain-wide-69.png",
     "source": "a_moody_cinematic_grainy_low_light_close_up_sce_desktop_1920x1080.png",
     "category": "Dark",
@@ -1264,7 +1268,8 @@
     "createdAt": "2026-09-28T15:09:51.578Z",
     "width": 1920,
     "height": 1080,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "too-lazy-orange"
   },
   {
     "id": 70,
@@ -1285,7 +1290,8 @@
     "createdAt": "2026-09-28T15:09:51.600Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "focus-follow-the-plan"
   },
   {
     "id": 71,
@@ -1306,11 +1312,12 @@
     "createdAt": "2026-09-28T15:09:51.626Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "sparks-between-us"
   },
   {
     "id": 72,
-    "title": "Focus, Follow the Plan (Portrait)",
+    "title": "Focus, Follow the Plan",
     "filename": "focus-follow-the-plan-portrait-72.png",
     "source": "a_moody_cinematic_warm_lit_atmospheric_still_li.png",
     "category": "Motivational",
@@ -1327,7 +1334,8 @@
     "createdAt": "2026-09-28T15:09:51.651Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "focus-follow-the-plan"
   },
   {
     "id": 73,
@@ -1390,7 +1398,8 @@
     "createdAt": "2026-09-28T15:09:51.720Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "itll-pass"
   },
   {
     "id": 76,
@@ -1414,7 +1423,7 @@
   },
   {
     "id": 77,
-    "title": "It'll Pass (Close)",
+    "title": "It'll Pass",
     "filename": "it-ll-pass-close-77.png",
     "source": "a_painterly_abstract_oil_brushstroke_illustration.png",
     "category": "Vintage",
@@ -1431,7 +1440,8 @@
     "createdAt": "2026-09-28T15:09:51.768Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "itll-pass"
   },
   {
     "id": 78,
@@ -1456,7 +1466,7 @@
   },
   {
     "id": 79,
-    "title": "It'll Pass (Portrait)",
+    "title": "It'll Pass",
     "filename": "it-ll-pass-portrait-79.png",
     "source": "a_vertical_painterly_oil_brushstroke_style_illus.png",
     "category": "Vintage",
@@ -1472,7 +1482,8 @@
     "createdAt": "2026-09-28T15:09:51.816Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "itll-pass"
   },
   {
     "id": 80,
@@ -1492,11 +1503,12 @@
     "createdAt": "2026-09-28T15:09:51.840Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "stitched-sky"
   },
   {
     "id": 81,
-    "title": "In the Right Eyes (Wide)",
+    "title": "In the Right Eyes",
     "filename": "in-the-right-eyes-wide-81.png",
     "source": "a_wide_dreamy_painterly_fantasy_illustration_sce.png",
     "category": "Vintage",
@@ -1513,7 +1525,8 @@
     "createdAt": "2026-09-28T15:09:51.864Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "in-the-right-eyes"
   },
   {
     "id": 82,
@@ -1538,7 +1551,7 @@
   },
   {
     "id": 83,
-    "title": "Into the Pink Deep (Wide)",
+    "title": "Into the Pink Deep",
     "filename": "into-the-pink-deep-wide-83.png",
     "source": "into-the-pink-deep-wide-83.png",
     "category": "Pink",
@@ -1555,11 +1568,12 @@
     "createdAt": "2026-09-28T15:09:51.916Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "into-the-pink-deep"
   },
   {
     "id": 84,
-    "title": "You Must Burn (Wide)",
+    "title": "You Must Burn",
     "filename": "you-must-burn-wide-84.png",
     "source": "you-must-burn-wide-84.png",
     "category": "Motivational",
@@ -1576,11 +1590,12 @@
     "createdAt": "2026-09-28T15:09:51.941Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "you-must-burn"
   },
   {
     "id": 85,
-    "title": "Sparks Between Us (Wide)",
+    "title": "Sparks Between Us",
     "filename": "sparks-between-us-wide-85.png",
     "source": "sparks-between-us-wide-85.png",
     "category": "Abstract",
@@ -1597,7 +1612,8 @@
     "createdAt": "2026-09-28T15:09:51.961Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "sparks-between-us"
   },
   {
     "id": 86,
@@ -1618,11 +1634,12 @@
     "createdAt": "2026-09-28T15:09:51.984Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "wheel-of-dharma"
   },
   {
     "id": 87,
-    "title": "The Wheel of Dharma (Wide)",
+    "title": "The Wheel of Dharma",
     "filename": "the-wheel-of-dharma-wide-87.png",
     "source": "the-wheel-of-dharma-wide-87.png",
     "category": "Dark",
@@ -1639,11 +1656,12 @@
     "createdAt": "2026-09-28T15:09:52.007Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "wheel-of-dharma"
   },
   {
     "id": 88,
-    "title": "Krishna's Gaze (Wide)",
+    "title": "Krishna's Gaze",
     "filename": "krishna-s-gaze-wide-88.png",
     "source": "krishna-s-gaze-wide-88.png",
     "category": "Vintage",
@@ -1659,7 +1677,8 @@
     "createdAt": "2026-09-28T15:09:52.032Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "krishnas-gaze"
   },
   {
     "id": 89,
@@ -1679,7 +1698,8 @@
     "createdAt": "2026-09-28T15:09:52.058Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "krishnas-gaze"
   },
   {
     "id": 90,
@@ -1700,11 +1720,12 @@
     "createdAt": "2026-09-28T15:09:52.081Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "series": "radha-in-bloom"
   },
   {
     "id": 91,
-    "title": "Radha in Bloom (Wide)",
+    "title": "Radha in Bloom",
     "filename": "radha-in-bloom-wide-91.png",
     "source": "radha-in-bloom-wide-91.png",
     "category": "Vintage",
@@ -1721,11 +1742,12 @@
     "createdAt": "2026-09-28T15:09:52.103Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "radha-in-bloom"
   },
   {
     "id": 92,
-    "title": "Stitched Sky (Wide)",
+    "title": "Stitched Sky",
     "filename": "stitched-sky-wide-92.png",
     "source": "wide_dramatic_pixel_art_voxel_like_mosaic_lands.png",
     "category": "Retro",
@@ -1741,6 +1763,7 @@
     "createdAt": "2026-09-28T15:09:52.125Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "series": "stitched-sky"
   }
 ]
