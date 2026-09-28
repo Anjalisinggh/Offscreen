@@ -8,12 +8,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_KEY = process.env.ADMIN_KEY || 'admin123';
 
-const DATA_DIR = path.join(__dirname, 'data');
+// On Vercel the deployed files are read-only and every instance is short-lived. There the data is
+// copied into /tmp on a cold start, so the site works but likes, sign-ups and admin edits are not
+// permanent. Locally (npm start) everything is read from and saved to ./data as normal.
+const IS_SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const DATA_DIR = IS_SERVERLESS ? path.join('/tmp', 'offscreen-data') : path.join(__dirname, 'data');
 const WALLPAPERS_FILE = path.join(DATA_DIR, 'wallpapers.json');
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
 const LIKES_FILE = path.join(DATA_DIR, 'likes.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
-
 function readJSON(file) {
   return JSON.parse(fs.readFileSync(file, 'utf-8'));
 }
@@ -21,17 +24,29 @@ function writeJSON(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-// likes/users are runtime state and aren't committed to the repo; create them on first run
 fs.mkdirSync(DATA_DIR, { recursive: true });
-for (const file of [LIKES_FILE, USERS_FILE]) {
-  if (!fs.existsSync(file)) writeJSON(file, {});
+// require() makes sure the bundler ships the committed data with the serverless function
+const seeds = {
+  [WALLPAPERS_FILE]: () => require('./data/wallpapers.json'),
+  [CATEGORIES_FILE]: () => require('./data/categories.json'),
+  [LIKES_FILE]: () => ({}),
+  [USERS_FILE]: () => ({}),
+};
+for (const [file, seed] of Object.entries(seeds)) {
+  if (!fs.existsSync(file)) writeJSON(file, seed());
 }
 
-// ---------- thumbnails (small webp copies so grids stay fast) ----------
-const sharp = require('sharp');
-const IMAGES_DIR = path.join(__dirname, 'public', 'images');
-const THUMBS_DIR = path.join(__dirname, 'public', 'thumbs');
-fs.mkdirSync(THUMBS_DIR, { recursive: true });
+// ---------- images & thumbnails ----------
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const IMAGES_DIR = path.join(PUBLIC_DIR, 'images');
+const THUMBS_DIR = path.join(PUBLIC_DIR, 'thumbs');
+
+// sharp is only needed to make thumbnails and read upload sizes, so load it lazily
+let sharpLib;
+function sharp(...args) {
+  sharpLib = sharpLib || require('sharp');
+  return sharpLib(...args);
+}
 
 async function ensureThumb(filename) {
   const out = path.join(THUMBS_DIR, filename + '.webp');
@@ -39,17 +54,22 @@ async function ensureThumb(filename) {
   await sharp(path.join(IMAGES_DIR, filename)).resize({ width: 520, withoutEnlargement: true }).webp({ quality: 78 }).toFile(out);
 }
 
-(async () => {
-  for (const w of readJSON(WALLPAPERS_FILE)) {
-    try { await ensureThumb(w.filename); } catch (e) { console.warn('thumb failed', w.filename, e.message); }
-  }
-  console.log('Thumbnails ready');
-})();
+// thumbnails are committed to the repo; locally any missing ones (e.g. new uploads) are generated
+if (!IS_SERVERLESS) {
+  (async () => {
+    fs.mkdirSync(THUMBS_DIR, { recursive: true });
+    for (const w of readJSON(WALLPAPERS_FILE)) {
+      try { await ensureThumb(w.filename); } catch (e) { console.warn('thumb failed', w.filename, e.message); }
+    }
+    console.log('Thumbnails ready');
+  })();
+}
 
 app.use(express.json());
 app.use(cookieParser());
 // images can be cached; html/css/js are revalidated so design changes show up immediately
-app.use(express.static(path.join(__dirname, 'public'), {
+// (on Vercel, files in public/ are served by the CDN before requests reach this app)
+app.use(express.static(PUBLIC_DIR, {
   setHeaders(res, filePath) {
     const isImage = /[\\/](images|thumbs)[\\/]/.test(filePath);
     res.setHeader('Cache-Control', isImage ? 'public, max-age=86400' : 'no-cache');
@@ -194,14 +214,18 @@ app.get('/api/wallpapers/:id/liked', (req, res) => {
 });
 
 // ---------- download ----------
-app.get('/api/wallpapers/:id/download', (req, res) => {
+// counts the download and tells the browser where the file is and what to name it; the browser then
+// saves /images/<file> itself (that file comes from the CDN on Vercel, not from this function)
+function downloadName(item) {
+  return `${item.title.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '')}${path.extname(item.filename)}`;
+}
+app.post('/api/wallpapers/:id/download', (req, res) => {
   const items = readJSON(WALLPAPERS_FILE);
   const item = items.find(w => w.id === Number(req.params.id));
   if (!item) return res.status(404).json({ error: 'Not found' });
   item.downloads += 1;
   writeJSON(WALLPAPERS_FILE, items);
-  const filePath = path.join(__dirname, 'public', 'images', item.filename);
-  res.download(filePath, `${item.title.replace(/[^a-z0-9]+/gi, '-')}${path.extname(item.filename)}`);
+  res.json({ url: `/images/${item.filename}`, name: downloadName(item), downloads: item.downloads });
 });
 
 // ---------- admin ----------
@@ -223,8 +247,7 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
     totalLikes: items.reduce((s, w) => s + w.likes, 0),
     totalDownloads: items.reduce((s, w) => s + w.downloads, 0),
     totalUsers: Object.keys(users).length,
-    totalCategories: readJSON(CATEGORIES_FILE).length,
-  });
+    totalCategories: readJSON(CATEGORIES_FILE).length,  });
 });
 
 app.put('/api/admin/wallpapers/:id', requireAdmin, (req, res) => {
@@ -246,10 +269,12 @@ app.delete('/api/admin/wallpapers/:id', requireAdmin, (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   const [removed] = items.splice(idx, 1);
   writeJSON(WALLPAPERS_FILE, items);
-  const filePath = path.join(__dirname, 'public', 'images', removed.filename);
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  const thumbPath = path.join(THUMBS_DIR, removed.filename + '.webp');
-  if (fs.existsSync(thumbPath)) fs.unlinkSync(thumbPath);
+  // the image files can only be removed where the disk is writable (not on Vercel)
+  if (!IS_SERVERLESS) {
+    for (const file of [path.join(IMAGES_DIR, removed.filename), path.join(THUMBS_DIR, removed.filename + '.webp')]) {
+      if (fs.existsSync(file)) fs.unlinkSync(file);
+    }
+  }
   res.json({ ok: true });
 });
 
@@ -265,17 +290,25 @@ app.post('/api/admin/categories', requireAdmin, (req, res) => {
   res.json(categories);
 });
 
-// multer for admin uploads
+// multer for admin uploads (writes to the OS temp dir, then the file is moved into public/images)
+const os = require('os');
 const multer = require('multer');
-const upload = multer({ dest: path.join(__dirname, 'public', 'images') });
+const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 25 * 1024 * 1024 } });
 
-app.post('/api/admin/wallpapers', requireAdmin, upload.single('image'), async (req, res) => {
+function uploadsSupported(req, res, next) {
+  if (!IS_SERVERLESS) return next();
+  res.status(503).json({ error: 'Uploads need persistent storage, which this hosted version does not have yet. Upload locally, then push to GitHub.' });
+}
+
+app.post('/api/admin/wallpapers', requireAdmin, uploadsSupported, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'Image required' });
   const items = readJSON(WALLPAPERS_FILE);
   const nextId = items.length ? Math.max(...items.map(w => w.id)) + 1 : 1;
-  const ext = path.extname(req.file.originalname) || '.png';
+  const ext = path.extname(req.file.originalname).toLowerCase() || '.png';
   const newFilename = req.file.filename + ext;
-  fs.renameSync(req.file.path, path.join(__dirname, 'public', 'images', newFilename));
+  // copy + delete rather than rename: the temp dir can be on a different drive
+  fs.copyFileSync(req.file.path, path.join(IMAGES_DIR, newFilename));
+  fs.unlinkSync(req.file.path);
 
   const { title, category, tags } = req.body;
   let width = 0, height = 0;
@@ -304,6 +337,16 @@ app.post('/api/admin/wallpapers', requireAdmin, upload.single('image'), async (r
   res.json(item);
 });
 
-app.listen(PORT, () => {
-  console.log(`Wallpaper site running at http://localhost:${PORT}`);
+// the SPA shell for any non-API route that isn't a static file
+app.get(/^\/(?!api\/).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
+// Vercel imports this module and uses the exported app; `npm start` runs it as a normal server
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Offscreen running at http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;

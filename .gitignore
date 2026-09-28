@@ -1,13 +1,9 @@
 node_modules/
 npm-debug.log*
 
-# generated preview thumbnails (rebuilt automatically on server start)
-public/thumbs/
-
 # runtime state (created automatically on first run, see server.js)
 data/likes.json
 data/users.json
-
 # local/session state
 .DS_Store
 Thumbs.db

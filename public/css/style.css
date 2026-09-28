@@ -118,7 +118,7 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 }
 .topbar.scrolled .topbar-inner { padding-top: 14px; padding-bottom: 14px; }
 .logo { font-family: var(--serif); font-size: 28px; font-weight: 500; letter-spacing: .02em; line-height: 1; }
-.logo em, .footer-brand em { color: var(--accent); font-style: italic; }
+.logo em { color: var(--accent); font-style: italic; }
 .main-nav { display: flex; gap: 34px; flex: 1; }
 .main-nav a {
   position: relative; font-size: 11.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase;
@@ -554,14 +554,67 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .row-actions button.danger:hover { border-color: var(--danger); color: var(--danger); }
 
 /* ---------------- footer ---------------- */
-.site-footer { border-top: 1px solid var(--line); margin-top: 60px; }
-.footer-inner { max-width: var(--maxw); margin: 0 auto; padding: 80px var(--gutter) 40px; text-align: center; }
-.footer-brand { font-family: var(--serif); font-size: clamp(64px, 12vw, 170px); line-height: .9; letter-spacing: -.01em; }
-.footer-inner > p { color: var(--muted); margin: 20px 0 0; }
-.footer-links { display: flex; justify-content: center; gap: 30px; margin-top: 40px; flex-wrap: wrap; }
-.footer-links a { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); transition: color .3s; }
-.footer-links a:hover { color: var(--accent); }
-.footer-inner .footer-fine { font-size: 11px; color: var(--faint); margin-top: 50px; letter-spacing: .1em; }
+/* deep plum block in both themes, with a giant gradient wordmark */
+.site-footer {
+  --foot-bg: #1f1118;
+  --foot-ink: #f8e9ee;
+  --foot-soft: rgba(248, 233, 238, .62);
+  --foot-line: rgba(248, 233, 238, .14);
+  --foot-accent: #f19bb8;
+  --mono: 'DM Mono', ui-monospace, 'Cascadia Mono', monospace;
+  position: relative; overflow: hidden; margin-top: 120px;
+  background: var(--foot-bg); color: var(--foot-ink);
+}
+:root[data-theme="dark"] .site-footer { --foot-bg: #1d1016; border-top: 1px solid var(--foot-line); }
+.foot-inner { max-width: var(--maxw); margin: 0 auto; padding: 72px var(--gutter) 0; }
+
+.foot-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 48px; }
+.foot-logo { font-family: var(--serif); font-size: 34px; font-weight: 500; line-height: 1; }
+.foot-logo em { font-style: italic; color: var(--foot-accent); }
+.foot-tagline { font-size: 19px; line-height: 1.45; max-width: 340px; margin: 22px 0 18px; color: var(--foot-ink); }
+.foot-status { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--foot-soft); margin: 0; }
+.foot-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--foot-accent); box-shadow: 0 0 0 0 rgba(241, 155, 184, .6); animation: pulse 2.2s ease-out infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(241, 155, 184, .55); } 80%, 100% { box-shadow: 0 0 0 9px rgba(241, 155, 184, 0); } }
+.foot-icons { display: flex; gap: 10px; margin-top: 30px; }
+.foot-icons a, .foot-icons button {
+  width: 46px; height: 46px; border-radius: 8px; border: 1px solid var(--foot-line); background: rgba(248, 233, 238, .03);
+  color: var(--foot-ink); display: flex; align-items: center; justify-content: center;
+  transition: border-color .35s var(--ease), background .35s var(--ease), transform .35s var(--ease), color .35s;
+}
+.foot-icons a:hover, .foot-icons button:hover { border-color: var(--foot-accent); color: var(--foot-accent); transform: translateY(-2px); }
+.foot-icons svg { width: 19px; height: 19px; stroke-width: 1.6; }
+
+.foot-col h4 { margin: 4px 0 30px; font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--foot-ink); }
+.foot-col a { display: block; width: fit-content; font-size: 16px; color: var(--foot-soft); margin-bottom: 18px; transition: color .3s, transform .45s var(--ease); }
+.foot-col a:hover { color: var(--foot-accent); transform: translateX(5px); }
+
+.foot-meta { display: flex; justify-content: space-between; gap: 16px; margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--foot-line); font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--foot-soft); }
+.foot-meta a { transition: color .3s; }
+.foot-meta a:hover { color: var(--foot-accent); }
+
+/* wordmark: rises into view, then a soft shine sweeps across now and then */
+.foot-mark { padding: 34px var(--gutter) clamp(22px, 3.5vw, 56px); max-width: 1600px; margin: 0 auto; overflow: hidden; }
+.foot-mark svg { display: block; width: 100%; height: auto; aspect-ratio: 1000 / 170; overflow: visible;
+  transform: translateY(45%); opacity: 0; transition: transform 1.6s var(--ease-slow), opacity 1.2s var(--ease); }
+.foot-mark.in svg { transform: none; opacity: 1; }
+.mark-text { font-family: 'Anton', 'Impact', 'Arial Narrow', sans-serif; font-size: 212px; letter-spacing: 0; }
+.mk-top { stop-color: #f7b3c9; }
+.mk-mid { stop-color: #c25a7c; }
+.mk-bottom { stop-color: #5b3a4a; }
+.foot-mark.in .mark-shine { animation: shine 7s var(--ease) 1.6s infinite; }
+@keyframes shine { 0% { transform: translateX(0); } 35%, 100% { transform: translateX(1600px); } }
+
+@media (max-width: 900px) {
+  .foot-grid { grid-template-columns: 1fr 1fr; gap: 44px 28px; }
+  .foot-brand { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) {
+  .foot-grid { grid-template-columns: 1fr 1fr; }
+  .foot-col:last-child { grid-column: 1 / -1; }
+  .foot-col h4 { margin-bottom: 20px; }
+  .foot-col a { font-size: 15px; margin-bottom: 14px; }
+  .foot-meta { flex-direction: column; gap: 8px; }
+}
 
 .loader { display: flex; justify-content: center; padding: 160px 0; }
 .loader span { width: 80px; height: 1px; background: var(--line-strong); position: relative; overflow: hidden; }

@@ -186,11 +186,22 @@ async function toggleLike(id) {
   }
 }
 
-function downloadWallpaper(id) {
-  const a = document.createElement('a');
-  a.href = `/api/wallpapers/${id}/download`;
-  a.click();
-  toast('Your download has started');
+async function downloadWallpaper(id) {
+  try {
+    const { url, name } = await api(`/wallpapers/${id}/download`, { method: 'POST' });
+    // fetch as a blob so the file is saved (with a readable name) instead of opened in a tab
+    const blob = await (await fetch(url)).blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    toast('Your download has started');
+  } catch (err) {
+    toast('Download failed, please try again');
+  }
 }
 
 function sectionHead(num, eyebrow, title, link) {
@@ -797,8 +808,7 @@ async function pageAdmin() {
       <div class="stat"><strong data-count="${stats.totalLikes}">0</strong><small>Likes</small></div>
       <div class="stat"><strong data-count="${stats.totalDownloads}">0</strong><small>Downloads</small></div>
       <div class="stat"><strong data-count="${stats.totalUsers}">0</strong><small>Members</small></div>
-      <div class="stat"><strong data-count="${stats.totalCategories}">0</strong><small>Collections</small></div>
-    </div>
+      <div class="stat"><strong data-count="${stats.totalCategories}">0</strong><small>Collections</small></div>    </div>
 
     <div class="admin-bar reveal"><h3>Collections</h3><button class="btn small accent" id="addCatBtn">Add collection</button></div>
     <div class="chips reveal">${categories.map(c => `<span>${esc(c.name)} · ${items.filter(w => w.category === c.name).length}</span>`).join('')}</div>
@@ -993,6 +1003,17 @@ async function render() {
 
 window.addEventListener('hashchange', render);
 document.getElementById('searchToggle').addEventListener('click', () => go('#/search'));
+
+// ---------------- footer ----------------
+revealObserver.observe(document.getElementById('footMark'));
+
+document.getElementById('backToTop').addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+});
+
+api('/wallpapers').then(all => {
+  document.getElementById('footCount').textContent = `${all.length} wallpapers`;
+}).catch(() => { /* keep the generic label */ });
 
 // light (blush) is the default; the choice is remembered per browser
 document.getElementById('themeToggle').addEventListener('click', () => {
