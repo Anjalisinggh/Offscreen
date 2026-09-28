@@ -216,21 +216,6 @@ function sectionHead(num, eyebrow, title, link) {
 }
 const arrowLink = (href, label) => `<a class="link-arrow reveal" href="${href}">${label} ${ICON.arrow}</a>`;
 
-function railControls(id) {
-  return `<div class="rail-controls reveal">
-    <button data-rail="${id}" data-dir="-1" aria-label="Previous">${ICON.arrowL}</button>
-    <button data-rail="${id}" data-dir="1" aria-label="Next">${ICON.arrow}</button>
-  </div>`;
-}
-function bindRailControls() {
-  document.querySelectorAll('[data-rail]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const rail = document.getElementById(btn.dataset.rail);
-      rail.scrollBy({ left: Number(btn.dataset.dir) * rail.clientWidth * 0.8, behavior: 'smooth' });
-    });
-  });
-}
-
 // ---------------- auth ----------------
 async function loadMe() {
   const { user } = await api('/auth/me');
@@ -355,13 +340,13 @@ async function pageHome() {
     <div class="marquee"><div class="marquee-track">${marqueeItems}${marqueeItems}</div></div>
 
     <section class="section">
-      ${sectionHead('01', 'Trending', 'What everyone is <em>saving</em>', railControls('railTrending'))}
-      <div class="rail" id="railTrending"></div>
+      ${sectionHead('01', 'Trending', 'What everyone is <em>saving</em>', arrowLink('/explore?sort=trending', 'View all'))}
+      <div class="grid" id="railTrending"></div>
     </section>
 
     <section class="section">
-      ${sectionHead('02', 'New arrivals', 'Just <em>added</em>', railControls('railNew'))}
-      <div class="rail" id="railNew"></div>
+      ${sectionHead('02', 'New arrivals', 'Just <em>added</em>', arrowLink('/explore?sort=new', 'View all'))}
+      <div class="grid" id="railNew"></div>
     </section>
 
     <section class="section">
@@ -371,7 +356,7 @@ async function pageHome() {
 
     ${desktops.length ? `<section class="section">
       ${sectionHead('04', 'Desktop', 'For your <em>desktop</em>', arrowLink('/explore?device=desktop', 'All desktop'))}
-      <div class="rail" id="railDesktop"></div>
+      <div class="grid" id="railDesktop"></div>
     </section>` : ''}
 
     <section class="section">
@@ -385,7 +370,6 @@ async function pageHome() {
   fillGrid(document.getElementById('popularGrid'), popular.slice(0, 8));
   if (desktops.length) fillGrid(document.getElementById('railDesktop'), desktops.slice(0, 10));
   fillGrid(document.getElementById('gallerySample'), shuffle([...all]).slice(0, 12));
-  bindRailControls();
 
   document.getElementById('heroSearchForm').addEventListener('submit', (e) => {
     e.preventDefault();
