@@ -1036,13 +1036,30 @@ api('/wallpapers').then(all => {
   document.getElementById('footCount').textContent = `${all.length} wallpapers`;
 }).catch(() => { /* keep the generic label */ });
 
-// light (blush) is the default; the choice is remembered per browser
-document.getElementById('themeToggle').addEventListener('click', () => {
+// light (blush) is the default; the choice is remembered per browser.
+// switching plays a circular reveal that grows from the toggle button, using the View
+// Transitions API where the browser supports it; elsewhere it just swaps instantly as before.
+document.getElementById('themeToggle').addEventListener('click', (e) => {
   const dark = document.documentElement.dataset.theme !== 'dark';
-  if (dark) document.documentElement.dataset.theme = 'dark';
-  else delete document.documentElement.dataset.theme;
-  document.querySelector('meta[name="theme-color"]').content = dark ? '#160e12' : '#faf3f1';
-  try { localStorage.setItem('offscreen_theme', dark ? 'dark' : 'light'); } catch (e) { /* storage unavailable */ }
+  const applyTheme = () => {
+    if (dark) document.documentElement.dataset.theme = 'dark';
+    else delete document.documentElement.dataset.theme;
+    document.querySelector('meta[name="theme-color"]').content = dark ? '#160e12' : '#faf3f1';
+    try { localStorage.setItem('offscreen_theme', dark ? 'dark' : 'light'); } catch (err) { /* storage unavailable */ }
+  };
+
+  if (reducedMotion || !document.startViewTransition) { applyTheme(); return; }
+
+  const btn = e.currentTarget.getBoundingClientRect();
+  const x = btn.left + btn.width / 2;
+  const y = btn.top + btn.height / 2;
+  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 12;
+  const root = document.documentElement.style;
+  root.setProperty('--reveal-x', `${x}px`);
+  root.setProperty('--reveal-y', `${y}px`);
+  root.setProperty('--reveal-r', `${radius}px`);
+
+  document.startViewTransition(applyTheme);
 });
 
 (async function init() {
