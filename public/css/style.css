@@ -302,7 +302,7 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .rail::-webkit-scrollbar { display: none; }
 /* rails keep a common height; each card's width follows its wallpaper's shape */
 .rail .card { flex: 0 0 auto; width: min-content; scroll-snap-align: start; }
-.rail .card-media { height: clamp(340px, 34vw, 460px); width: auto; }
+.rail .card-media { height: clamp(200px, 34vw, 460px); width: auto; }
 .rail .card-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rail .card-info { contain: inline-size; }
 .rail .card-info > div { min-width: 0; }
@@ -378,6 +378,23 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .coll-grid.feature .coll:first-child h3 { font-size: clamp(40px, 12cqi, 72px); }
 @media (max-width: 900px) { .coll-grid.feature { grid-template-columns: repeat(2, 1fr); } .coll-grid.feature .coll:first-child { grid-row: auto; aspect-ratio: 16 / 10; } }
 @media (max-width: 520px) { .coll-grid.feature { grid-template-columns: 1fr; } .coll-grid.feature .coll:first-child { grid-column: auto; } }
+
+/* phone: rails (Trending, New, Desktop…) shouldn't eat the whole screen */
+@media (max-width: 640px) {
+  .rail { gap: 14px; }
+  /* height keeps every card the same size; max-width stops wide desktop wallpapers
+     from ballooning past the screen (their image still cropped in with object-fit) */
+  .rail .card-media { height: 34vh; max-width: 78vw; }
+  .rail .card { max-width: 78vw; }
+  .rail .card-info { padding-top: 10px; }
+  .rail .card-title { font-size: 16px; }
+  .rail .card-cat { font-size: 9px; margin-top: 3px; }
+  .rail .card-likes { font-size: 11px; }
+  .section-head { margin-bottom: 20px; }
+  .section-head h2 { font-size: 30px; margin-top: 8px; }
+  .rail-controls button { width: 36px; height: 36px; }
+  .rail-controls svg { width: 15px; height: 15px; }
+}
 
 /* filter tabs */
 .filter-row { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 36px; }
