@@ -22,28 +22,6 @@
     "device": "phone"
   },
   {
-    "id": 2,
-    "title": "Silver Glass Light",
-    "filename": "silver-glass-light-2.png",
-    "category": "Minimal",
-    "tags": [
-      "glass",
-      "iphone16",
-      "silver",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 45,
-    "downloads": 137,
-    "featured": false,
-    "createdAt": "2026-09-23T10:11:55.941Z",
-    "source": "01_silver_lightmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
     "id": 3,
     "title": "Champagne Glass Dark",
     "filename": "champagne-glass-dark-3.png",
@@ -61,28 +39,6 @@
     "featured": false,
     "createdAt": "2026-09-28T10:11:55.953Z",
     "source": "02_champagne_darkmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
-    "id": 4,
-    "title": "Champagne Glass Light",
-    "filename": "champagne-glass-light-4.png",
-    "category": "Minimal",
-    "tags": [
-      "glass",
-      "iphone16",
-      "champagne",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 8,
-    "downloads": 248,
-    "featured": false,
-    "createdAt": "2026-09-12T10:11:55.960Z",
-    "source": "02_champagne_lightmode_iphone16.png",
     "width": 1179,
     "height": 2556,
     "device": "phone"
@@ -110,28 +66,6 @@
     "device": "phone"
   },
   {
-    "id": 6,
-    "title": "Pink Glass Light",
-    "filename": "pink-glass-light-6.png",
-    "category": "Pink",
-    "tags": [
-      "glass",
-      "iphone16",
-      "pink",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 117,
-    "downloads": 37,
-    "featured": false,
-    "createdAt": "2026-09-24T10:11:55.974Z",
-    "source": "03_pink_lightmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
     "id": 7,
     "title": "Purple Glass Dark",
     "filename": "purple-glass-dark-7.png",
@@ -149,28 +83,6 @@
     "featured": false,
     "createdAt": "2026-09-14T10:11:55.980Z",
     "source": "04_purple_darkmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
-    "id": 8,
-    "title": "Purple Glass Light",
-    "filename": "purple-glass-light-8.png",
-    "category": "Psychedelic",
-    "tags": [
-      "glass",
-      "iphone16",
-      "purple",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 96,
-    "downloads": 278,
-    "featured": false,
-    "createdAt": "2026-09-10T10:11:55.987Z",
-    "source": "04_purple_lightmode_iphone16.png",
     "width": 1179,
     "height": 2556,
     "device": "phone"
@@ -198,28 +110,6 @@
     "device": "phone"
   },
   {
-    "id": 10,
-    "title": "Ice Blue Glass Light",
-    "filename": "ice-blue-glass-light-10.png",
-    "category": "Minimal",
-    "tags": [
-      "glass",
-      "iphone16",
-      "ice-blue",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 71,
-    "downloads": 45,
-    "featured": false,
-    "createdAt": "2026-09-15T10:11:56.005Z",
-    "source": "05_ice_blue_lightmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
     "id": 11,
     "title": "Navy Glass Dark",
     "filename": "navy-glass-dark-11.png",
@@ -237,28 +127,6 @@
     "featured": false,
     "createdAt": "2026-09-19T10:11:56.012Z",
     "source": "06_navy_darkmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
-    "id": 12,
-    "title": "Navy Glass Light",
-    "filename": "navy-glass-light-12.png",
-    "category": "Dark",
-    "tags": [
-      "glass",
-      "iphone16",
-      "navy",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 87,
-    "downloads": 386,
-    "featured": false,
-    "createdAt": "2026-09-09T10:11:56.021Z",
-    "source": "06_navy_lightmode_iphone16.png",
     "width": 1179,
     "height": 2556,
     "device": "phone"
@@ -286,28 +154,6 @@
     "device": "phone"
   },
   {
-    "id": 14,
-    "title": "Sage Glass Light",
-    "filename": "sage-glass-light-14.png",
-    "category": "Nature",
-    "tags": [
-      "glass",
-      "iphone16",
-      "sage",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 107,
-    "downloads": 227,
-    "featured": false,
-    "createdAt": "2026-09-26T10:11:56.036Z",
-    "source": "07_sage_lightmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
     "id": 15,
     "title": "Amber Glass Dark",
     "filename": "amber-glass-dark-15.png",
@@ -325,28 +171,6 @@
     "featured": false,
     "createdAt": "2026-09-24T10:11:56.044Z",
     "source": "08_amber_darkmode_iphone16.png",
-    "width": 1179,
-    "height": 2556,
-    "device": "phone"
-  },
-  {
-    "id": 16,
-    "title": "Amber Glass Light",
-    "filename": "amber-glass-light-16.png",
-    "category": "Retro",
-    "tags": [
-      "glass",
-      "iphone16",
-      "amber",
-      "light",
-      "minimal",
-      "phone"
-    ],
-    "likes": 106,
-    "downloads": 148,
-    "featured": false,
-    "createdAt": "2026-09-12T10:11:56.051Z",
-    "source": "08_amber_lightmode_iphone16.png",
     "width": 1179,
     "height": 2556,
     "device": "phone"
