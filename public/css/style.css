@@ -381,6 +381,19 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 
 /* phone: rails (Trending, New, Desktop…) shouldn't eat the whole screen */
 @media (max-width: 640px) {
+  /* two columns instead of one, so a card is roughly a quarter of the screen, not all of it */
+  .grid { columns: 2; column-gap: 12px; }
+  .grid > .card { margin-bottom: 22px; }
+  .card-info { padding-top: 10px; }
+  .card-title { font-size: 16px; }
+  .card-cat { font-size: 8.5px; margin-top: 3px; }
+  .card-likes { font-size: 10.5px; }
+  .card-likes svg { width: 10px; height: 10px; }
+  .card-actions { right: 7px; bottom: 7px; gap: 6px; }
+  .card-actions button { width: 30px; height: 30px; }
+  .card-actions svg { width: 14px; height: 14px; }
+  .badge { top: 7px; left: 7px; font-size: 8.5px; padding: 4px 7px; }
+
   .rail { gap: 14px; }
   /* height keeps every card the same size; max-width stops wide desktop wallpapers
      from ballooning past the screen (their image still cropped in with object-fit) */
