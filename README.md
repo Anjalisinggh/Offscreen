@@ -66,6 +66,12 @@ From the dashboard you can add/edit/delete wallpapers, add collections, feature 
 - All data (wallpapers, likes, members, collections) lives in plain JSON files under `data/` — no external database needed.
 - `data/likes.json` and `data/users.json` are runtime state, not checked into git; they're created automatically the first time the server starts.
 
+## Deploying to Vercel
+
+The project deploys to Vercel as is: `server.js` exports the Express app, and everything in `public/` (including the committed thumbnails) is served from Vercel's CDN.
+
+Vercel's filesystem is read-only and its functions are short-lived, so on Vercel the data is copied into `/tmp` when a function starts. Browsing, searching and downloading work normally, but **likes, sign-ins and admin edits are not permanent** there, and uploads are turned off. To make them stick, move `data/` into a hosted store such as Vercel KV/Upstash Redis, Postgres, or Vercel Blob for images.
+
 ## Tech stack
 
 Node.js, Express, and vanilla JavaScript on the front end (no framework, no build step). Image thumbnails via [sharp](https://sharp.pixelplumbing.com/).
