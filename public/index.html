@@ -11,8 +11,8 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2218%22 fill=%22%23f4c7d4%22/><text x=%2250%22 y=%2270%22 font-family=%22Georgia,serif%22 font-size=%2262%22 fill=%22%238e3456%22 text-anchor=%22middle%22 font-style=%22italic%22>O</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/css/style.css?v=3" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Anton&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/style.css?v=5" />
 </head>
 <body>
 
@@ -48,22 +48,76 @@
 <main id="app"></main>
 
 <footer class="site-footer">
-  <div class="footer-inner">
-    <div class="footer-brand"><em>Off</em>screen</div>
-    <p>A collection for your screen.</p>
-    <div class="footer-links">
-      <a href="#/explore">Explore</a>
-      <a href="#/categories">Collections</a>
-      <a href="#/likes">Liked</a>
-      <a href="#/admin">Admin</a>
+  <div class="foot-inner">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#/" class="foot-logo" aria-label="Offscreen home"><em>Off</em>screen</a>
+        <p class="foot-tagline">A collection for your screen. Wallpapers for phone and desktop, picked by mood.</p>
+        <p class="foot-status"><span class="foot-dot"></span><span id="footCount">Wallpapers</span> · New every Sunday</p>
+        <div class="foot-icons">
+          <a href="https://github.com/Anjalisinggh/Offscreen" target="_blank" rel="noopener" aria-label="Offscreen on GitHub">
+            <svg viewBox="0 0 24 24"><path d="M9 19c-4 1.3-4-2-6-2.5m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12 12 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>
+          </a>
+          <button type="button" id="backToTop" aria-label="Back to top">
+            <svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="foot-col">
+        <h4>Browse</h4>
+        <a href="#/explore">Explore</a>
+        <a href="#/categories">Collections</a>
+        <a href="#/explore?device=desktop">Desktop wallpapers</a>
+        <a href="#/search">Search</a>
+      </div>
+      <div class="foot-col">
+        <h4>For you</h4>
+        <a href="#/explore?sort=new">New arrivals</a>
+        <a href="#/explore?sort=popular">Most loved</a>
+        <a href="#/likes">Your likes</a>
+        <a href="#/profile">Profile</a>
+      </div>
+      <div class="foot-col">
+        <h4>Moods</h4>
+        <a href="#/explore?category=Pink">Pink</a>
+        <a href="#/explore?category=Dark">Dark</a>
+        <a href="#/explore?category=Vintage">Vintage</a>
+        <a href="#/explore?category=Minimal">Minimal</a>
+      </div>
     </div>
-    <p class="footer-fine">© 2026 Offscreen</p>
+
+    <div class="foot-meta">
+      <span>© 2026 Offscreen</span>
+      <a href="#/admin">Studio</a>
+    </div>
+  </div>
+
+  <!-- giant wordmark: SVG text stretched to the exact footer width -->
+  <div class="foot-mark" id="footMark" aria-hidden="true">
+    <svg viewBox="0 0 1000 170" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="markFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" class="mk-top" />
+          <stop offset=".45" class="mk-mid" />
+          <stop offset="1" class="mk-bottom" />
+        </linearGradient>
+        <linearGradient id="markShine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff" stop-opacity="0" />
+          <stop offset=".5" stop-color="#fff" stop-opacity=".35" />
+          <stop offset="1" stop-color="#fff" stop-opacity="0" />
+        </linearGradient>
+        <clipPath id="markClip"><text x="0" y="160" textLength="1000" lengthAdjust="spacingAndGlyphs" class="mark-text">OFFSCREEN</text></clipPath>
+      </defs>
+      <text x="0" y="160" textLength="1000" lengthAdjust="spacingAndGlyphs" class="mark-text" fill="url(#markFill)">OFFSCREEN</text>
+      <g clip-path="url(#markClip)"><rect class="mark-shine" x="-300" y="0" width="260" height="170" fill="url(#markShine)" /></g>
+    </svg>
   </div>
 </footer>
 
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
 
-<script src="/js/app.js?v=3"></script>
+<script src="/js/app.js?v=5"></script>
 </body>
 </html>
