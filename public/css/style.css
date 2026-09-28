@@ -310,10 +310,13 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .link-arrow:hover svg { transform: translateX(4px); }
 
 /* ---------------- cards ---------------- */
-/* masonry columns so phone (tall) and desktop (wide) wallpapers sit together naturally */
-.grid { columns: 4 230px; column-gap: 22px; }
-.grid > .card { display: block; break-inside: avoid; margin-bottom: 40px; }
-.grid > .empty-state { column-span: all; }
+/* masonry columns, built in JS (app.js: layoutGrid) so phone (tall) and desktop (wide)
+   wallpapers can sit together without one side of the grid running short — see layoutGrid
+   for why CSS's own `columns` balancing isn't used here */
+.grid-col { display: flex; flex-direction: column; min-width: 0; flex: 1 1 0; }
+.grid-col > .card { margin-bottom: 40px; }
+.grid > .empty-state { width: 100%; }
+@media (max-width: 640px) { .grid-col > .card { margin-bottom: 22px; } }
 
 .card { cursor: pointer; }
 .card-media { position: relative; aspect-ratio: var(--ar, 9 / 16); border-radius: 6px; overflow: hidden; background: var(--surface); }
@@ -387,11 +390,8 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 @media (max-width: 900px) { .coll-grid.feature { grid-template-columns: repeat(2, 1fr); } .coll-grid.feature .coll:first-child { grid-row: auto; aspect-ratio: 16 / 10; } }
 @media (max-width: 520px) { .coll-grid.feature { grid-template-columns: 1fr; } .coll-grid.feature .coll:first-child { grid-column: auto; } }
 
-/* phone: cards shouldn't eat the whole screen */
+/* phone: cards shouldn't eat the whole screen (column count itself is set in app.js) */
 @media (max-width: 640px) {
-  /* two columns instead of one, so a card is roughly a quarter of the screen, not all of it */
-  .grid { columns: 2; column-gap: 12px; }
-  .grid > .card { margin-bottom: 22px; }
   .card-info { padding-top: 10px; }
   .card-title { font-size: 16px; }
   .card-cat { font-size: 8.5px; margin-top: 3px; }

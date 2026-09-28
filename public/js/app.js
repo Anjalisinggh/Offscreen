@@ -168,10 +168,68 @@ function bindCards(container) {
   });
 }
 
-function fillGrid(node, items, emptyHTML) {
-  node.innerHTML = items.length ? items.map(cardHTML).join('') : emptyHTML;
+// Masonry columns, built in JS instead of CSS `columns`: CSS column-balancing fills a whole
+// column before moving to the next, so a run of tall phone cards next to a run of short,
+// wide desktop cards leaves one side visibly shorter than the other. Here every card goes
+// into whichever column is currently shortest (by estimated height, from its own aspect
+// ratio), which is what actually keeps both sides level regardless of the mix of shapes.
+const liveGrids = [];
+
+function columnCountFor(width) {
+  if (width < 640) return 2;
+  return Math.max(1, Math.min(4, Math.floor((width + 22) / (230 + 22))));
+}
+function estCardHeight(w, colWidth) {
+  const ar = (w.width && w.height) ? w.width / w.height : 9 / 16;
+  return colWidth / ar + 84; // + title/meta block
+}
+
+function layoutGrid(node, items) {
+  const width = node.clientWidth || node.parentElement.clientWidth || 320;
+  const mobile = width < 640;
+  const gap = mobile ? 12 : 22;
+  const cols = columnCountFor(width);
+  const colWidth = (width - gap * (cols - 1)) / cols;
+  const heights = new Array(cols).fill(0);
+
+  node.innerHTML = '';
+  node.style.display = 'flex';
+  node.style.gap = gap + 'px';
+  node.style.alignItems = 'flex-start';
+  const colEls = Array.from({ length: cols }, () => {
+    const col = document.createElement('div');
+    col.className = 'grid-col';
+    node.appendChild(col);
+    return col;
+  });
+
+  items.forEach((w, i) => {
+    const target = heights.indexOf(Math.min(...heights));
+    colEls[target].insertAdjacentHTML('beforeend', cardHTML(w, i));
+    heights[target] += estCardHeight(w, colWidth) + (mobile ? 22 : 40);
+  });
   bindCards(node);
 }
+
+function fillGrid(node, items, emptyHTML) {
+  if (!items.length) {
+    node.style.display = '';
+    node.innerHTML = emptyHTML;
+    return;
+  }
+  layoutGrid(node, items);
+  liveGrids.push({ node, items });
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    for (const { node, items } of liveGrids) {
+      if (document.body.contains(node)) layoutGrid(node, items);
+    }
+  }, 200);
+});
 
 async function toggleLike(id) {
   if (!state.user) { openAuthModal(); return null; }
@@ -948,6 +1006,7 @@ let firstRender = true;
 async function render() {
   const id = ++renderId;
   const { path, params } = parseLocation();
+  liveGrids.length = 0; // the page below is about to be replaced; drop the old grid refs
 
   // fade the current page out before swapping content
   if (!firstRender && !reducedMotion) {
