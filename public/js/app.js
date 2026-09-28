@@ -147,7 +147,7 @@ function bindCards(container) {
   container.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', (e) => {
       if (e.target.closest('button')) return;
-      go(`#/wallpaper/${card.dataset.id}`);
+      go(`/wallpaper/${card.dataset.id}`);
     });
   });
   container.querySelectorAll('.like-btn').forEach(btn => {
@@ -249,7 +249,7 @@ async function loadMe() {
 function renderProfileSlot() {
   const slot = document.getElementById('profileSlot');
   if (state.user) {
-    slot.innerHTML = `<a href="#/profile" class="profile-chip"><span class="profile-avatar">${initial(state.user.username)}</span><span>${esc(state.user.username)}</span></a>`;
+    slot.innerHTML = `<a href="/profile" class="profile-chip"><span class="profile-avatar">${initial(state.user.username)}</span><span>${esc(state.user.username)}</span></a>`;
   } else {
     slot.innerHTML = `<button class="btn-login" id="loginBtn">Sign in</button>`;
     document.getElementById('loginBtn').addEventListener('click', openAuthModal);
@@ -298,7 +298,7 @@ async function logout() {
   state.user = null;
   state.likedIds = new Set();
   renderProfileSlot();
-  go('#/');
+  go('/');
 }
 
 // ---------------- pages ----------------
@@ -323,7 +323,7 @@ async function pageHome() {
   const desktops = shuffle(all.filter(isDesktop));
   const cols = [0, 1, 2].map(c => pool.filter((_, i) => i % 3 === c).slice(0, 7));
   const colHTML = cols.map(col => {
-    const imgs = col.map(w => `<a href="#/wallpaper/${w.id}" tabindex="-1"><img src="${thumb(w)}" data-full="${full(w)}" alt="" /></a>`).join('');
+    const imgs = col.map(w => `<a href="/wallpaper/${w.id}" tabindex="-1"><img src="${thumb(w)}" data-full="${full(w)}" alt="" /></a>`).join('');
     return `<div class="hero-col">${imgs}${imgs}</div>`;
   }).join('');
 
@@ -333,7 +333,7 @@ async function pageHome() {
     .sort((a, b) => b.items.length - a.items.length)
     .slice(0, 5);
 
-  const marqueeItems = categories.map(c => `<a href="#/explore?category=${encodeURIComponent(c.name)}">${esc(c.name)}</a>`).join('');
+  const marqueeItems = categories.map(c => `<a href="/explore?category=${encodeURIComponent(c.name)}">${esc(c.name)}</a>`).join('');
 
   app.innerHTML = `
     <section class="hero" data-reveal>
@@ -366,7 +366,7 @@ async function pageHome() {
     </section>
 
     <section class="section">
-      ${sectionHead('02', 'Collections', 'Explore by <em>style</em>', arrowLink('#/categories', 'All collections'))}
+      ${sectionHead('02', 'Collections', 'Explore by <em>style</em>', arrowLink('/categories', 'All collections'))}
       <div class="coll-grid feature" id="collGrid"></div>
     </section>
 
@@ -376,17 +376,17 @@ async function pageHome() {
     </section>
 
     <section class="section">
-      ${sectionHead('04', 'Popular', 'Most <em>loved</em>', arrowLink('#/explore?sort=popular', 'View all'))}
+      ${sectionHead('04', 'Popular', 'Most <em>loved</em>', arrowLink('/explore?sort=popular', 'View all'))}
       <div class="grid" id="popularGrid"></div>
     </section>
 
     ${desktops.length ? `<section class="section">
-      ${sectionHead('05', 'Desktop', 'For your <em>desktop</em>', arrowLink('#/explore?device=desktop', 'All desktop'))}
+      ${sectionHead('05', 'Desktop', 'For your <em>desktop</em>', arrowLink('/explore?device=desktop', 'All desktop'))}
       <div class="rail" id="railDesktop"></div>
     </section>` : ''}
 
     <section class="section">
-      ${sectionHead(desktops.length ? '06' : '05', 'The gallery', 'Keep <em>discovering</em>', arrowLink('#/explore', 'Full gallery'))}
+      ${sectionHead(desktops.length ? '06' : '05', 'The gallery', 'Keep <em>discovering</em>', arrowLink('/explore', 'Full gallery'))}
       <div class="grid" id="gallerySample"></div>
     </section>
   `;
@@ -402,14 +402,14 @@ async function pageHome() {
   document.getElementById('heroSearchForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const q = document.getElementById('heroSearch').value.trim();
-    go(`#/search?q=${encodeURIComponent(q)}`);
+    go(`/search?q=${encodeURIComponent(q)}`);
   });
 }
 
 function collHTML(c, items, i) {
   const cover = [...items].sort((a, b) => b.likes - a.likes)[0];
   return `
-    <a class="coll reveal" style="--i:${i}" href="#/explore?category=${encodeURIComponent(c.name)}">
+    <a class="coll reveal" style="--i:${i}" href="/explore?category=${encodeURIComponent(c.name)}">
       ${cover ? `<img src="${thumb(cover)}" data-full="${full(cover)}" alt="" loading="lazy" />` : ''}
       <span class="coll-num">${pad(i + 1)}</span>
       <h3>${esc(c.name)}</h3>
@@ -461,7 +461,7 @@ async function pageExplore(params) {
     if (cat !== 'All') q.set('category', cat);
     if (sort) q.set('sort', sort);
     if (dev) q.set('device', dev);
-    go(`#/explore${q.toString() ? '?' + q : ''}`);
+    go(`/explore${q.toString() ? '?' + q : ''}`);
   };
   document.getElementById('catFilters').addEventListener('click', (e) => {
     const btn = e.target.closest('.filter');
@@ -500,7 +500,7 @@ async function pageSearch(params) {
         <input class="field-underline" type="text" id="searchInput" placeholder="What’s your mood today?" value="${esc(q)}" autocomplete="off" />
         <button type="submit" aria-label="Search">${ICON.search}</button>
       </form>
-      <div class="suggest reveal"><span>Try</span>${suggestions.map(s => `<a class="tag" href="#/search?q=${s}">${s}</a>`).join('')}</div>
+      <div class="suggest reveal"><span>Try</span>${suggestions.map(s => `<a class="tag" href="/search?q=${s}">${s}</a>`).join('')}</div>
     </div>
     <div id="searchResults"></div>
   `;
@@ -508,7 +508,7 @@ async function pageSearch(params) {
   if (!q) input.focus();
   document.getElementById('searchForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    go(`#/search?q=${encodeURIComponent(input.value.trim())}`);
+    go(`/search?q=${encodeURIComponent(input.value.trim())}`);
   });
 
   const results = document.getElementById('searchResults');
@@ -538,7 +538,7 @@ async function pageLikes() {
     <div class="grid" id="likesGrid"></div>
   `;
   fillGrid(document.getElementById('likesGrid'), items,
-    `<div class="empty-state"><h3>Nothing <em>liked</em> yet</h3>Tap the heart on any wallpaper to keep it here.<br/><a class="btn" href="#/explore">Start exploring ${ICON.arrow}</a></div>`);
+    `<div class="empty-state"><h3>Nothing <em>liked</em> yet</h3>Tap the heart on any wallpaper to keep it here.<br/><a class="btn" href="/explore">Start exploring ${ICON.arrow}</a></div>`);
 }
 
 async function pageProfile() {
@@ -587,14 +587,14 @@ async function pageDetail(id) {
   try {
     [w, similar] = await Promise.all([api(`/wallpapers/${id}`), api(`/wallpapers/${id}/similar`)]);
   } catch (e) {
-    app.innerHTML = `<div class="empty-state"><h3>Wallpaper <em>not found</em></h3><a class="btn" href="#/explore">Back to gallery</a></div>`;
+    app.innerHTML = `<div class="empty-state"><h3>Wallpaper <em>not found</em></h3><a class="btn" href="/explore">Back to gallery</a></div>`;
     return;
   }
   const liked = state.likedIds.has(w.id);
   const desktop = isDesktop(w);
 
   app.innerHTML = `
-    <nav class="crumbs reveal"><a href="#/explore">Gallery</a><span>/</span><a href="#/explore?category=${encodeURIComponent(w.category)}">${esc(w.category)}</a></nav>
+    <nav class="crumbs reveal"><a href="/explore">Gallery</a><span>/</span><a href="/explore?category=${encodeURIComponent(w.category)}">${esc(w.category)}</a></nav>
     <div class="detail ${desktop ? 'is-desktop' : ''}">
       <div class="detail-stage" id="stage">
         ${desktop ? `
@@ -651,13 +651,13 @@ async function pageDetail(id) {
         </div>
         <div class="meta-block reveal">
           <h4>Tags</h4>
-          <div class="tags">${w.tags.map(t => `<a class="tag" href="#/search?q=${encodeURIComponent(t)}">${esc(t)}</a>`).join('')}</div>
+          <div class="tags">${w.tags.map(t => `<a class="tag" href="/search?q=${encodeURIComponent(t)}">${esc(t)}</a>`).join('')}</div>
         </div>
       </div>
     </div>
 
     <section class="section">
-      ${sectionHead('', 'Similar style', 'You might also <em>like</em>', arrowLink(`#/explore?category=${encodeURIComponent(w.category)}`, 'More ' + esc(w.category)))}
+      ${sectionHead('', 'Similar style', 'You might also <em>like</em>', arrowLink(`/explore?category=${encodeURIComponent(w.category)}`, 'More ' + esc(w.category)))}
       <div class="grid" id="similarGrid"></div>
     </section>
   `;
@@ -944,14 +944,16 @@ function openAddWallpaperModal(categories) {
 }
 
 // ---------------- router ----------------
-function go(hash) {
-  if (location.hash === hash) render(); else location.hash = hash;
+// real paths via the History API — no #, so links are ordinary, shareable URLs;
+// the server (see server.js) sends index.html for any of these on a fresh load or refresh
+function go(url) {
+  if (location.pathname + location.search === url) { render(); return; }
+  history.pushState(null, '', url);
+  render();
 }
 
-function parseHash() {
-  const hash = location.hash.replace(/^#/, '') || '/';
-  const [pathPart, queryPart] = hash.split('?');
-  return { path: pathPart, params: new URLSearchParams(queryPart || '') };
+function parseLocation() {
+  return { path: location.pathname || '/', params: new URLSearchParams(location.search) };
 }
 
 const routes = [
@@ -970,7 +972,7 @@ let firstRender = true;
 
 async function render() {
   const id = ++renderId;
-  const { path, params } = parseHash();
+  const { path, params } = parseLocation();
 
   // fade the current page out before swapping content
   if (!firstRender && !reducedMotion) {
@@ -989,7 +991,7 @@ async function render() {
   app.classList.remove('is-leaving');
   try {
     if (route) await route[1](path.match(route[0]), params);
-    else app.innerHTML = `<div class="empty-state"><h3>Page <em>not found</em></h3><a class="btn" href="#/">Return home</a></div>`;
+    else app.innerHTML = `<div class="empty-state"><h3>Page <em>not found</em></h3><a class="btn" href="/">Return home</a></div>`;
   } catch (e) {
     app.innerHTML = `<div class="empty-state"><h3>Something went <em>wrong</em></h3>${esc(e.message)}</div>`;
   }
@@ -1003,8 +1005,20 @@ async function render() {
   }
 }
 
-window.addEventListener('hashchange', render);
-document.getElementById('searchToggle').addEventListener('click', () => go('#/search'));
+window.addEventListener('popstate', render);
+document.getElementById('searchToggle').addEventListener('click', () => go('/search'));
+
+// intercept clicks on ordinary same-site links (<a href="/explore">…</a>) and route them
+// through pushState instead of a full page reload; anything external, modified, or aimed
+// at a new tab/download is left completely alone
+document.addEventListener('click', (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = e.target.closest('a[href]');
+  if (!a || a.target === '_blank' || a.hasAttribute('download') || a.origin !== location.origin) return;
+  if (a.pathname === location.pathname && a.search === location.search && a.hash) return; // in-page anchor
+  e.preventDefault();
+  go(a.pathname + a.search);
+});
 
 // ---------------- footer ----------------
 revealObserver.observe(document.getElementById('footMark'));
@@ -1059,7 +1073,11 @@ document.getElementById('themeToggle').addEventListener('click', (e) => {
   root.setProperty('--reveal-y', `${y}px`);
   root.setProperty('--reveal-r', `${radius}px`);
 
-  document.startViewTransition(applyTheme);
+  // .ready/.finished reject if the transition gets interrupted (a fast double-click, the
+  // page navigating away mid-animation); that's fine, just don't let it log as unhandled
+  const transition = document.startViewTransition(applyTheme);
+  transition.ready.catch(() => {});
+  transition.finished.catch(() => {});
 });
 
 (async function init() {
