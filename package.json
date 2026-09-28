@@ -1,0 +1,20 @@
+{
+  "name": "offscreen",
+  "version": "1.0.0",
+  "description": "Offscreen, a collection for your screen",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "generate-data": "node generate-data.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["wallpapers", "gallery", "express"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "multer": "^2.4.0",
+    "sharp": "^0.35.5"
+  }
+}

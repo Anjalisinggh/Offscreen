@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Retro",
+    "icon": "📻"
+  },
+  {
+    "name": "Dark",
+    "icon": "🌑"
+  },
+  {
+    "name": "Minimal",
+    "icon": "⚪"
+  },
+  {
+    "name": "Motivational",
+    "icon": "✨"
+  },
+  {
+    "name": "Cute",
+    "icon": "🐾"
+  },
+  {
+    "name": "Abstract",
+    "icon": "🌀"
+  },
+  {
+    "name": "Nature",
+    "icon": "🌿"
+  },
+  {
+    "name": "Pink",
+    "icon": "🌸"
+  },
+  {
+    "name": "Vintage",
+    "icon": "🕰️"
+  },
+  {
+    "name": "Psychedelic",
+    "icon": "🌈"
+  }
+]
