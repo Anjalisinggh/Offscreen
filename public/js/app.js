@@ -317,7 +317,9 @@ async function pageHome() {
   state.categories = categories;
 
   // three drifting columns of wallpapers, each doubled so the loop is seamless
-  const pool = shuffle(all.filter(w => !isDesktop(w)));
+  // the plain colour-glass renders are flat next to everything else, so keep the hero to
+  // the more visually rich wallpapers (they still show up everywhere else on the site)
+  const pool = shuffle(all.filter(w => !isDesktop(w) && !w.tags.includes('glass')));
   const desktops = shuffle(all.filter(isDesktop));
   const cols = [0, 1, 2].map(c => pool.filter((_, i) => i % 3 === c).slice(0, 7));
   const colHTML = cols.map(col => {
