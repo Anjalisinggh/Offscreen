@@ -1007,6 +1007,25 @@ document.getElementById('searchToggle').addEventListener('click', () => go('#/se
 // ---------------- footer ----------------
 revealObserver.observe(document.getElementById('footMark'));
 
+// size the wordmark's viewBox to the exact ink of "OFFSCREEN" in Anton, so the letters run
+// edge to edge at their true proportions (no stretching, no empty space above or below)
+function fitWordmark() {
+  const svg = document.getElementById('markSvg');
+  const text = svg.querySelector('text');
+  const ctx = document.createElement('canvas').getContext('2d');
+  ctx.font = `200px ${getComputedStyle(text).fontFamily}`;
+  const m = ctx.measureText(text.textContent);
+  const left = m.actualBoundingBoxLeft, width = left + m.actualBoundingBoxRight;
+  const top = m.actualBoundingBoxAscent, height = top + m.actualBoundingBoxDescent;
+  if (!width || !height) return;
+  svg.setAttribute('viewBox', `${-left} ${-top} ${width} ${height}`);
+  const grad = document.getElementById('markFill');
+  grad.setAttribute('y1', -top);
+  grad.setAttribute('y2', m.actualBoundingBoxDescent);
+}
+fitWordmark();
+document.fonts.load('200px Anton').then(fitWordmark).catch(() => {});
+
 document.getElementById('backToTop').addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
 });

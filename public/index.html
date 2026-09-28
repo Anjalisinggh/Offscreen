@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Anton&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="/css/style.css?v=5" />
+<link rel="stylesheet" href="/css/style.css?v=6" />
 </head>
 <body>
 
@@ -93,24 +93,18 @@
     </div>
   </div>
 
-  <!-- giant wordmark: SVG text stretched to the exact footer width -->
+  <!-- giant wordmark: the viewBox is fitted to the real letter shapes once the font loads (app.js),
+       so it spans the full width without stretching the glyphs -->
   <div class="foot-mark" id="footMark" aria-hidden="true">
-    <svg viewBox="0 0 1000 170" preserveAspectRatio="none">
+    <svg id="markSvg" viewBox="0 -148 852 148">
       <defs>
-        <linearGradient id="markFill" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="markFill" gradientUnits="userSpaceOnUse" x1="0" y1="-148" x2="0" y2="0">
           <stop offset="0" class="mk-top" />
-          <stop offset=".45" class="mk-mid" />
+          <stop offset=".5" class="mk-mid" />
           <stop offset="1" class="mk-bottom" />
         </linearGradient>
-        <linearGradient id="markShine" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#fff" stop-opacity="0" />
-          <stop offset=".5" stop-color="#fff" stop-opacity=".35" />
-          <stop offset="1" stop-color="#fff" stop-opacity="0" />
-        </linearGradient>
-        <clipPath id="markClip"><text x="0" y="160" textLength="1000" lengthAdjust="spacingAndGlyphs" class="mark-text">OFFSCREEN</text></clipPath>
       </defs>
-      <text x="0" y="160" textLength="1000" lengthAdjust="spacingAndGlyphs" class="mark-text" fill="url(#markFill)">OFFSCREEN</text>
-      <g clip-path="url(#markClip)"><rect class="mark-shine" x="-300" y="0" width="260" height="170" fill="url(#markShine)" /></g>
+      <text x="0" y="0" class="mark-text" fill="url(#markFill)">OFFSCREEN</text>
     </svg>
   </div>
 </footer>
@@ -118,6 +112,6 @@
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
 
-<script src="/js/app.js?v=5"></script>
+<script src="/js/app.js?v=6"></script>
 </body>
 </html>

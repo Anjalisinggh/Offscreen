@@ -592,17 +592,16 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .foot-meta a { transition: color .3s; }
 .foot-meta a:hover { color: var(--foot-accent); }
 
-/* wordmark: rises into view, then a soft shine sweeps across now and then */
-.foot-mark { padding: 34px var(--gutter) clamp(22px, 3.5vw, 56px); max-width: 1600px; margin: 0 auto; overflow: hidden; }
-.foot-mark svg { display: block; width: 100%; height: auto; aspect-ratio: 1000 / 170; overflow: visible;
-  transform: translateY(45%); opacity: 0; transition: transform 1.6s var(--ease-slow), opacity 1.2s var(--ease); }
+/* wordmark: rises into view; the svg's viewBox hugs the letters so it spans the width undistorted */
+.foot-mark { padding: 40px var(--gutter) clamp(24px, 3.5vw, 56px); max-width: 1600px; margin: 0 auto; overflow: hidden; }
+.foot-mark svg { display: block; width: 100%; height: auto;
+  transform: translateY(60%); opacity: 0; transition: transform 1.6s var(--ease-slow), opacity 1.2s var(--ease); }
 .foot-mark.in svg { transform: none; opacity: 1; }
-.mark-text { font-family: 'Anton', 'Impact', 'Arial Narrow', sans-serif; font-size: 212px; letter-spacing: 0; }
-.mk-top { stop-color: #f7b3c9; }
+.mark-text { font-family: 'Anton', 'Impact', 'Arial Narrow', sans-serif; font-size: 200px; letter-spacing: 0; }
+.mk-top { stop-color: #f7b3c9; transition: stop-color .8s var(--ease); }
 .mk-mid { stop-color: #c25a7c; }
-.mk-bottom { stop-color: #5b3a4a; }
-.foot-mark.in .mark-shine { animation: shine 7s var(--ease) 1.6s infinite; }
-@keyframes shine { 0% { transform: translateX(0); } 35%, 100% { transform: translateX(1600px); } }
+.mk-bottom { stop-color: #4a2d3b; }
+.foot-mark:hover .mk-top { stop-color: #ffd3e1; }
 
 @media (max-width: 900px) {
   .foot-grid { grid-template-columns: 1fr 1fr; gap: 44px 28px; }
