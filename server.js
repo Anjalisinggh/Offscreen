@@ -108,7 +108,7 @@ app.get('/api/auth/me', (req, res) => {
 
 // ---------- wallpapers ----------
 app.get('/api/wallpapers', (req, res) => {
-  const { category, q, sort, device } = req.query;
+  const { category, q, sort, device, dedupe } = req.query;
   let items = readJSON(WALLPAPERS_FILE);
 
   if (device === 'phone' || device === 'desktop') {
@@ -124,6 +124,18 @@ app.get('/api/wallpapers', (req, res) => {
       w.category.toLowerCase().includes(needle) ||
       w.tags.some(t => t.toLowerCase().includes(needle))
     );
+  }
+  // dedupe=1 collapses phone/desktop crops of the same artwork to one result (run after the
+  // filters above so a device filter still keeps its own member of the pair). Public browsing
+  // views pass this; admin leaves it off so every wallpaper stays visible and manageable there.
+  if (dedupe === '1') {
+    const seenSeries = new Set();
+    items = items.filter(w => {
+      if (!w.series) return true;
+      if (seenSeries.has(w.series)) return false;
+      seenSeries.add(w.series);
+      return true;
+    });
   }
   if (sort === 'trending') {
     // activity weighted toward recently added wallpapers
@@ -155,11 +167,20 @@ app.get('/api/wallpapers/:id/similar', (req, res) => {
     (w.category === item.category ? 3 : 0) +
     w.tags.filter(t => item.tags.includes(t) && t !== w.device).length +
     (w.device === item.device ? 4 : 0);
+  const seenSeries = new Set();
   const similar = items
-    .filter(w => w.id !== item.id)
+    // never recommend a phone/desktop crop of the wallpaper someone is already looking at,
+    // and never recommend two crops of some other wallpaper alongside each other either
+    .filter(w => w.id !== item.id && !(item.series && w.series === item.series))
     .map(w => ({ w, s: score(w) }))
     .filter(x => x.s > 4)
     .sort((a, b) => b.s - a.s)
+    .filter(x => {
+      if (!x.w.series) return true;
+      if (seenSeries.has(x.w.series)) return false;
+      seenSeries.add(x.w.series);
+      return true;
+    })
     .slice(0, 8)
     .map(x => x.w);
   res.json(similar);

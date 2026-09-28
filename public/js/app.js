@@ -308,10 +308,10 @@ const loaderHTML = '<div class="loader"><span></span></div>';
 async function pageHome() {
   app.classList.add('is-home');
   const [all, trending, fresh, popular, categories] = await Promise.all([
-    api('/wallpapers'),
-    api('/wallpapers?sort=trending'),
-    api('/wallpapers?sort=new'),
-    api('/wallpapers?sort=popular'),
+    api('/wallpapers?dedupe=1'),
+    api('/wallpapers?sort=trending&dedupe=1'),
+    api('/wallpapers?sort=new&dedupe=1'),
+    api('/wallpapers?sort=popular&dedupe=1'),
     api('/categories'),
   ]);
   state.categories = categories;
@@ -410,7 +410,7 @@ function collHTML(c, items, i) {
   const cover = [...items].sort((a, b) => b.likes - a.likes)[0];
   return `
     <a class="coll reveal" style="--i:${i}" href="/explore?category=${encodeURIComponent(c.name)}">
-      ${cover ? `<img src="${thumb(cover)}" data-full="${full(cover)}" alt="" loading="lazy" />` : ''}
+      ${cover ? `<img src="${full(cover)}" alt="" loading="lazy" />` : ''}
       <span class="coll-num">${pad(i + 1)}</span>
       <h3>${esc(c.name)}</h3>
       <p>${items.length} wallpaper${items.length === 1 ? '' : 's'} ${ICON.arrow}</p>
@@ -421,6 +421,8 @@ async function pageExplore(params) {
   const activeCategory = params.get('category') || 'All';
   const sort = params.get('sort') || '';
   const device = params.get('device') || '';
+  // counts (category/device chip numbers) use the full, undeduped set so they read as
+  // "how many wallpapers total" — only the rendered grid below hides paired duplicates
   const [categories, all] = await Promise.all([api('/categories'), api('/wallpapers')]);
   state.categories = categories;
 
@@ -428,6 +430,7 @@ async function pageExplore(params) {
   if (activeCategory !== 'All') query.set('category', activeCategory);
   if (sort) query.set('sort', sort);
   if (device) query.set('device', device);
+  query.set('dedupe', '1');
   const items = await api('/wallpapers?' + query);
 
   // category counts follow the chosen device
@@ -516,7 +519,7 @@ async function pageSearch(params) {
     results.innerHTML = `<div class="empty-state"><h3>Search by <em>feeling</em></h3>Try a mood, a colour or a style.</div>`;
     return;
   }
-  const items = await api(`/wallpapers?q=${encodeURIComponent(q)}`);
+  const items = await api(`/wallpapers?dedupe=1&q=${encodeURIComponent(q)}`);
   results.innerHTML = `<p class="result-count reveal">${items.length} result${items.length === 1 ? '' : 's'} for “${esc(q)}”</p><div class="grid" id="searchGrid"></div>`;
   fillGrid(document.getElementById('searchGrid'), items,
     `<div class="empty-state"><h3>No <em>matches</em></h3>Nothing matched “${esc(q)}”. Try one of the suggestions above.</div>`);
