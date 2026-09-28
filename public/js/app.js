@@ -327,12 +327,6 @@ async function pageHome() {
     return `<div class="hero-col">${imgs}${imgs}</div>`;
   }).join('');
 
-  const collections = categories
-    .map(c => ({ ...c, items: all.filter(w => w.category === c.name) }))
-    .filter(c => c.items.length)
-    .sort((a, b) => b.items.length - a.items.length)
-    .slice(0, 5);
-
   const marqueeItems = categories.map(c => `<a href="/explore?category=${encodeURIComponent(c.name)}">${esc(c.name)}</a>`).join('');
 
   app.innerHTML = `
@@ -366,27 +360,22 @@ async function pageHome() {
     </section>
 
     <section class="section">
-      ${sectionHead('02', 'Collections', 'Explore by <em>style</em>', arrowLink('/categories', 'All collections'))}
-      <div class="coll-grid feature" id="collGrid"></div>
-    </section>
-
-    <section class="section">
-      ${sectionHead('03', 'New arrivals', 'Just <em>added</em>', railControls('railNew'))}
+      ${sectionHead('02', 'New arrivals', 'Just <em>added</em>', railControls('railNew'))}
       <div class="rail" id="railNew"></div>
     </section>
 
     <section class="section">
-      ${sectionHead('04', 'Popular', 'Most <em>loved</em>', arrowLink('/explore?sort=popular', 'View all'))}
+      ${sectionHead('03', 'Popular', 'Most <em>loved</em>', arrowLink('/explore?sort=popular', 'View all'))}
       <div class="grid" id="popularGrid"></div>
     </section>
 
     ${desktops.length ? `<section class="section">
-      ${sectionHead('05', 'Desktop', 'For your <em>desktop</em>', arrowLink('/explore?device=desktop', 'All desktop'))}
+      ${sectionHead('04', 'Desktop', 'For your <em>desktop</em>', arrowLink('/explore?device=desktop', 'All desktop'))}
       <div class="rail" id="railDesktop"></div>
     </section>` : ''}
 
     <section class="section">
-      ${sectionHead(desktops.length ? '06' : '05', 'The gallery', 'Keep <em>discovering</em>', arrowLink('/explore', 'Full gallery'))}
+      ${sectionHead(desktops.length ? '05' : '04', 'The gallery', 'Keep <em>discovering</em>', arrowLink('/explore', 'Full gallery'))}
       <div class="grid" id="gallerySample"></div>
     </section>
   `;
@@ -396,7 +385,6 @@ async function pageHome() {
   fillGrid(document.getElementById('popularGrid'), popular.slice(0, 8));
   if (desktops.length) fillGrid(document.getElementById('railDesktop'), desktops.slice(0, 10));
   fillGrid(document.getElementById('gallerySample'), shuffle([...all]).slice(0, 12));
-  document.getElementById('collGrid').innerHTML = collections.map((c, i) => collHTML(c, c.items, i)).join('');
   bindRailControls();
 
   document.getElementById('heroSearchForm').addEventListener('submit', (e) => {
