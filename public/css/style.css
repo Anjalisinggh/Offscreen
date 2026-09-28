@@ -309,23 +309,11 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .link-arrow svg { width: 14px; height: 14px; transition: transform .5s var(--ease); }
 .link-arrow:hover svg { transform: translateX(4px); }
 
-.rail-controls { display: flex; gap: 10px; align-items: center; }
-.rail-controls button { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line-strong); background: none; display: flex; align-items: center; justify-content: center; transition: all .4s var(--ease); }
-.rail-controls button:hover { border-color: var(--accent); color: var(--accent); }
-
 /* ---------------- cards ---------------- */
 /* masonry columns so phone (tall) and desktop (wide) wallpapers sit together naturally */
 .grid { columns: 4 230px; column-gap: 22px; }
 .grid > .card { display: block; break-inside: avoid; margin-bottom: 40px; }
 .grid > .empty-state { column-span: all; }
-.rail { display: flex; gap: 22px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: 6px; margin-right: calc(var(--gutter) * -1); padding-right: var(--gutter); }
-.rail::-webkit-scrollbar { display: none; }
-/* rails keep a common height; each card's width follows its wallpaper's shape */
-.rail .card { flex: 0 0 auto; width: min-content; scroll-snap-align: start; }
-.rail .card-media { height: clamp(200px, 34vw, 460px); width: auto; }
-.rail .card-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rail .card-info { contain: inline-size; }
-.rail .card-info > div { min-width: 0; }
 
 .card { cursor: pointer; }
 .card-media { position: relative; aspect-ratio: var(--ar, 9 / 16); border-radius: 6px; overflow: hidden; background: var(--surface); }
@@ -399,7 +387,7 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 @media (max-width: 900px) { .coll-grid.feature { grid-template-columns: repeat(2, 1fr); } .coll-grid.feature .coll:first-child { grid-row: auto; aspect-ratio: 16 / 10; } }
 @media (max-width: 520px) { .coll-grid.feature { grid-template-columns: 1fr; } .coll-grid.feature .coll:first-child { grid-column: auto; } }
 
-/* phone: rails (Trending, New, Desktop…) shouldn't eat the whole screen */
+/* phone: cards shouldn't eat the whole screen */
 @media (max-width: 640px) {
   /* two columns instead of one, so a card is roughly a quarter of the screen, not all of it */
   .grid { columns: 2; column-gap: 12px; }
@@ -419,19 +407,8 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
   .card-actions button { background: rgba(11, 10, 8, .62); }
   .badge { background: rgba(11, 10, 8, .58); }
 
-  .rail { gap: 14px; }
-  /* height keeps every card the same size; max-width stops wide desktop wallpapers
-     from ballooning past the screen (their image still cropped in with object-fit) */
-  .rail .card-media { height: 34vh; max-width: 78vw; }
-  .rail .card { max-width: 78vw; }
-  .rail .card-info { padding-top: 10px; }
-  .rail .card-title { font-size: 16px; }
-  .rail .card-cat { font-size: 9px; margin-top: 3px; }
-  .rail .card-likes { font-size: 11px; }
   .section-head { margin-bottom: 20px; }
   .section-head h2 { font-size: 30px; margin-top: 8px; }
-  .rail-controls button { width: 36px; height: 36px; }
-  .rail-controls svg { width: 15px; height: 15px; }
 }
 
 /* filter tabs */
