@@ -13,7 +13,7 @@ Offscreen is a small, self-hosted wallpaper gallery. Browse, like, save, and dow
 - **Collections and search** by style, plus tag-based discovery ("you might also like").
 - **Light and dark themes**, remembered per browser.
 - **Admin dashboard** (`/#/admin`) to upload wallpapers, edit titles/tags/collections, feature wallpapers, add new collections, and see like/download stats.
-- **Fast grids.** The server generates small WebP thumbnails for every wallpaper so the gallery stays light, while full-resolution images are served for downloads and previews.
+- **Fast to load.** Every wallpaper is served at three sizes: a small WebP thumbnail for grid cards, a mid-size WebP for the wallpaper page and collection tiles, and the original file only for the actual Download button — so a page never pulls multi-megabyte images just to render on screen.
 
 ## Getting started
 
@@ -34,9 +34,12 @@ public/
   index.html          App shell
   css/style.css        Design system (light + dark themes)
   js/app.js            Single-page app: routing, rendering, all interactions
-  images/               Full-resolution wallpapers
-  thumbs/               Generated preview thumbnails (gitignored, rebuilt on server start)
+  images/               Full-resolution wallpapers (only sent for Download)
+  thumbs/               Generated 520px WebP previews for grid/rail cards
+  display/              Generated 1100px WebP previews for the wallpaper page and collection tiles
 ```
+
+`thumbs/` and `display/` are committed (Vercel's filesystem can't generate them at request time), but are only a fraction of `images/`'s size. Both are rebuilt automatically for any new wallpaper when the server starts locally, or right after an admin upload.
 
 ## Adding your own wallpapers
 
@@ -68,13 +71,13 @@ From the dashboard you can add/edit/delete wallpapers, add collections, feature 
 
 ## Deploying to Vercel
 
-The project deploys to Vercel as is: `server.js` exports the Express app, and everything in `public/` (including the committed thumbnails) is served from Vercel's CDN.
+The project deploys to Vercel as is: `server.js` exports the Express app, and everything in `public/` (including the committed thumbnails and display images) is served from Vercel's CDN.
 
 Vercel's filesystem is read-only and its functions are short-lived, so on Vercel the data is copied into `/tmp` when a function starts. Browsing, searching and downloading work normally, but **likes, sign-ins and admin edits are not permanent** there, and uploads are turned off. To make them stick, move `data/` into a hosted store such as Vercel KV/Upstash Redis, Postgres, or Vercel Blob for images.
 
 ## Tech stack
 
-Node.js, Express, and vanilla JavaScript on the front end (no framework, no build step). Image thumbnails via [sharp](https://sharp.pixelplumbing.com/).
+Node.js, Express, and vanilla JavaScript on the front end (no framework, no build step). Image resizing via [sharp](https://sharp.pixelplumbing.com/).
 
 ## License
 
