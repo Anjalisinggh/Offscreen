@@ -72,6 +72,9 @@ function shuffle(arr) {
   return arr;
 }
 const thumb = (w) => `/thumbs/${w.filename}.webp`;
+// a lighter, still-sharp stand-in for the original — for anywhere an image is shown large
+// on screen (the wallpaper page, collection tiles) but isn't the actual file being downloaded
+const display = (w) => `/display/${w.filename}.webp`;
 const full = (w) => `/images/${w.filename}`;
 const pad = (n) => String(n).padStart(2, '0');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -440,7 +443,7 @@ function collHTML(c, items, i) {
   const cover = [...items].sort((a, b) => b.likes - a.likes)[0];
   return `
     <a class="coll reveal" style="--i:${i}" href="/explore?category=${encodeURIComponent(c.name)}">
-      ${cover ? `<img src="${full(cover)}" alt="" loading="lazy" />` : ''}
+      ${cover ? `<img src="${display(cover)}" data-full="${full(cover)}" alt="" loading="lazy" />` : ''}
       <span class="coll-num">${pad(i + 1)}</span>
       <h3>${esc(c.name)}</h3>
       <p>${items.length} wallpaper${items.length === 1 ? '' : 's'} ${ICON.arrow}</p>
@@ -635,7 +638,7 @@ async function pageDetail(id) {
           <div class="laptop-lid">
             <div class="laptop-screen">
               <div class="laptop-notch"></div>
-              <img src="${full(w)}" alt="${esc(w.title)}" />
+              <img src="${display(w)}" data-full="${full(w)}" alt="${esc(w.title)}" />
               <div class="mac-bar"><span><b>Finder</b><span>File</span><span>Edit</span><span>View</span></span><span id="macTime"></span></div>
               <div class="mac-win"></div>
               <div class="mac-dock">${'<i></i>'.repeat(8)}</div>
@@ -652,7 +655,7 @@ async function pageDetail(id) {
         <div class="phone" id="device">
           <div class="phone-screen">
             <div class="phone-island"></div>
-            <img src="${full(w)}" alt="${esc(w.title)}" />
+            <img src="${display(w)}" data-full="${full(w)}" alt="${esc(w.title)}" />
             <div class="ls">
               <div class="ls-date" id="lsDate"></div>
               <div class="ls-time" id="lsTime"></div>

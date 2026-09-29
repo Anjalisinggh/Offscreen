@@ -40,6 +40,7 @@ for (const [file, seed] of Object.entries(seeds)) {
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const IMAGES_DIR = path.join(PUBLIC_DIR, 'images');
 const THUMBS_DIR = path.join(PUBLIC_DIR, 'thumbs');
+const DISPLAY_DIR = path.join(PUBLIC_DIR, 'display');
 
 // sharp is only needed to make thumbnails and read upload sizes, so load it lazily
 let sharpLib;
@@ -48,18 +49,29 @@ function sharp(...args) {
   return sharpLib(...args);
 }
 
+// Two derived sizes per wallpaper, both much lighter than the original upload (often 1-3MB):
+//  - thumbs (520px):   grid/rail cards, where dozens can be on screen at once
+//  - display (1100px): the single large image on a wallpaper's own page and on collection
+//                       tiles — sharp at those sizes, but nowhere near the full original
+// The original file is only ever sent back whole for the actual Download button.
 async function ensureThumb(filename) {
   const out = path.join(THUMBS_DIR, filename + '.webp');
   if (fs.existsSync(out)) return;
   await sharp(path.join(IMAGES_DIR, filename)).resize({ width: 520, withoutEnlargement: true }).webp({ quality: 78 }).toFile(out);
 }
+async function ensureDisplay(filename) {
+  const out = path.join(DISPLAY_DIR, filename + '.webp');
+  if (fs.existsSync(out)) return;
+  await sharp(path.join(IMAGES_DIR, filename)).resize({ width: 1100, withoutEnlargement: true }).webp({ quality: 82 }).toFile(out);
+}
 
-// thumbnails are committed to the repo; locally any missing ones (e.g. new uploads) are generated
+// both sizes are committed to the repo; locally any missing ones (e.g. new uploads) are generated
 if (!IS_SERVERLESS) {
   (async () => {
     fs.mkdirSync(THUMBS_DIR, { recursive: true });
+    fs.mkdirSync(DISPLAY_DIR, { recursive: true });
     for (const w of readJSON(WALLPAPERS_FILE)) {
-      try { await ensureThumb(w.filename); } catch (e) { console.warn('thumb failed', w.filename, e.message); }
+      try { await ensureThumb(w.filename); await ensureDisplay(w.filename); } catch (e) { console.warn('resize failed', w.filename, e.message); }
     }
     console.log('Thumbnails ready');
   })();
@@ -292,7 +304,7 @@ app.delete('/api/admin/wallpapers/:id', requireAdmin, (req, res) => {
   writeJSON(WALLPAPERS_FILE, items);
   // the image files can only be removed where the disk is writable (not on Vercel)
   if (!IS_SERVERLESS) {
-    for (const file of [path.join(IMAGES_DIR, removed.filename), path.join(THUMBS_DIR, removed.filename + '.webp')]) {
+    for (const file of [path.join(IMAGES_DIR, removed.filename), path.join(THUMBS_DIR, removed.filename + '.webp'), path.join(DISPLAY_DIR, removed.filename + '.webp')]) {
       if (fs.existsSync(file)) fs.unlinkSync(file);
     }
   }
@@ -355,6 +367,7 @@ app.post('/api/admin/wallpapers', requireAdmin, uploadsSupported, upload.single(
   items.push(item);
   writeJSON(WALLPAPERS_FILE, items);
   ensureThumb(newFilename).catch(() => {});
+  ensureDisplay(newFilename).catch(() => {});
   res.json(item);
 });
 
