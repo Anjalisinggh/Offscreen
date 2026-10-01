@@ -75,6 +75,8 @@ The project deploys to Vercel as is: `server.js` exports the Express app, and ev
 
 Vercel's filesystem is read-only and its functions are short-lived, so on Vercel the data is copied into `/tmp` when a function starts. Browsing, searching and downloading work normally, but **likes, sign-ins and admin edits are not permanent** there, and uploads are turned off. To make them stick, move `data/` into a hosted store such as Vercel KV/Upstash Redis, Postgres, or Vercel Blob for images.
 
+Static files under `public/` (`images/`, `thumbs/`, `thumbs-avif/`, `display/`, `display-avif/`) are served by Vercel's CDN directly, bypassing the Express app entirely — the `Cache-Control` header `server.js` sets only takes effect when running locally. `vercel.json` sets a one-year immutable cache for those same paths on Vercel; if you rename or replace a wallpaper's image file, give the new copy a different filename (the admin upload flow already does this) rather than overwriting one in place.
+
 ## Tech stack
 
 Node.js, Express, and vanilla JavaScript on the front end (no framework, no build step). Image resizing via [sharp](https://sharp.pixelplumbing.com/).
