@@ -72,10 +72,19 @@ function shuffle(arr) {
   return arr;
 }
 const thumb = (w) => `/thumbs/${w.filename}.webp`;
+const thumbAvif = (w) => `/thumbs-avif/${w.filename}.avif`;
 // a lighter, still-sharp stand-in for the original — for anywhere an image is shown large
 // on screen (the wallpaper page, collection tiles) but isn't the actual file being downloaded
 const display = (w) => `/display/${w.filename}.webp`;
+const displayAvif = (w) => `/display-avif/${w.filename}.avif`;
 const full = (w) => `/images/${w.filename}`;
+
+// <picture> markup: the browser picks AVIF if it can decode it (typically 15-35% smaller
+// than WebP at matched quality), falling back to the WebP <img> everywhere else. `attrs` is
+// any extra attributes to put on the <img> itself (class, data-full, loading, etc).
+function picture(avifSrc, webpSrc, alt, attrs = '') {
+  return `<picture><source type="image/avif" srcset="${avifSrc}" /><img src="${webpSrc}" alt="${alt}" ${attrs} /></picture>`;
+}
 const pad = (n) => String(n).padStart(2, '0');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -130,7 +139,7 @@ function cardHTML(w, i = 0) {
   <article class="card reveal" style="--i:${i % 8}" data-id="${w.id}">
     <div class="card-media" style="--ar:${ratio(w)}">
       ${w.featured ? '<span class="badge">Featured</span>' : ''}
-      <img src="${thumb(w)}" data-full="${full(w)}" alt="${esc(w.title)}" loading="lazy" decoding="async" />
+      ${picture(thumbAvif(w), thumb(w), esc(w.title), `data-full="${full(w)}" loading="lazy" decoding="async"`)}
       <div class="card-actions">
         <button class="like-btn ${liked ? 'liked' : ''}" data-id="${w.id}" aria-label="Like">${ICON.heart}</button>
         <button class="dl-btn" data-id="${w.id}" aria-label="Download">${ICON.download}</button>
@@ -369,7 +378,7 @@ async function pageHome() {
   const desktops = shuffle(all.filter(isDesktop));
   const cols = [0, 1, 2].map(c => pool.filter((_, i) => i % 3 === c).slice(0, 7));
   const colHTML = cols.map(col => {
-    const imgs = col.map(w => `<a href="/wallpaper/${w.id}" tabindex="-1"><img src="${thumb(w)}" data-full="${full(w)}" alt="" /></a>`).join('');
+    const imgs = col.map(w => `<a href="/wallpaper/${w.id}" tabindex="-1">${picture(thumbAvif(w), thumb(w), '', `data-full="${full(w)}"`)}</a>`).join('');
     return `<div class="hero-col">${imgs}${imgs}</div>`;
   }).join('');
 
@@ -443,7 +452,7 @@ function collHTML(c, items, i) {
   const cover = [...items].sort((a, b) => b.likes - a.likes)[0];
   return `
     <a class="coll reveal" style="--i:${i}" href="/explore?category=${encodeURIComponent(c.name)}">
-      ${cover ? `<img src="${display(cover)}" data-full="${full(cover)}" alt="" loading="lazy" />` : ''}
+      ${cover ? picture(displayAvif(cover), display(cover), '', `data-full="${full(cover)}" loading="lazy"`) : ''}
       <span class="coll-num">${pad(i + 1)}</span>
       <h3>${esc(c.name)}</h3>
       <p>${items.length} wallpaper${items.length === 1 ? '' : 's'} ${ICON.arrow}</p>
@@ -638,7 +647,7 @@ async function pageDetail(id) {
           <div class="laptop-lid">
             <div class="laptop-screen">
               <div class="laptop-notch"></div>
-              <img src="${display(w)}" data-full="${full(w)}" alt="${esc(w.title)}" />
+              ${picture(displayAvif(w), display(w), esc(w.title), `data-full="${full(w)}"`)}
               <div class="mac-bar"><span><b>Finder</b><span>File</span><span>Edit</span><span>View</span></span><span id="macTime"></span></div>
               <div class="mac-win"></div>
               <div class="mac-dock">${'<i></i>'.repeat(8)}</div>
@@ -655,7 +664,7 @@ async function pageDetail(id) {
         <div class="phone" id="device">
           <div class="phone-screen">
             <div class="phone-island"></div>
-            <img src="${display(w)}" data-full="${full(w)}" alt="${esc(w.title)}" />
+            ${picture(displayAvif(w), display(w), esc(w.title), `data-full="${full(w)}"`)}
             <div class="ls">
               <div class="ls-date" id="lsDate"></div>
               <div class="ls-time" id="lsTime"></div>
