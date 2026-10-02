@@ -2,6 +2,11 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+
+// Local development reads DATABASE_URL / SMTP_URL / MAIL_FROM from .env (see .env.example).
+// On Vercel there's no .env file; set the same variables in the project's settings.
+try { process.loadEnvFile(path.join(__dirname, '.env')); } catch {}
+
 const cookieParser = require('cookie-parser');
 const { createStore } = require('./store');
 const { sendCode, canSendEmail } = require('./mailer');
