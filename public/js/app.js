@@ -815,7 +815,6 @@ async function pageAdmin() {
         </div>
         <input class="field-underline reveal" type="password" id="adminKeyInput" placeholder="Admin key" />
         <button class="btn accent reveal" id="adminLoginBtn">Enter studio ${ICON.arrow}</button>
-        <p class="hint reveal">Default key is <code>admin123</code>. Set the ADMIN_KEY environment variable to change it.</p>
       </div>`;
     const input = document.getElementById('adminKeyInput');
     const submit = async () => {
@@ -860,7 +859,7 @@ async function pageAdmin() {
     <div class="admin-bar reveal"><h3>Collections</h3><button class="btn small accent" id="addCatBtn">Add collection</button></div>
     <div class="chips reveal">${categories.map(c => `<span>${esc(c.name)} · ${items.filter(w => w.category === c.name).length}</span>`).join('')}</div>
 
-    <div class="admin-bar reveal"><h3>Wallpapers <sup style="font-size:14px;color:var(--faint)">${items.length}</sup></h3><button class="btn small accent" id="addWallpaperBtn">Upload wallpaper</button></div>
+    <div class="admin-bar reveal"><h3>Wallpapers <sup style="font-size:14px;color:var(--faint)">${items.length}</sup></h3></div>
     <div class="table-wrap reveal">
       <table class="admin-table">
         <thead><tr><th></th><th>Title</th><th>Collection</th><th>Device</th><th>Likes</th><th>Downloads</th><th>Featured</th><th></th></tr></thead>
@@ -909,7 +908,6 @@ async function pageAdmin() {
   });
 
   document.getElementById('addCatBtn').addEventListener('click', openAddCategoryModal);
-  document.getElementById('addWallpaperBtn').addEventListener('click', () => openAddWallpaperModal(categories));
 }
 
 const categoryOptions = (categories, selected) =>
@@ -955,34 +953,6 @@ function openAddCategoryModal() {
       await adminApi('/admin/categories', { method: 'POST', body: JSON.stringify({ name }) });
       close();
       toast('Collection added');
-      pageAdmin().then(() => activateMotion(app));
-    } catch (e) { toast(e.message); }
-  });
-}
-
-function openAddWallpaperModal(categories) {
-  const { modal, close } = openModal(`
-    <span class="eyebrow">Upload</span>
-    <h3>Add a <em>wallpaper</em></h3>
-    <label>Image</label><input type="file" id="newImgFile" accept="image/*" />
-    <label>Title</label><input class="field" type="text" id="newTitle" />
-    <label>Collection</label><select id="newCategory">${categoryOptions(categories)}</select>
-    <label>Tags (comma separated)</label><input class="field" type="text" id="newTags" />
-    <div class="modal-actions"><button class="btn small" id="cancelAdd">Cancel</button><button class="btn small accent" id="saveAdd">Upload</button></div>`);
-  modal.querySelector('#cancelAdd').addEventListener('click', close);
-  modal.querySelector('#saveAdd').addEventListener('click', async () => {
-    const fileInput = modal.querySelector('#newImgFile');
-    if (!fileInput.files.length) { toast('Please choose an image'); return; }
-    const fd = new FormData();
-    fd.append('image', fileInput.files[0]);
-    fd.append('title', modal.querySelector('#newTitle').value);
-    fd.append('category', modal.querySelector('#newCategory').value);
-    fd.append('tags', modal.querySelector('#newTags').value);
-    try {
-      const res = await fetch('/api/admin/wallpapers', { method: 'POST', headers: { 'x-admin-key': adminKey }, body: fd });
-      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
-      close();
-      toast('Wallpaper added');
       pageAdmin().then(() => activateMotion(app));
     } catch (e) { toast(e.message); }
   });
