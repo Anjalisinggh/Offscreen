@@ -12,7 +12,7 @@ Offscreen is a small, self-hosted wallpaper gallery. Browse, like, save, and dow
 - **Phone and desktop wallpapers**, detected automatically by image aspect ratio. Each wallpaper opens in a realistic preview — an iPhone mockup with a live lock screen clock, or a MacBook mockup with a menu bar and dock — with a toggle between views.
 - **Collections and search** by style, plus tag-based discovery ("you might also like").
 - **Light and dark themes**, remembered per browser.
-- **Admin dashboard** (`/#/admin`) to upload wallpapers, edit titles/tags/collections, feature wallpapers, add new collections, and see like/download stats.
+- **Admin dashboard** (`/admin`) to edit titles/tags/collections, feature wallpapers, add new collections, and see like/download stats.
 - **Fast to load.** Every wallpaper is served at three sizes: a small WebP thumbnail for grid cards, a mid-size WebP for the wallpaper page and collection tiles, and the original file only for the actual Download button — so a page never pulls multi-megabyte images just to render on screen.
 
 ## Getting started
@@ -39,7 +39,7 @@ public/
   display/              Generated 1100px WebP previews for the wallpaper page and collection tiles
 ```
 
-`thumbs/` and `display/` are committed (Vercel's filesystem can't generate them at request time), but are only a fraction of `images/`'s size. Both are rebuilt automatically for any new wallpaper when the server starts locally, or right after an admin upload.
+`thumbs/` and `display/` are committed (Vercel's filesystem can't generate them at request time), but are only a fraction of `images/`'s size. Both are rebuilt automatically for any new wallpaper when the server starts locally.
 
 ## Adding your own wallpapers
 
@@ -51,17 +51,15 @@ npm run generate-data
 
 This copies new images into `public/images`, detects phone vs. desktop by aspect ratio, and appends them to `data/wallpapers.json`. It's safe to re-run: wallpapers that were already imported are left untouched, so any titles/tags/collections you've edited in the admin dashboard are preserved.
 
-You can also upload directly from the admin dashboard at `/#/admin`.
-
 ## Admin access
 
-Go to `/#/admin` and sign in with the admin key. The default is `admin123` — set the `ADMIN_KEY` environment variable to change it:
+There is no public link to the admin dashboard. It is switched off until you set an `ADMIN_KEY` environment variable; then open `/admin` and sign in with that key:
 
 ```bash
 ADMIN_KEY=your-key-here npm start
 ```
 
-From the dashboard you can add/edit/delete wallpapers, add collections, feature wallpapers, and see totals for likes, downloads, wallpapers, members, and collections.
+From the dashboard you can edit/delete wallpapers, add collections, feature wallpapers, and see totals for likes, downloads, wallpapers, members, and collections.
 
 ## Notes
 
@@ -73,9 +71,9 @@ From the dashboard you can add/edit/delete wallpapers, add collections, feature 
 
 The project deploys to Vercel as is: `server.js` exports the Express app, and everything in `public/` (including the committed thumbnails and display images) is served from Vercel's CDN.
 
-Vercel's filesystem is read-only and its functions are short-lived, so on Vercel the data is copied into `/tmp` when a function starts. Browsing, searching and downloading work normally, but **likes, sign-ins and admin edits are not permanent** there, and uploads are turned off. To make them stick, move `data/` into a hosted store such as Vercel KV/Upstash Redis, Postgres, or Vercel Blob for images.
+Vercel's filesystem is read-only and its functions are short-lived, so on Vercel the data is copied into `/tmp` when a function starts. Browsing, searching and downloading work normally, but **likes, sign-ins and admin edits are not permanent** there. To make them stick, move `data/` into a hosted store such as Vercel KV/Upstash Redis, Postgres, or Vercel Blob for images.
 
-Static files under `public/` (`images/`, `thumbs/`, `thumbs-avif/`, `display/`, `display-avif/`) are served by Vercel's CDN directly, bypassing the Express app entirely — the `Cache-Control` header `server.js` sets only takes effect when running locally. `vercel.json` sets a one-year immutable cache for those same paths on Vercel; if you rename or replace a wallpaper's image file, give the new copy a different filename (the admin upload flow already does this) rather than overwriting one in place.
+Static files under `public/` (`images/`, `thumbs/`, `thumbs-avif/`, `display/`, `display-avif/`) are served by Vercel's CDN directly, bypassing the Express app entirely — the `Cache-Control` header `server.js` sets only takes effect when running locally. `vercel.json` sets a one-year immutable cache for those same paths on Vercel; if you rename or replace a wallpaper's image file, give the new copy a different filename rather than overwriting one in place.
 
 ## Tech stack
 

@@ -6,7 +6,8 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_KEY = process.env.ADMIN_KEY || 'admin123';
+// no default: with ADMIN_KEY unset, the admin API is switched off entirely
+const ADMIN_KEY = process.env.ADMIN_KEY || '';
 
 // On Vercel the deployed files are read-only and every instance is short-lived. There the data is
 // copied into /tmp on a cold start, so the site works but likes, sign-ups and admin edits are not
@@ -276,12 +277,12 @@ app.post('/api/wallpapers/:id/download', (req, res) => {
 
 // ---------- admin ----------
 function requireAdmin(req, res, next) {
-  if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized' });
+  if (!ADMIN_KEY || req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized' });
   next();
 }
 
 app.post('/api/admin/login', (req, res) => {
-  if (req.body.key === ADMIN_KEY) return res.json({ ok: true });
+  if (ADMIN_KEY && req.body.key === ADMIN_KEY) return res.json({ ok: true });
   res.status(401).json({ ok: false });
 });
 
@@ -340,54 +341,6 @@ app.post('/api/admin/categories', requireAdmin, (req, res) => {
   categories.push({ name, icon: icon || '🏷️' });
   writeJSON(CATEGORIES_FILE, categories);
   res.json(categories);
-});
-
-// multer for admin uploads (writes to the OS temp dir, then the file is moved into public/images)
-const os = require('os');
-const multer = require('multer');
-const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 25 * 1024 * 1024 } });
-
-function uploadsSupported(req, res, next) {
-  if (!IS_SERVERLESS) return next();
-  res.status(503).json({ error: 'Uploads need persistent storage, which this hosted version does not have yet. Upload locally, then push to GitHub.' });
-}
-
-app.post('/api/admin/wallpapers', requireAdmin, uploadsSupported, upload.single('image'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Image required' });
-  const items = readJSON(WALLPAPERS_FILE);
-  const nextId = items.length ? Math.max(...items.map(w => w.id)) + 1 : 1;
-  const ext = path.extname(req.file.originalname).toLowerCase() || '.png';
-  const newFilename = req.file.filename + ext;
-  // copy + delete rather than rename: the temp dir can be on a different drive
-  fs.copyFileSync(req.file.path, path.join(IMAGES_DIR, newFilename));
-  fs.unlinkSync(req.file.path);
-
-  const { title, category, tags } = req.body;
-  let width = 0, height = 0;
-  try {
-    ({ width, height } = await sharp(path.join(IMAGES_DIR, newFilename)).metadata());
-  } catch (e) {
-    fs.unlinkSync(path.join(IMAGES_DIR, newFilename));
-    return res.status(400).json({ error: 'That file is not a readable image' });
-  }
-  const device = width > height ? 'desktop' : 'phone';
-  const item = {
-    id: nextId,
-    title: title || 'Untitled Wallpaper',
-    filename: newFilename,
-    category: category || 'Abstract',
-    tags: tags ? String(tags).split(',').map(t => t.trim()).filter(Boolean) : [],
-    likes: 0,
-    downloads: 0,
-    featured: false,
-    createdAt: new Date().toISOString(),
-    width, height, device,
-  };
-  items.push(item);
-  writeJSON(WALLPAPERS_FILE, items);
-  ensureThumb(newFilename).catch(() => {});
-  ensureDisplay(newFilename).catch(() => {});
-  res.json(item);
 });
 
 // the SPA shell for any non-API route that isn't a static file
