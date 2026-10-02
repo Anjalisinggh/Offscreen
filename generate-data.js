@@ -40,6 +40,9 @@ function guessCategory(f) {
 (async () => {
   const items = fs.existsSync(WALLPAPERS_FILE) ? JSON.parse(fs.readFileSync(WALLPAPERS_FILE, 'utf8')) : [];
   const known = new Set(items.map(w => w.source));
+  // images deliberately taken off the site stay off, even though the originals are still in the folder
+  const removedFile = path.join(DATA_DIR, 'removed.json');
+  if (fs.existsSync(removedFile)) for (const f of JSON.parse(fs.readFileSync(removedFile, 'utf8'))) known.add(f);
   let nextId = items.length ? Math.max(...items.map(w => w.id)) + 1 : 1;
   const files = fs.readdirSync(SRC_DIR).filter(f => /\.(png|jpe?g|webp)$/i.test(f) && !known.has(f));
 

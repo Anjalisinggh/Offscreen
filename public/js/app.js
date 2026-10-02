@@ -530,7 +530,6 @@ async function pageHome() {
 
   app.innerHTML = `
     <section class="hero" data-reveal>
-      <div class="hero-aura" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="hero-copy">
         <span class="eyebrow">A curated wallpaper gallery</span>
         <h1>

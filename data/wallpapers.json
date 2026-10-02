@@ -1765,5 +1765,130 @@
     "height": 941,
     "device": "desktop",
     "series": "stitched-sky"
+  },
+  {
+    "id": 101,
+    "title": "But What If I Can?",
+    "filename": "but-what-if-i-can-101.png",
+    "source": "cat_what_if_i_can_desktop.png",
+    "category": "Motivational",
+    "tags": [
+      "cat",
+      "quote",
+      "collage",
+      "desktop"
+    ],
+    "likes": 59,
+    "downloads": 15,
+    "featured": false,
+    "createdAt": "2026-10-02T17:22:33.221Z",
+    "width": 736,
+    "height": 414,
+    "device": "desktop"
+  },
+  {
+    "id": 102,
+    "title": "No Next Time",
+    "filename": "no-next-time-102.webp",
+    "source": "demon_slayer_quote_collage.webp",
+    "category": "Motivational",
+    "tags": [
+      "anime",
+      "quote",
+      "collage",
+      "dark",
+      "phone"
+    ],
+    "likes": 85,
+    "downloads": 16,
+    "featured": false,
+    "createdAt": "2026-10-02T17:22:33.232Z",
+    "width": 561,
+    "height": 998,
+    "device": "phone"
+  },
+  {
+    "id": 103,
+    "title": "Blue Blade",
+    "filename": "blue-blade-103.png",
+    "source": "giyu_blue_blade.png",
+    "category": "Dark",
+    "tags": [
+      "anime",
+      "sword",
+      "blue",
+      "glow",
+      "phone"
+    ],
+    "likes": 86,
+    "downloads": 9,
+    "featured": false,
+    "createdAt": "2026-10-02T17:22:33.238Z",
+    "width": 570,
+    "height": 991,
+    "device": "phone"
+  },
+  {
+    "id": 104,
+    "title": "Krishna's Flute",
+    "filename": "krishna-s-flute-104.webp",
+    "source": "krishna_flute_painting.webp",
+    "category": "Vintage",
+    "tags": [
+      "spiritual",
+      "flute",
+      "painterly",
+      "floral",
+      "phone"
+    ],
+    "likes": 9,
+    "downloads": 1,
+    "featured": false,
+    "createdAt": "2026-10-02T17:22:33.250Z",
+    "width": 561,
+    "height": 998,
+    "device": "phone"
+  },
+  {
+    "id": 105,
+    "title": "Madhav",
+    "filename": "madhav-105.png",
+    "source": "madhav_gold_sketch.png",
+    "category": "Minimal",
+    "tags": [
+      "spiritual",
+      "gold",
+      "sketch",
+      "dark",
+      "phone"
+    ],
+    "likes": 28,
+    "downloads": 12,
+    "featured": false,
+    "createdAt": "2026-10-02T17:22:33.257Z",
+    "width": 561,
+    "height": 998,
+    "device": "phone"
+  },
+  {
+    "id": 106,
+    "title": "Better Plans",
+    "filename": "better-plans-106.webp",
+    "source": "moon_better_plans.webp",
+    "category": "Cute",
+    "tags": [
+      "moon",
+      "space",
+      "doodle",
+      "quote",
+      "phone"
+    ],
+    "likes": 37,
+    "downloads": 3,
+    "featured": false,
+    "createdAt": "2026-10-02T17:22:33.268Z",
+    "width": 561,
+    "height": 998,
+    "device": "phone"
   }
 ]

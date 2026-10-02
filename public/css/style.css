@@ -276,8 +276,8 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .scroll-cue i::after { content: ''; position: absolute; left: 0; top: -50%; width: 100%; height: 50%; background: var(--accent); animation: cue 2.2s var(--ease) infinite; }
 @keyframes cue { to { top: 110%; } }
 
-/* phones/tablets only: glow + fanned deck (hidden on desktop, where the drifting columns are) */
-.hero-aura, .hero-deck { display: none; }
+/* phones/tablets only: fanned deck (hidden on desktop, where the drifting columns are) */
+.hero-deck { display: none; }
 
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 96px; }
@@ -286,14 +286,6 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
   .hero .eyebrow { justify-content: center; }
   .hero h1 { font-size: clamp(54px, 15vw, 84px); margin: 18px 0 18px; }
   .hero-sub { margin: 0 auto; font-size: 15px; max-width: 340px; }
-
-  /* soft colour glow drifting behind everything */
-  .hero-aura { display: block; position: absolute; inset: 0 calc(var(--gutter) * -1); overflow: hidden; z-index: 0; pointer-events: none; }
-  .hero-aura i { position: absolute; border-radius: 50%; filter: blur(56px); opacity: .7; animation: aura 16s ease-in-out infinite alternate; }
-  .hero-aura i:nth-child(1) { width: 300px; height: 300px; background: #f6b9cc; top: 6%; left: -90px; }
-  .hero-aura i:nth-child(2) { width: 260px; height: 260px; background: #ffd9bf; top: 34%; right: -80px; animation-duration: 19s; animation-delay: -6s; }
-  .hero-aura i:nth-child(3) { width: 240px; height: 240px; background: #dccbf5; bottom: 4%; left: 18%; animation-duration: 22s; animation-delay: -11s; }
-  :root[data-theme="dark"] .hero-aura i { opacity: .2; }
 
   /* fanned deck of phone-shaped cards */
   .hero-deck { display: block; margin: 30px auto 6px; }
@@ -341,10 +333,7 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
   :root[data-theme="dark"] .hero-meta div { background: rgba(255, 255, 255, .04); }
   .hero-meta small { font-size: 9px; letter-spacing: .18em; margin-top: 6px; }
 }
-@keyframes aura {
-  from { transform: translate(0, 0) scale(1); }
-  to   { transform: translate(30px, -24px) scale(1.15); }
-}
+
 
 /* ---------------- marquee ---------------- */
 /* a slim strip of collection pills drifting past, faded out at both edges */
