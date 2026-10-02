@@ -40,14 +40,27 @@ function toast(msg) {
   root.appendChild(t);
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 400); }, 2400);
 }
+// a plain-language fallback for when the server didn't send its own message
+function friendlyError(status) {
+  if (status === 401) return 'Please sign in first';
+  if (status === 404) return 'This page is out of date. Please refresh and try again.';
+  if (status === 429) return 'Too many tries. Please wait a moment and try again.';
+  if (status >= 500) return 'Something went wrong on our side. Please try again in a moment.';
+  return 'That didn’t work. Please try again.';
+}
 async function api(path, opts = {}) {
-  const res = await fetch('/api' + path, {
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
-    ...opts,
-  });
+  let res;
+  try {
+    res = await fetch('/api' + path, {
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+      ...opts,
+    });
+  } catch {
+    throw Object.assign(new Error('Can’t reach Offscreen. Check your connection and try again.'), { status: 0 });
+  }
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(err.error || 'Request failed');
+    const err = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(err.error || friendlyError(res.status)), { status: res.status, retryAfter: err.retryAfter });
   }
   return res.status === 204 ? null : res.json();
 }
@@ -305,10 +318,16 @@ async function loadMe() {
   }
 }
 
+function avatarHTML(u, cls) {
+  return u.avatar
+    ? `<span class="${cls} has-photo"><img src="${u.avatar}" alt="" /></span>`
+    : `<span class="${cls}">${initial(u.name)}</span>`;
+}
+
 function renderProfileSlot() {
   const slot = document.getElementById('profileSlot');
   if (state.user) {
-    slot.innerHTML = `<a href="/profile" class="profile-chip"><span class="profile-avatar">${initial(state.user.name)}</span><span>${esc(state.user.name.split(' ')[0])}</span></a>`;
+    slot.innerHTML = `<a href="/profile" class="profile-chip">${avatarHTML(state.user, 'profile-avatar')}<span>${esc(state.user.name.split(' ')[0])}</span></a>`;
   } else {
     slot.innerHTML = `<button class="btn-login" id="loginBtn">Sign in</button>`;
     document.getElementById('loginBtn').addEventListener('click', () => openAuthModal());
@@ -332,55 +351,130 @@ function openAuthModal({ reason, then, mode = 'signup' } = {}) {
   const { modal, close } = openModal(`
     <span class="eyebrow">Members</span>
     <h3 id="authTitle"></h3>
-    <p class="sub">${esc(reason || 'Sign in to like and download wallpapers. No password needed.')}</p>
-    <div class="auth-switch" role="tablist">
-      <button type="button" data-mode="signup" role="tab">Sign up</button>
-      <button type="button" data-mode="login" role="tab">Log in</button>
+    <p class="sub" id="authSub">${esc(reason || 'Sign in to like and download wallpapers. No password needed.')}</p>
+    <div id="stepDetails">
+      <div class="auth-switch" role="tablist">
+        <button type="button" data-mode="signup" role="tab">Sign up</button>
+        <button type="button" data-mode="login" role="tab">Log in</button>
+      </div>
+      <form id="detailsForm" novalidate>
+        <label class="auth-field" id="nameField"><span>Name</span>
+          <input class="field" type="text" id="authName" maxlength="60" autocomplete="name" /></label>
+        <label class="auth-field"><span>Email</span>
+          <input class="field" type="email" id="authEmail" maxlength="200" autocomplete="email" /></label>
+        <p class="auth-error" role="alert"></p>
+        <div class="modal-actions"><button class="btn accent" type="submit">Send code ${ICON.arrow}</button></div>
+      </form>
     </div>
-    <form id="authForm" novalidate>
-      <label class="auth-field" id="nameField"><span>Name</span>
-        <input class="field" type="text" id="authName" maxlength="60" autocomplete="name" /></label>
-      <label class="auth-field"><span>Email</span>
-        <input class="field" type="email" id="authEmail" maxlength="200" autocomplete="email" /></label>
-      <p class="auth-error" id="authError" role="alert"></p>
-      <div class="modal-actions"><button class="btn accent" type="submit" id="authSubmit"></button></div>
-    </form>`);
+    <div id="stepCode" hidden>
+      <form id="codeForm" novalidate>
+        <label class="auth-field"><span>6-digit code</span>
+          <input class="field code-input" type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" /></label>
+        <p class="auth-error" role="alert"></p>
+        <div class="modal-actions code-actions">
+          <button class="btn small" type="button" id="changeEmail">Change email</button>
+          <button class="btn small" type="button" id="resendCode"></button>
+          <button class="btn accent" type="submit">Verify ${ICON.arrow}</button>
+        </div>
+      </form>
+    </div>`);
   const $ = (sel) => modal.querySelector(sel);
+  const showError = (step, msg) => { $(`${step} .auth-error`).textContent = msg || ''; };
+  let email = '';
+  let resendTimer;
+
   const setMode = (m) => {
     mode = m;
     modal.querySelectorAll('.auth-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
     $('#nameField').hidden = m === 'login';
     $('#authTitle').innerHTML = m === 'signup' ? 'Join <em>Offscreen</em>' : 'Welcome <em>back</em>';
-    $('#authSubmit').innerHTML = `${m === 'signup' ? 'Create account' : 'Log in'} ${ICON.arrow}`;
-    $('#authError').textContent = '';
+    showError('#stepDetails', '');
     setTimeout(() => (m === 'signup' ? $('#authName') : $('#authEmail')).focus(), 30);
   };
   modal.querySelectorAll('.auth-switch button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
   setMode(mode);
 
-  $('#authForm').addEventListener('submit', async (e) => {
+  const countdown = (secs) => {
+    clearInterval(resendTimer);
+    const btn = $('#resendCode');
+    const tick = () => {
+      btn.disabled = secs > 0;
+      btn.textContent = secs > 0 ? `Resend in ${secs}s` : 'Resend code';
+      if (secs-- <= 0) clearInterval(resendTimer);
+    };
+    tick();
+    resendTimer = setInterval(tick, 1000);
+  };
+
+  const requestCode = async () => {
+    const body = { mode, email: $('#authEmail').value.trim(), name: $('#authName').value.trim() };
+    const res = await api('/auth/request-code', { method: 'POST', body: JSON.stringify(body) });
+    email = res.email;
+    return res;
+  };
+
+  $('#detailsForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = $('#authName').value.trim();
-    const email = $('#authEmail').value.trim();
-    const btn = $('#authSubmit');
+    const btn = e.submitter || $('#detailsForm button[type=submit]');
     btn.disabled = true;
     try {
-      const body = mode === 'signup' ? { name, email } : { email };
-      const { user } = await api(`/auth/${mode}`, { method: 'POST', body: JSON.stringify(body) });
+      const res = await requestCode();
+      $('#stepDetails').hidden = true;
+      $('#stepCode').hidden = false;
+      $('#authTitle').innerHTML = 'Check your <em>email</em>';
+      $('#authSub').innerHTML = `We sent a 6-digit code to <b>${esc(email)}</b>. It expires in 10 minutes.`;
+      showError('#stepCode', '');
+      countdown(res.resendAfter || 30);
+      setTimeout(() => $('#authCode').focus(), 30);
+    } catch (err) {
+      showError('#stepDetails', err.message);
+      if (/already has an account/.test(err.message)) { setMode('login'); showError('#stepDetails', err.message); }
+      else if (/Sign up first/.test(err.message)) { setMode('signup'); showError('#stepDetails', err.message); }
+    } finally { btn.disabled = false; }
+  });
+
+  const verify = async () => {
+    const code = $('#authCode').value.replace(/\D/g, '');
+    if (code.length !== 6) return showError('#stepCode', 'Enter all 6 digits');
+    const btn = $('#codeForm button[type=submit]');
+    btn.disabled = true;
+    try {
+      const { user } = await api('/auth/verify-code', { method: 'POST', body: JSON.stringify({ email, code }) });
+      clearInterval(resendTimer);
       close();
       await loadMe();
       toast(mode === 'signup' ? `Welcome, ${user.name.split(' ')[0]}` : `Welcome back, ${user.name.split(' ')[0]}`);
       render();
       if (then) then();
     } catch (err) {
-      $('#authError').textContent = err.message;
-      // an existing email on sign up, or an unknown one on log in: point them at the other tab
-      if (/already has an account/.test(err.message)) setMode('login');
-      else if (/Sign up first/.test(err.message)) setMode('signup');
-      $('#authError').textContent = err.message;
-    } finally {
-      btn.disabled = false;
+      showError('#stepCode', err.message);
+      $('#authCode').select();
+    } finally { btn.disabled = false; }
+  };
+  $('#codeForm').addEventListener('submit', (e) => { e.preventDefault(); verify(); });
+  // submit as soon as the 6th digit is typed or pasted
+  $('#authCode').addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    if (e.target.value.length === 6) verify();
+  });
+  $('#resendCode').addEventListener('click', async () => {
+    try {
+      const res = await requestCode();
+      showError('#stepCode', '');
+      toast('A new code is on its way');
+      countdown(res.resendAfter || 30);
+    } catch (err) {
+      showError('#stepCode', err.message);
+      if (err.retryAfter) countdown(err.retryAfter);
     }
+  });
+  $('#changeEmail').addEventListener('click', () => {
+    clearInterval(resendTimer);
+    $('#stepCode').hidden = true;
+    $('#stepDetails').hidden = false;
+    $('#authCode').value = '';
+    $('#authSub').textContent = reason || 'Sign in to like and download wallpapers. No password needed.';
+    setMode(mode);
   });
 }
 
@@ -418,6 +512,17 @@ async function pageHome() {
     return `<div class="hero-col">${imgs}${imgs}</div>`;
   }).join('');
 
+  // phones/tablets get a fanned deck of wallpapers instead of the faded columns
+  const deck = [...pool.filter(w => w.featured), ...pool.filter(w => !w.featured)].slice(0, 5);
+  const now = new Date();
+  const lockTime = `${now.getHours() % 12 || 12}:${pad(now.getMinutes())}`;
+  const deckHTML = deck.map((w, k) => `
+    <a class="deck-card" href="/wallpaper/${w.id}" data-k="${k}" aria-label="${esc(w.title)}">
+      ${picture(displayAvif(w), display(w), '', `data-full="${full(w)}"`)}
+      <span class="deck-island"></span>
+      <span class="deck-time">${lockTime}</span>
+    </a>`).join('');
+
   const marqueeItems = categories
     .map(c => ({ ...c, n: all.filter(w => w.category === c.name).length }))
     .filter(c => c.n)
@@ -425,6 +530,7 @@ async function pageHome() {
 
   app.innerHTML = `
     <section class="hero" data-reveal>
+      <div class="hero-aura" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="hero-copy">
         <span class="eyebrow">A curated wallpaper gallery</span>
         <h1>
@@ -433,6 +539,11 @@ async function pageHome() {
           <span class="line-mask" style="--i:2"><span><em>mood.</em></span></span>
         </h1>
         <p class="hero-sub">A collection for your screen. Hand-picked wallpapers, from quiet and minimal to bold and vintage. Find one you love, preview it, and keep it.</p>
+        <div class="hero-deck" id="heroDeck">
+          <div class="deck-stage">${deckHTML}</div>
+          <p class="deck-caption" id="deckCaption" aria-live="polite"></p>
+          <div class="deck-dots" id="deckDots">${deck.map(() => '<i></i>').join('')}</div>
+        </div>
         <form class="hero-search" id="heroSearchForm">
           <input type="text" id="heroSearch" placeholder="Search dark, retro, pink…" autocomplete="off" />
           <button type="submit" aria-label="Search">${ICON.arrow}</button>
@@ -474,6 +585,7 @@ async function pageHome() {
     </section>
   `;
 
+  startDeck(deck);
   fillGrid(document.getElementById('railTrending'), trending.slice(0, 12));
   fillGrid(document.getElementById('railNew'), fresh.slice(0, 12));
   fillGrid(document.getElementById('popularGrid'), popular.slice(0, 8));
@@ -485,6 +597,56 @@ async function pageHome() {
     const q = document.getElementById('heroSearch').value.trim();
     go(`/search?q=${encodeURIComponent(q)}`);
   });
+}
+
+// ---------------- hero deck (phones/tablets) ----------------
+let deckTimer;
+function startDeck(items) {
+  const deck = document.getElementById('heroDeck');
+  if (!deck || !items.length) return;
+  const cards = [...deck.querySelectorAll('.deck-card')];
+  const dots = [...deck.querySelectorAll('#deckDots i')];
+  const caption = document.getElementById('deckCaption');
+  const n = cards.length;
+  let i = 0;
+
+  const layout = () => {
+    cards.forEach((c, k) => {
+      const rel = (k - i + n) % n;
+      c.dataset.pos = rel === 0 ? 'center' : rel === 1 ? 'right' : rel === n - 1 ? 'left' : 'back';
+      c.tabIndex = rel === 0 ? 0 : -1;
+    });
+    dots.forEach((d, k) => d.classList.toggle('on', k === i));
+    const w = items[i];
+    caption.innerHTML = `<b>${esc(w.title)}</b><span>${esc(w.category)}</span>`;
+  };
+  const go_ = (step) => { i = (i + step + n) % n; layout(); };
+  const restart = () => {
+    clearInterval(deckTimer);
+    if (!reducedMotion) deckTimer = setInterval(() => go_(1), 3400);
+  };
+
+  // tapping a card at the side brings it to the front instead of opening it
+  cards.forEach((c, k) => c.addEventListener('click', (e) => {
+    if (c.dataset.pos === 'center') return;
+    e.preventDefault();
+    i = k;
+    layout();
+    restart();
+  }));
+
+  // swipe left/right
+  let x0 = null;
+  deck.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+  deck.addEventListener('touchend', (e) => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) > 40) { go_(dx < 0 ? 1 : -1); restart(); }
+  });
+
+  layout();
+  restart();
 }
 
 function collHTML(c, items, i) {
@@ -625,6 +787,23 @@ async function pageLikes() {
     `<div class="empty-state"><h3>Nothing <em>liked</em> yet</h3>Tap the heart on any wallpaper to keep it here.<br/><a class="btn" href="/explore">Start exploring ${ICON.arrow}</a></div>`);
 }
 
+function shrinkImage(file, max) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      c.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read that image'))), 'image/jpeg', 0.9);
+    };
+    img.onerror = () => reject(new Error('Could not read that image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 async function pageProfile() {
   if (!state.user) return signInPrompt('Your <em>profile</em>', 'Sign in to see your profile and collection.');
   const [liked, downloaded] = await Promise.all([api('/me/likes'), api('/me/downloads')]);
@@ -632,7 +811,14 @@ async function pageProfile() {
   const since = u.createdAt ? new Date(u.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'recently';
   app.innerHTML = `
     <div class="profile-head reveal">
-      <div class="profile-avatar-lg">${initial(u.name)}</div>
+      <div class="avatar-edit">
+        <button type="button" class="avatar-btn" id="avatarBtn" aria-label="Change profile photo">
+          ${avatarHTML(u, 'profile-avatar-lg')}
+          <span class="avatar-overlay">${ICON.camera}<small>${u.avatar ? 'Change' : 'Add photo'}</small></span>
+        </button>
+        <input type="file" id="avatarFile" accept="image/*" hidden />
+        ${u.avatar ? '<button type="button" class="avatar-remove" id="avatarRemove">Remove photo</button>' : ''}
+      </div>
       <div>
         <span class="eyebrow">Member since ${since}</span>
         <h1>${esc(u.name)}</h1>
@@ -671,6 +857,34 @@ async function pageProfile() {
   }));
   requestAnimationFrame(moveBar);
   show('liked');
+
+  const fileInput = document.getElementById('avatarFile');
+  document.getElementById('avatarBtn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) return toast('Please choose an image');
+    try {
+      toast('Uploading your photo…');
+      const blob = await shrinkImage(file, 512);
+      const res = await fetch('/api/me/avatar', { method: 'PUT', headers: { 'Content-Type': blob.type }, body: blob });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || friendlyError(res.status));
+      state.user = data.user;
+      renderProfileSlot();
+      toast('Profile photo updated');
+      pageProfile().then(() => activateMotion(app));
+    } catch (err) { toast(err.message); }
+  });
+  document.getElementById('avatarRemove')?.addEventListener('click', async () => {
+    try {
+      const { user } = await api('/me/avatar', { method: 'DELETE' });
+      state.user = user;
+      renderProfileSlot();
+      toast('Profile photo removed');
+      pageProfile().then(() => activateMotion(app));
+    } catch (err) { toast(err.message); }
+  });
   document.getElementById('logoutBtn').addEventListener('click', logout);
 }
 
@@ -877,6 +1091,7 @@ async function render() {
   const id = ++renderId;
   const { path, params } = parseLocation();
   liveGrids.length = 0; // the page below is about to be replaced; drop the old grid refs
+  clearInterval(deckTimer);
 
   // fade the current page out before swapping content
   if (!firstRender && !reducedMotion) {

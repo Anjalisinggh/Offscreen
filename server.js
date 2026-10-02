@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const { createStore } = require('./store');
+const { sendCode, canSendEmail } = require('./mailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -135,24 +136,81 @@ const requireUser = async (req, res, next) => {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const cleanEmail = (v) => String(v || '').trim().toLowerCase();
 
-app.post('/api/auth/signup', async (req, res) => {
-  const name = String(req.body.name || '').trim().slice(0, 60);
+// What the browser gets to see about a user (never the photo bytes themselves).
+const publicUser = (u) => u && {
+  id: u.id, name: u.name, email: u.email, createdAt: u.createdAt,
+  avatar: u.avatarUpdatedAt ? `/api/avatars/${u.id}?v=${new Date(u.avatarUpdatedAt).getTime()}` : null,
+};
+
+// Sign-up and log-in both prove the email by sending a 6-digit code to it:
+//   1. POST /api/auth/request-code  { mode: 'signup'|'login', email, name? }
+//   2. POST /api/auth/verify-code   { email, code }
+// Only a hash of the code is stored; it expires after 10 minutes, allows 5 tries, and a new one
+// can be requested every 30 seconds.
+const CODE_TTL_MS = 10 * 60 * 1000;
+const RESEND_AFTER_MS = 30 * 1000;
+const MAX_TRIES = 5;
+const hashCode = (email, code) => crypto.createHmac('sha256', SESSION_SECRET).update(`${email}:${code}`).digest('hex');
+
+app.post('/api/auth/request-code', async (req, res) => {
+  const mode = req.body.mode === 'login' ? 'login' : 'signup';
   const email = cleanEmail(req.body.email);
-  if (!name) return res.status(400).json({ error: 'Please enter your name' });
+  const name = String(req.body.name || '').trim().slice(0, 60);
+  if (mode === 'signup' && !name) return res.status(400).json({ error: 'Please enter your name' });
   if (!EMAIL_RE.test(email) || email.length > 200) return res.status(400).json({ error: 'Please enter a valid email address' });
-  const user = await store.createUser({ name, email });
-  if (!user) return res.status(409).json({ error: 'That email already has an account. Log in instead.' });
-  startSession(res, user);
-  res.json({ user });
+  if (IS_SERVERLESS && !canSendEmail()) {
+    return res.status(503).json({ error: "Sign-in emails aren't set up on this site yet. Please try again later." });
+  }
+
+  const existing = await store.findUserByEmail(email);
+  if (mode === 'signup' && existing) return res.status(409).json({ error: 'That email already has an account. Log in instead.' });
+  if (mode === 'login' && !existing) return res.status(404).json({ error: 'No account with that email yet. Sign up first.' });
+
+  const pending = await store.getCode(email);
+  if (pending && Date.now() - pending.createdAt < RESEND_AFTER_MS) {
+    const wait = Math.ceil((RESEND_AFTER_MS - (Date.now() - pending.createdAt)) / 1000);
+    return res.status(429).json({ error: `Please wait ${wait}s before asking for another code`, retryAfter: wait });
+  }
+
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+  await store.saveCode({ email, codeHash: hashCode(email, code), purpose: mode, name, ttlMs: CODE_TTL_MS });
+  try {
+    await sendCode({ to: email, code, purpose: mode });
+  } catch (err) {
+    console.error('sending code failed:', err.message);
+    await store.deleteCode(email);
+    return res.status(502).json({ error: "We couldn't send the email. Please check the address and try again." });
+  }
+  res.json({ ok: true, email, resendAfter: RESEND_AFTER_MS / 1000 });
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/verify-code', async (req, res) => {
   const email = cleanEmail(req.body.email);
-  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email address' });
-  const user = await store.findUserByEmail(email);
+  const code = String(req.body.code || '').replace(/\D/g, '');
+  const pending = await store.getCode(email);
+  if (!pending || Date.now() > pending.expiresAt) {
+    if (pending) await store.deleteCode(email);
+    return res.status(400).json({ error: 'That code has expired. Please ask for a new one.' });
+  }
+  if (pending.attempts >= MAX_TRIES) {
+    await store.deleteCode(email);
+    return res.status(429).json({ error: 'Too many wrong tries. Please ask for a new code.' });
+  }
+  const good = Buffer.from(pending.codeHash), given = Buffer.from(hashCode(email, code));
+  if (code.length !== 6 || !crypto.timingSafeEqual(good, given)) {
+    await store.bumpCodeAttempts(email);
+    const left = MAX_TRIES - pending.attempts - 1;
+    return res.status(400).json({ error: left > 0 ? `That code isn't right. ${left} ${left === 1 ? 'try' : 'tries'} left.` : 'Too many wrong tries. Please ask for a new code.' });
+  }
+  await store.deleteCode(email);
+
+  let user = await store.findUserByEmail(email);
+  if (!user && pending.purpose === 'signup') {
+    user = (await store.createUser({ name: pending.name || email.split('@')[0], email })) || await store.findUserByEmail(email);
+  }
   if (!user) return res.status(404).json({ error: 'No account with that email yet. Sign up first.' });
   startSession(res, user);
-  res.json({ user });
+  res.json({ user: publicUser(user) });
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -161,7 +219,35 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/api/auth/me', async (req, res) => {
-  res.json({ user: await currentUser(req) });
+  res.json({ user: publicUser(await currentUser(req)) });
+});
+
+// ---------- profile photo ----------
+// The browser shrinks the photo before sending it; here it's checked to really be an image,
+// cropped square to 256px and stored as a small webp (roughly 10-25KB) in the database.
+app.put('/api/me/avatar', express.raw({ type: 'image/*', limit: '4mb' }), requireUser, async (req, res) => {
+  if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ error: 'Please choose an image' });
+  let data;
+  try {
+    data = await sharp(req.body).rotate().resize(256, 256, { fit: 'cover' }).webp({ quality: 82 }).toBuffer();
+  } catch {
+    return res.status(400).json({ error: "That file isn't an image we can read" });
+  }
+  await store.setAvatar(req.user.id, data);
+  res.json({ user: publicUser(await store.findUserById(req.user.id)) });
+});
+
+app.delete('/api/me/avatar', requireUser, async (req, res) => {
+  await store.setAvatar(req.user.id, null);
+  res.json({ user: publicUser(await store.findUserById(req.user.id)) });
+});
+
+// the URL carries the photo's version (?v=), so it can be cached for good
+app.get('/api/avatars/:id', async (req, res) => {
+  const data = await store.getAvatar(Number(req.params.id));
+  if (!data) return res.status(404).end();
+  res.set({ 'Content-Type': 'image/webp', 'Cache-Control': 'public, max-age=31536000, immutable' });
+  res.send(data);
 });
 
 // likes and downloads live in the database; the likes/downloads numbers in wallpapers.json are
@@ -287,6 +373,11 @@ app.post('/api/wallpapers/:id/download', requireUser, async (req, res) => {
   await store.recordDownload(req.user.id, id);
   const item = (await loadWallpapers()).find(w => w.id === id);
   res.json({ url: `/images/${base.filename}`, name: downloadName(base), downloads: item.downloads });
+});
+
+// unknown API routes answer in JSON too, never with an HTML page
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'This page is out of date. Please refresh and try again.' });
 });
 
 // a failed database call should look like an API error, not an HTML page
