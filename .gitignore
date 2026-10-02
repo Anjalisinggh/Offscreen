@@ -11,3 +11,6 @@ data/users.json
 # local/session state
 .DS_Store
 Thumbs.db
+
+.vercel
+.env*.local
