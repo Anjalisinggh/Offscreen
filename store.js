@@ -44,9 +44,23 @@ function postgresStore(url) {
       created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS downloads_user_idx ON downloads (user_id, created_at DESC);
+    -- profile photos: a small webp stored right on the user row
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar BYTEA;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_updated_at TIMESTAMPTZ;
+    -- one pending sign-up/log-in code per email; only a hash of the code is kept
+    CREATE TABLE IF NOT EXISTS email_codes (
+      email      TEXT        PRIMARY KEY,
+      code_hash  TEXT        NOT NULL,
+      purpose    TEXT        NOT NULL,
+      name       TEXT,
+      attempts   INTEGER     NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      expires_at TIMESTAMPTZ NOT NULL
+    );
   `).catch((e) => { ready = null; throw e; }));
 
-  const user = (r) => r && { id: Number(r.id), name: r.name, email: r.email, createdAt: r.created_at };
+  const COLS = 'id, name, email, created_at, avatar_updated_at';
+  const user = (r) => r && { id: Number(r.id), name: r.name, email: r.email, createdAt: r.created_at, avatarUpdatedAt: r.avatar_updated_at };
 
   return {
     kind: 'postgres',
@@ -54,18 +68,18 @@ function postgresStore(url) {
     async createUser({ name, email }) {
       await init();
       const { rows } = await q(
-        'INSERT INTO users (name, email) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING *',
+        `INSERT INTO users (name, email) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING ${COLS}`,
         [name, norm(email)]);
       return rows[0] ? user(rows[0]) : null; // null = that email already has an account
     },
     async findUserByEmail(email) {
       await init();
-      const { rows } = await q('SELECT * FROM users WHERE lower(email) = $1', [norm(email)]);
+      const { rows } = await q(`SELECT ${COLS} FROM users WHERE lower(email) = $1`, [norm(email)]);
       return user(rows[0]);
     },
     async findUserById(id) {
       await init();
-      const { rows } = await q('SELECT * FROM users WHERE id = $1', [id]);
+      const { rows } = await q(`SELECT ${COLS} FROM users WHERE id = $1`, [id]);
       return user(rows[0]);
     },
     async toggleLike(userId, wid) {
@@ -99,6 +113,38 @@ function postgresStore(url) {
       const toMap = (rows) => Object.fromEntries(rows.map((r) => [r.wallpaper_id, r.n]));
       return { likes: toMap(l.rows), downloads: toMap(d.rows) };
     },
+    async setAvatar(userId, data) {
+      await init();
+      await q('UPDATE users SET avatar = $2, avatar_updated_at = CASE WHEN $2::bytea IS NULL THEN NULL ELSE now() END WHERE id = $1', [userId, data]);
+    },
+    async getAvatar(userId) {
+      await init();
+      const { rows } = await q('SELECT avatar FROM users WHERE id = $1 AND avatar IS NOT NULL', [userId]);
+      return rows[0] ? rows[0].avatar : null;
+    },
+    async saveCode({ email, codeHash, purpose, name, ttlMs }) {
+      await init();
+      await q(`INSERT INTO email_codes (email, code_hash, purpose, name, attempts, created_at, expires_at)
+               VALUES ($1, $2, $3, $4, 0, now(), now() + ($5 || ' milliseconds')::interval)
+               ON CONFLICT (email) DO UPDATE SET code_hash = $2, purpose = $3, name = $4, attempts = 0,
+                 created_at = now(), expires_at = now() + ($5 || ' milliseconds')::interval`,
+        [norm(email), codeHash, purpose, name || null, String(ttlMs)]);
+    },
+    async getCode(email) {
+      await init();
+      const { rows } = await q('SELECT * FROM email_codes WHERE email = $1', [norm(email)]);
+      const r = rows[0];
+      return r && { email: r.email, codeHash: r.code_hash, purpose: r.purpose, name: r.name, attempts: r.attempts,
+        createdAt: new Date(r.created_at).getTime(), expiresAt: new Date(r.expires_at).getTime() };
+    },
+    async bumpCodeAttempts(email) {
+      await init();
+      await q('UPDATE email_codes SET attempts = attempts + 1 WHERE email = $1', [norm(email)]);
+    },
+    async deleteCode(email) {
+      await init();
+      await q('DELETE FROM email_codes WHERE email = $1', [norm(email)]);
+    },
     async totals() {
       await init();
       const { rows } = await q(`SELECT
@@ -115,10 +161,10 @@ function jsonStore(dir) {
   const file = path.join(dir, 'db.json');
   const load = () => {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
-    catch { return { users: [], likes: [], downloads: [] }; }
+    catch { return { users: [], likes: [], downloads: [], codes: {} }; }
   };
   const save = (db) => fs.writeFileSync(file, JSON.stringify(db, null, 2));
-  const user = (u) => u && { id: u.id, name: u.name, email: u.email, createdAt: u.createdAt };
+  const user = (u) => u && { id: u.id, name: u.name, email: u.email, createdAt: u.createdAt, avatarUpdatedAt: u.avatarUpdatedAt || null };
 
   return {
     kind: 'json',
@@ -126,7 +172,9 @@ function jsonStore(dir) {
     async createUser({ name, email }) {
       const db = load();
       if (db.users.some((u) => norm(u.email) === norm(email))) return null;
-      const u = { id: db.users.reduce((m, x) => Math.max(m, x.id), 0) + 1, name, email: norm(email), createdAt: new Date().toISOString() };
+      // like a Postgres sequence, never hand out an id again, even after an account is deleted
+      db.lastUserId = Math.max(db.lastUserId || 0, db.users.reduce((m, x) => Math.max(m, x.id), 0)) + 1;
+      const u = { id: db.lastUserId, name, email: norm(email), createdAt: new Date().toISOString() };
       db.users.push(u);
       save(db);
       return user(u);
@@ -156,6 +204,34 @@ function jsonStore(dir) {
       const db = load();
       const tally = (rows) => rows.reduce((m, r) => ((m[r.wid] = (m[r.wid] || 0) + 1), m), {});
       return { likes: tally(db.likes), downloads: tally(db.downloads) };
+    },
+    async setAvatar(userId, data) {
+      const db = load();
+      const u = db.users.find((x) => x.id === userId);
+      if (!u) return;
+      u.avatar = data ? data.toString('base64') : null;
+      u.avatarUpdatedAt = data ? new Date().toISOString() : null;
+      save(db);
+    },
+    async getAvatar(userId) {
+      const u = load().users.find((x) => x.id === userId);
+      return u && u.avatar ? Buffer.from(u.avatar, 'base64') : null;
+    },
+    async saveCode({ email, codeHash, purpose, name, ttlMs }) {
+      const db = load();
+      db.codes = db.codes || {};
+      db.codes[norm(email)] = { email: norm(email), codeHash, purpose, name: name || null, attempts: 0, createdAt: Date.now(), expiresAt: Date.now() + ttlMs };
+      save(db);
+    },
+    async getCode(email) { return (load().codes || {})[norm(email)] || null; },
+    async bumpCodeAttempts(email) {
+      const db = load();
+      const c = (db.codes || {})[norm(email)];
+      if (c) { c.attempts += 1; save(db); }
+    },
+    async deleteCode(email) {
+      const db = load();
+      if (db.codes) { delete db.codes[norm(email)]; save(db); }
     },
     async totals() {
       const db = load();

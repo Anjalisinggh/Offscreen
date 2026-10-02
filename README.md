@@ -9,7 +9,8 @@ Offscreen is a small, self-hosted wallpaper gallery. Browse, like and download p
 ## Features
 
 - **Browse without an account.** Anyone can explore and search. An account is needed to like or download.
-- **Simple accounts.** Sign up with a name and email; log in later with just the email. No passwords.
+- **Verified accounts, no passwords.** Sign up with a name and email, then enter the 6-digit code emailed to you; logging in later works the same way with just the email.
+- **Profile photos.** Members can add, change or remove a photo; it's cropped to 256px and stored in the database.
 - **Every download is recorded** against the person who made it, and shows up in their profile under Downloads.
 - **Phone and desktop wallpapers**, detected automatically by image aspect ratio. Each wallpaper opens in a realistic preview — an iPhone mockup with a live lock screen clock, or a MacBook mockup with a menu bar and dock.
 - **Collections and search** by style, plus tag-based discovery ("you might also like").
@@ -37,9 +38,26 @@ Without `DATABASE_URL` on Vercel, sign-ups, likes and downloads only live in a s
 
 `SESSION_SECRET` (optional) signs the login cookie. If it's unset, a secret is derived from `DATABASE_URL`.
 
+## Sign-in emails
+
+Sign-up and log-in send a 6-digit code by email. Set `SMTP_URL` and `MAIL_FROM`:
+
+| Provider | `SMTP_URL` |
+|---|---|
+| Gmail (needs an [app password](https://myaccount.google.com/apppasswords)) | `smtps://you%40gmail.com:APP_PASSWORD@smtp.gmail.com:465` |
+| Resend | `smtps://resend:RESEND_API_KEY@smtp.resend.com:465` |
+| Brevo | `smtp://LOGIN:SMTP_KEY@smtp-relay.brevo.com:587` |
+
+`MAIL_FROM` is the sender, e.g. `Offscreen <you@gmail.com>`. Note the `@` in a Gmail address is written `%40` inside the URL.
+
+Locally, with no `SMTP_URL`, the code is printed in the server console instead. On Vercel without it, sign-up and log-in show "Sign-in emails aren't set up on this site yet".
+
+Codes expire after 10 minutes, allow 5 tries, can be re-sent every 30 seconds, and only a hash of each code is stored.
+
 | Table | What's in it |
 |---|---|
-| `users` | id, name, email (unique, case-insensitive), created_at |
+| `users` | id, name, email (unique, case-insensitive), created_at, avatar (256px webp), avatar_updated_at |
+| `email_codes` | one pending sign-in code per email (hashed), with expiry and try count |
 | `likes` | user_id, wallpaper_id, created_at — one row per like, removed on unlike |
 | `downloads` | id, user_id, wallpaper_id, created_at — one row per download |
 
@@ -49,7 +67,8 @@ The `likes` and `downloads` numbers in `data/wallpapers.json` are starting total
 
 ```
 server.js             Express API + static file server
-store.js              Accounts, likes, downloads: Postgres (DATABASE_URL) or data/db.json
+store.js              Accounts, photos, sign-in codes, likes, downloads: Postgres (DATABASE_URL) or data/db.json
+mailer.js             Sends the 6-digit sign-in code over SMTP (SMTP_URL)
 generate-data.js      Imports new images from a source folder into public/images + data/wallpapers.json
 data/                 wallpapers.json, categories.json (committed); db.json (local only, gitignored)
 public/
@@ -79,13 +98,9 @@ The project deploys to Vercel as is: `server.js` exports the Express app, and ev
 
 Static files under `public/` bypass the Express app on Vercel, so the `Cache-Control` header `server.js` sets only applies locally. `vercel.json` sets a one-year immutable cache for the image folders; if you replace a wallpaper's image, give the new file a different name rather than overwriting it.
 
-## Notes
-
-- Logging in needs only an email, with no password or confirmation email, so anyone who knows someone's email could log in as them. That's fine for likes and download history; add email verification (a magic link) before storing anything sensitive.
-
 ## Tech stack
 
-Node.js, Express, Postgres (`pg`), and vanilla JavaScript on the front end (no framework, no build step). Image resizing via [sharp](https://sharp.pixelplumbing.com/).
+Node.js, Express, Postgres (`pg`), Nodemailer, and vanilla JavaScript on the front end (no framework, no build step). Image resizing via [sharp](https://sharp.pixelplumbing.com/).
 
 ## License
 
