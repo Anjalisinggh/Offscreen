@@ -244,7 +244,7 @@ window.addEventListener('resize', () => {
 });
 
 async function toggleLike(id) {
-  if (!state.user) { openAuthModal(); return null; }
+  if (!state.user) { openAuthModal({ reason: 'Sign in to like wallpapers and keep them in one place.' }); return null; }
   try {
     const res = await api(`/wallpapers/${id}/like`, { method: 'POST' });
     if (res.liked) state.likedIds.add(Number(id)); else state.likedIds.delete(Number(id));
@@ -257,6 +257,10 @@ async function toggleLike(id) {
 }
 
 async function downloadWallpaper(id) {
+  if (!state.user) {
+    openAuthModal({ reason: 'Sign in to download. It only takes your name and email.', then: () => downloadWallpaper(id) });
+    return;
+  }
   try {
     const { url, name } = await api(`/wallpapers/${id}/download`, { method: 'POST' });
     // fetch as a blob so the file is saved (with a readable name) instead of opened in a tab
@@ -270,7 +274,7 @@ async function downloadWallpaper(id) {
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
     toast('Your download has started');
   } catch (err) {
-    toast('Download failed, please try again');
+    toast(err.message === 'Please sign in first' ? err.message : 'Download failed, please try again');
   }
 }
 
@@ -304,10 +308,10 @@ async function loadMe() {
 function renderProfileSlot() {
   const slot = document.getElementById('profileSlot');
   if (state.user) {
-    slot.innerHTML = `<a href="/profile" class="profile-chip"><span class="profile-avatar">${initial(state.user.username)}</span><span>${esc(state.user.username)}</span></a>`;
+    slot.innerHTML = `<a href="/profile" class="profile-chip"><span class="profile-avatar">${initial(state.user.name)}</span><span>${esc(state.user.name.split(' ')[0])}</span></a>`;
   } else {
     slot.innerHTML = `<button class="btn-login" id="loginBtn">Sign in</button>`;
-    document.getElementById('loginBtn').addEventListener('click', openAuthModal);
+    document.getElementById('loginBtn').addEventListener('click', () => openAuthModal());
   }
 }
 
@@ -324,28 +328,60 @@ function openModal(inner) {
   return { modal, close };
 }
 
-function openAuthModal() {
+function openAuthModal({ reason, then, mode = 'signup' } = {}) {
   const { modal, close } = openModal(`
     <span class="eyebrow">Members</span>
-    <h3>Welcome to <em>Offscreen</em></h3>
-    <p class="sub">Choose a name to like, save and keep your own collection. No password needed.</p>
-    <input class="field-underline" type="text" id="authUsername" placeholder="Your name" maxlength="30" autocomplete="off" />
-    <div class="modal-actions"><button class="btn accent" id="authSubmit">Continue ${ICON.arrow}</button></div>`);
-  const input = modal.querySelector('#authUsername');
-  setTimeout(() => input.focus(), 50);
-  const submit = async () => {
-    const username = input.value.trim();
-    if (!username) return;
+    <h3 id="authTitle"></h3>
+    <p class="sub">${esc(reason || 'Sign in to like and download wallpapers. No password needed.')}</p>
+    <div class="auth-switch" role="tablist">
+      <button type="button" data-mode="signup" role="tab">Sign up</button>
+      <button type="button" data-mode="login" role="tab">Log in</button>
+    </div>
+    <form id="authForm" novalidate>
+      <label class="auth-field" id="nameField"><span>Name</span>
+        <input class="field" type="text" id="authName" maxlength="60" autocomplete="name" /></label>
+      <label class="auth-field"><span>Email</span>
+        <input class="field" type="email" id="authEmail" maxlength="200" autocomplete="email" /></label>
+      <p class="auth-error" id="authError" role="alert"></p>
+      <div class="modal-actions"><button class="btn accent" type="submit" id="authSubmit"></button></div>
+    </form>`);
+  const $ = (sel) => modal.querySelector(sel);
+  const setMode = (m) => {
+    mode = m;
+    modal.querySelectorAll('.auth-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    $('#nameField').hidden = m === 'login';
+    $('#authTitle').innerHTML = m === 'signup' ? 'Join <em>Offscreen</em>' : 'Welcome <em>back</em>';
+    $('#authSubmit').innerHTML = `${m === 'signup' ? 'Create account' : 'Log in'} ${ICON.arrow}`;
+    $('#authError').textContent = '';
+    setTimeout(() => (m === 'signup' ? $('#authName') : $('#authEmail')).focus(), 30);
+  };
+  modal.querySelectorAll('.auth-switch button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  setMode(mode);
+
+  $('#authForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = $('#authName').value.trim();
+    const email = $('#authEmail').value.trim();
+    const btn = $('#authSubmit');
+    btn.disabled = true;
     try {
-      await api('/auth/login', { method: 'POST', body: JSON.stringify({ username }) });
+      const body = mode === 'signup' ? { name, email } : { email };
+      const { user } = await api(`/auth/${mode}`, { method: 'POST', body: JSON.stringify(body) });
       close();
       await loadMe();
-      toast(`Welcome, ${username}`);
+      toast(mode === 'signup' ? `Welcome, ${user.name.split(' ')[0]}` : `Welcome back, ${user.name.split(' ')[0]}`);
       render();
-    } catch (err) { toast(err.message); }
-  };
-  modal.querySelector('#authSubmit').addEventListener('click', submit);
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+      if (then) then();
+    } catch (err) {
+      $('#authError').textContent = err.message;
+      // an existing email on sign up, or an unknown one on log in: point them at the other tab
+      if (/already has an account/.test(err.message)) setMode('login');
+      else if (/Sign up first/.test(err.message)) setMode('signup');
+      $('#authError').textContent = err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
 }
 
 async function logout() {
@@ -382,7 +418,10 @@ async function pageHome() {
     return `<div class="hero-col">${imgs}${imgs}</div>`;
   }).join('');
 
-  const marqueeItems = categories.map(c => `<a href="/explore?category=${encodeURIComponent(c.name)}">${esc(c.name)}</a>`).join('');
+  const marqueeItems = categories
+    .map(c => ({ ...c, n: all.filter(w => w.category === c.name).length }))
+    .filter(c => c.n)
+    .map(c => `<a href="/explore?category=${encodeURIComponent(c.name)}">${esc(c.name)}<small>${c.n}</small></a>`).join('');
 
   app.innerHTML = `
     <section class="hero" data-reveal>
@@ -569,7 +608,7 @@ async function pageSearch(params) {
 
 function signInPrompt(title, text) {
   app.innerHTML = `<div class="empty-state" style="padding-top:140px"><span class="eyebrow">Members</span><h3 style="margin-top:18px">${title}</h3>${text}<br/><button class="btn accent" id="promptLogin">Sign in ${ICON.arrow}</button></div>`;
-  document.getElementById('promptLogin').addEventListener('click', openAuthModal);
+  document.getElementById('promptLogin').addEventListener('click', () => openAuthModal());
 }
 
 async function pageLikes() {
@@ -588,25 +627,30 @@ async function pageLikes() {
 
 async function pageProfile() {
   if (!state.user) return signInPrompt('Your <em>profile</em>', 'Sign in to see your profile and collection.');
-  const liked = await api('/me/likes');
-  const since = state.user.joined ? new Date(state.user.joined).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'recently';
+  const [liked, downloaded] = await Promise.all([api('/me/likes'), api('/me/downloads')]);
+  const u = state.user;
+  const since = u.createdAt ? new Date(u.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'recently';
   app.innerHTML = `
     <div class="profile-head reveal">
-      <div class="profile-avatar-lg">${initial(state.user.username)}</div>
+      <div class="profile-avatar-lg">${initial(u.name)}</div>
       <div>
         <span class="eyebrow">Member since ${since}</span>
-        <h1>${esc(state.user.username)}</h1>
-        <p>${liked.length} liked · ${liked.length} saved</p>
+        <h1>${esc(u.name)}</h1>
+        <p>${esc(u.email)} · ${liked.length} liked · ${downloaded.length} downloaded</p>
       </div>
       <button class="btn" id="logoutBtn">Sign out</button>
     </div>
     <div class="tabs" id="profileTabs">
       <button class="active" data-tab="liked">Liked<sup>${liked.length}</sup></button>
-      <button data-tab="saved">Saved<sup>${liked.length}</sup></button>
+      <button data-tab="downloads">Downloads<sup>${downloaded.length}</sup></button>
       <span class="tabs-bar"></span>
     </div>
     <div class="grid" id="profileGrid"></div>
   `;
+  const lists = {
+    liked: [liked, '<div class="empty-state"><h3>An empty <em>gallery</em></h3>Your liked wallpapers will appear here.</div>'],
+    downloads: [downloaded, '<div class="empty-state"><h3>No <em>downloads</em> yet</h3>Wallpapers you download will appear here.</div>'],
+  };
   const tabs = document.getElementById('profileTabs');
   const moveBar = () => {
     const active = tabs.querySelector('button.active');
@@ -614,14 +658,19 @@ async function pageProfile() {
     bar.style.width = active.offsetWidth + 'px';
     bar.style.transform = `translateX(${active.offsetLeft}px)`;
   };
+  const show = (tab) => {
+    const [items, empty] = lists[tab];
+    fillGrid(document.getElementById('profileGrid'), items, empty);
+    requestAnimationFrame(() => activateMotion(app));
+  };
   tabs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
     tabs.querySelectorAll('button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
     moveBar();
+    show(b.dataset.tab);
   }));
   requestAnimationFrame(moveBar);
-  fillGrid(document.getElementById('profileGrid'), liked,
-    `<div class="empty-state"><h3>An empty <em>gallery</em></h3>Your liked wallpapers will appear here.</div>`);
+  show('liked');
   document.getElementById('logoutBtn').addEventListener('click', logout);
 }
 
@@ -798,166 +847,6 @@ async function pageDetail(id) {
     `<div class="empty-state">No similar wallpapers yet.</div>`);
 }
 
-// ---------------- admin ----------------
-let adminKey = sessionStorage.getItem('offscreen_admin_key') || '';
-
-async function adminApi(path, opts = {}) {
-  return api(path, { ...opts, headers: { ...(opts.headers || {}), 'x-admin-key': adminKey } });
-}
-
-async function pageAdmin() {
-  if (!adminKey) {
-    app.innerHTML = `
-      <div class="admin-login">
-        <span class="eyebrow reveal">Studio</span>
-        <div class="page-head" style="border:none;padding:0;margin:0">
-          <h1><span class="line-mask"><span>Admin <em>access</em></span></span></h1>
-        </div>
-        <input class="field-underline reveal" type="password" id="adminKeyInput" placeholder="Admin key" />
-        <button class="btn accent reveal" id="adminLoginBtn">Enter studio ${ICON.arrow}</button>
-      </div>`;
-    const input = document.getElementById('adminKeyInput');
-    const submit = async () => {
-      try {
-        await api('/admin/login', { method: 'POST', body: JSON.stringify({ key: input.value }) });
-        adminKey = input.value;
-        sessionStorage.setItem('offscreen_admin_key', adminKey);
-        render();
-      } catch (e) { toast('That key is not correct'); }
-    };
-    document.getElementById('adminLoginBtn').addEventListener('click', submit);
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
-    return;
-  }
-
-  let stats, items, categories;
-  try {
-    [stats, items, categories] = await Promise.all([adminApi('/admin/stats'), api('/wallpapers'), api('/categories')]);
-  } catch (e) {
-    adminKey = '';
-    sessionStorage.removeItem('offscreen_admin_key');
-    toast('Please sign in to the studio again');
-    return pageAdmin();
-  }
-
-  app.innerHTML = `
-    <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap">
-      <div>
-        <span class="eyebrow reveal">Studio</span>
-        <h1><span class="line-mask"><span>The <em>dashboard</em></span></span></h1>
-      </div>
-      <button class="btn small reveal" id="adminLogout">Leave studio</button>
-    </div>
-
-    <div class="admin-stats reveal">
-      <div class="stat"><strong data-count="${stats.totalWallpapers}">0</strong><small>Wallpapers</small></div>
-      <div class="stat"><strong data-count="${stats.totalLikes}">0</strong><small>Likes</small></div>
-      <div class="stat"><strong data-count="${stats.totalDownloads}">0</strong><small>Downloads</small></div>
-      <div class="stat"><strong data-count="${stats.totalUsers}">0</strong><small>Members</small></div>
-      <div class="stat"><strong data-count="${stats.totalCategories}">0</strong><small>Collections</small></div>    </div>
-
-    <div class="admin-bar reveal"><h3>Collections</h3><button class="btn small accent" id="addCatBtn">Add collection</button></div>
-    <div class="chips reveal">${categories.map(c => `<span>${esc(c.name)} · ${items.filter(w => w.category === c.name).length}</span>`).join('')}</div>
-
-    <div class="admin-bar reveal"><h3>Wallpapers <sup style="font-size:14px;color:var(--faint)">${items.length}</sup></h3></div>
-    <div class="table-wrap reveal">
-      <table class="admin-table">
-        <thead><tr><th></th><th>Title</th><th>Collection</th><th>Device</th><th>Likes</th><th>Downloads</th><th>Featured</th><th></th></tr></thead>
-        <tbody id="adminRows"></tbody>
-      </table>
-    </div>
-  `;
-
-  document.getElementById('adminLogout').addEventListener('click', () => {
-    adminKey = '';
-    sessionStorage.removeItem('offscreen_admin_key');
-    render();
-  });
-
-  const rows = document.getElementById('adminRows');
-  rows.innerHTML = items.map(w => `
-    <tr data-id="${w.id}">
-      <td><img src="${thumb(w)}" data-full="${full(w)}" alt="" loading="lazy" /></td>
-      <td class="title">${esc(w.title)}</td>
-      <td>${esc(w.category)}</td>
-      <td>${isDesktop(w) ? 'Desktop' : 'Phone'}</td>
-      <td>${w.likes}</td>
-      <td>${w.downloads}</td>
-      <td>${w.featured ? '<span class="star">★</span>' : ''}</td>
-      <td><div class="row-actions">
-        <button class="edit-btn">Edit</button>
-        <button class="feature-btn">${w.featured ? 'Unfeature' : 'Feature'}</button>
-        <button class="danger delete-btn">Delete</button>
-      </div></td>
-    </tr>`).join('');
-
-  rows.querySelectorAll('tr').forEach(tr => {
-    const w = items.find(x => x.id === Number(tr.dataset.id));
-    tr.querySelector('.edit-btn').addEventListener('click', () => openEditModal(w, categories));
-    tr.querySelector('.feature-btn').addEventListener('click', async () => {
-      await adminApi(`/admin/wallpapers/${w.id}`, { method: 'PUT', body: JSON.stringify({ featured: !w.featured }) });
-      toast(w.featured ? 'Removed from featured' : 'Now featured');
-      pageAdmin().then(() => activateMotion(app));
-    });
-    tr.querySelector('.delete-btn').addEventListener('click', async () => {
-      if (!confirm(`Delete "${w.title}"? This cannot be undone.`)) return;
-      await adminApi(`/admin/wallpapers/${w.id}`, { method: 'DELETE' });
-      toast('Wallpaper deleted');
-      pageAdmin().then(() => activateMotion(app));
-    });
-  });
-
-  document.getElementById('addCatBtn').addEventListener('click', openAddCategoryModal);
-}
-
-const categoryOptions = (categories, selected) =>
-  categories.map(c => `<option value="${esc(c.name)}" ${c.name === selected ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
-
-function openEditModal(w, categories) {
-  const { modal, close } = openModal(`
-    <span class="eyebrow">Edit</span>
-    <h3>${esc(w.title)}</h3>
-    <label>Title</label><input class="field" type="text" id="editTitle" value="${esc(w.title)}" />
-    <label>Collection</label><select id="editCategory">${categoryOptions(categories, w.category)}</select>
-    <label>Tags (comma separated)</label><input class="field" type="text" id="editTags" value="${esc(w.tags.join(', '))}" />
-    <div class="modal-actions"><button class="btn small" id="cancelEdit">Cancel</button><button class="btn small accent" id="saveEdit">Save</button></div>`);
-  modal.querySelector('#cancelEdit').addEventListener('click', close);
-  modal.querySelector('#saveEdit').addEventListener('click', async () => {
-    try {
-      await adminApi(`/admin/wallpapers/${w.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          title: modal.querySelector('#editTitle').value,
-          category: modal.querySelector('#editCategory').value,
-          tags: modal.querySelector('#editTags').value,
-        }),
-      });
-      close();
-      toast('Wallpaper updated');
-      pageAdmin().then(() => activateMotion(app));
-    } catch (e) { toast(e.message); }
-  });
-}
-
-function openAddCategoryModal() {
-  const { modal, close } = openModal(`
-    <span class="eyebrow">New</span>
-    <h3>Add a <em>collection</em></h3>
-    <label>Name</label><input class="field" type="text" id="newCatName" />
-    <div class="modal-actions"><button class="btn small" id="cancelCat">Cancel</button><button class="btn small accent" id="saveCat">Add</button></div>`);
-  modal.querySelector('#cancelCat').addEventListener('click', close);
-  modal.querySelector('#saveCat').addEventListener('click', async () => {
-    const name = modal.querySelector('#newCatName').value.trim();
-    if (!name) return;
-    try {
-      await adminApi('/admin/categories', { method: 'POST', body: JSON.stringify({ name }) });
-      close();
-      toast('Collection added');
-      pageAdmin().then(() => activateMotion(app));
-    } catch (e) { toast(e.message); }
-  });
-}
-
 // ---------------- router ----------------
 // real paths via the History API — no #, so links are ordinary, shareable URLs;
 // the server (see server.js) sends index.html for any of these on a fresh load or refresh
@@ -978,7 +867,6 @@ const routes = [
   [/^\/search$/, (m, p) => pageSearch(p), 'search'],
   [/^\/likes$/, () => pageLikes(), 'likes'],
   [/^\/profile$/, () => pageProfile()],
-  [/^\/admin$/, () => pageAdmin()],
   [/^\/wallpaper\/(\d+)$/, (m) => pageDetail(m[1])],
 ];
 

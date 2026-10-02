@@ -1,9 +1,13 @@
 node_modules/
 npm-debug.log*
+.env
 
-# runtime state (created automatically on first run, see server.js)
+# local accounts/likes/downloads when no DATABASE_URL is set (see store.js)
+data/db.json
+# older runtime files from before store.js
 data/likes.json
 data/users.json
+
 # local/session state
 .DS_Store
 Thumbs.db
