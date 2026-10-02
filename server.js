@@ -3,21 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
+const { createStore } = require('./store');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-// no default: with ADMIN_KEY unset, the admin API is switched off entirely
-const ADMIN_KEY = process.env.ADMIN_KEY || '';
 
-// On Vercel the deployed files are read-only and every instance is short-lived. There the data is
-// copied into /tmp on a cold start, so the site works but likes, sign-ups and admin edits are not
-// permanent. Locally (npm start) everything is read from and saved to ./data as normal.
+// On Vercel the deployed files are read-only, so the committed wallpaper/category data is copied
+// into /tmp on a cold start. Accounts, likes and downloads live in the database (store.js).
 const IS_SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 const DATA_DIR = IS_SERVERLESS ? path.join('/tmp', 'offscreen-data') : path.join(__dirname, 'data');
 const WALLPAPERS_FILE = path.join(DATA_DIR, 'wallpapers.json');
 const CATEGORIES_FILE = path.join(DATA_DIR, 'categories.json');
-const LIKES_FILE = path.join(DATA_DIR, 'likes.json');
-const USERS_FILE = path.join(DATA_DIR, 'users.json');
 function readJSON(file) {
   return JSON.parse(fs.readFileSync(file, 'utf-8'));
 }
@@ -30,11 +26,17 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 const seeds = {
   [WALLPAPERS_FILE]: () => require('./data/wallpapers.json'),
   [CATEGORIES_FILE]: () => require('./data/categories.json'),
-  [LIKES_FILE]: () => ({}),
-  [USERS_FILE]: () => ({}),
 };
 for (const [file, seed] of Object.entries(seeds)) {
   if (!fs.existsSync(file)) writeJSON(file, seed());
+}
+
+// ---------- accounts, likes, downloads ----------
+// Postgres when DATABASE_URL is set (see store.js and the README), a local JSON file otherwise.
+const store = createStore({ dataDir: DATA_DIR, databaseUrl: process.env.DATABASE_URL });
+console.log(`Storing accounts, likes and downloads in: ${store.kind}`);
+if (IS_SERVERLESS && store.kind === 'json') {
+  console.warn('DATABASE_URL is not set: accounts, likes and downloads will not survive on Vercel.');
 }
 
 // ---------- images & thumbnails ----------
@@ -102,40 +104,77 @@ app.use(express.static(PUBLIC_DIR, {
   },
 }));
 
-// ---------- auth (lightweight, demo-only: username identifies a user, no password) ----------
-function getUser(req) {
-  return req.cookies.wp_user || null;
-}
+// ---------- auth: name + email to sign up, email alone to log in ----------
+// The session cookie holds the user id plus an HMAC of it, so it can't be forged or edited.
+// With a database the secret is derived from DATABASE_URL (itself secret), so nothing extra is
+// needed on Vercel; set SESSION_SECRET to use your own.
+const SESSION_SECRET = process.env.SESSION_SECRET
+  || (process.env.DATABASE_URL ? crypto.createHash('sha256').update('offscreen-session:' + process.env.DATABASE_URL).digest('hex')
+    : IS_SERVERLESS ? crypto.randomBytes(32).toString('hex') : 'offscreen-local-dev-secret');
+const sign = (v) => crypto.createHmac('sha256', SESSION_SECRET).update(v).digest('base64url');
 
-app.post('/api/auth/login', (req, res) => {
-  const { username } = req.body;
-  if (!username || !username.trim()) return res.status(400).json({ error: 'Username required' });
-  const clean = username.trim().slice(0, 30);
-  const users = readJSON(USERS_FILE);
-  if (!users[clean]) {
-    users[clean] = { username: clean, joined: new Date().toISOString(), avatarSeed: crypto.randomBytes(4).toString('hex') };
-    writeJSON(USERS_FILE, users);
-  }
-  res.cookie('wp_user', clean, { httpOnly: false, maxAge: 1000 * 60 * 60 * 24 * 30 });
-  res.json({ user: users[clean] });
+function startSession(res, user) {
+  const id = String(user.id);
+  res.cookie('sid', `${id}.${sign(id)}`, {
+    httpOnly: true, sameSite: 'lax', secure: IS_SERVERLESS, maxAge: 1000 * 60 * 60 * 24 * 90,
+  });
+}
+async function currentUser(req) {
+  const [id, sig] = String(req.cookies.sid || '').split('.');
+  if (!id || !sig) return null;
+  const good = Buffer.from(sign(id)), given = Buffer.from(sig);
+  if (good.length !== given.length || !crypto.timingSafeEqual(good, given)) return null;
+  return store.findUserById(Number(id));
+}
+const requireUser = async (req, res, next) => {
+  req.user = await currentUser(req);
+  if (!req.user) return res.status(401).json({ error: 'Please sign in first' });
+  next();
+};
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const cleanEmail = (v) => String(v || '').trim().toLowerCase();
+
+app.post('/api/auth/signup', async (req, res) => {
+  const name = String(req.body.name || '').trim().slice(0, 60);
+  const email = cleanEmail(req.body.email);
+  if (!name) return res.status(400).json({ error: 'Please enter your name' });
+  if (!EMAIL_RE.test(email) || email.length > 200) return res.status(400).json({ error: 'Please enter a valid email address' });
+  const user = await store.createUser({ name, email });
+  if (!user) return res.status(409).json({ error: 'That email already has an account. Log in instead.' });
+  startSession(res, user);
+  res.json({ user });
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const email = cleanEmail(req.body.email);
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email address' });
+  const user = await store.findUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'No account with that email yet. Sign up first.' });
+  startSession(res, user);
+  res.json({ user });
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('wp_user');
+  res.clearCookie('sid');
   res.json({ ok: true });
 });
 
-app.get('/api/auth/me', (req, res) => {
-  const username = getUser(req);
-  if (!username) return res.json({ user: null });
-  const users = readJSON(USERS_FILE);
-  res.json({ user: users[username] || { username } });
+app.get('/api/auth/me', async (req, res) => {
+  res.json({ user: await currentUser(req) });
 });
 
+// likes and downloads live in the database; the likes/downloads numbers in wallpapers.json are
+// just the starting totals, and what people actually do is added on top of them
+async function loadWallpapers() {
+  const [items, c] = await Promise.all([Promise.resolve(readJSON(WALLPAPERS_FILE)), store.counts()]);
+  return items.map((w) => ({ ...w, likes: (w.likes || 0) + (c.likes[w.id] || 0), downloads: (w.downloads || 0) + (c.downloads[w.id] || 0) }));
+}
+
 // ---------- wallpapers ----------
-app.get('/api/wallpapers', (req, res) => {
+app.get('/api/wallpapers', async (req, res) => {
   const { category, q, sort, device, dedupe } = req.query;
-  let items = readJSON(WALLPAPERS_FILE);
+  let items = await loadWallpapers();
 
   if (device === 'phone' || device === 'desktop') {
     items = items.filter(w => w.device === device);
@@ -153,7 +192,7 @@ app.get('/api/wallpapers', (req, res) => {
   }
   // dedupe=1 collapses phone/desktop crops of the same artwork to one result (run after the
   // filters above so a device filter still keeps its own member of the pair). Public browsing
-  // views pass this; admin leaves it off so every wallpaper stays visible and manageable there.
+  // views pass this; the plain list (used for counts) leaves it off.
   if (dedupe === '1') {
     const seenSeries = new Set();
     items = items.filter(w => {
@@ -177,15 +216,15 @@ app.get('/api/wallpapers', (req, res) => {
   res.json(items);
 });
 
-app.get('/api/wallpapers/:id', (req, res) => {
-  const items = readJSON(WALLPAPERS_FILE);
+app.get('/api/wallpapers/:id', async (req, res) => {
+  const items = await loadWallpapers();
   const item = items.find(w => w.id === Number(req.params.id));
   if (!item) return res.status(404).json({ error: 'Not found' });
   res.json(item);
 });
 
-app.get('/api/wallpapers/:id/similar', (req, res) => {
-  const items = readJSON(WALLPAPERS_FILE);
+app.get('/api/wallpapers/:id/similar', async (req, res) => {
+  const items = await loadWallpapers();
   const item = items.find(w => w.id === Number(req.params.id));
   if (!item) return res.status(404).json({ error: 'Not found' });
   // rank by shared category/tags, and keep to the same device (phone vs desktop) where possible
@@ -216,131 +255,44 @@ app.get('/api/categories', (req, res) => {
   res.json(readJSON(CATEGORIES_FILE));
 });
 
-// ---------- likes (requires login) ----------
-app.post('/api/wallpapers/:id/like', (req, res) => {
-  const username = getUser(req);
-  if (!username) return res.status(401).json({ error: 'Login required' });
+// ---------- likes and downloads (both need an account) ----------
+app.post('/api/wallpapers/:id/like', requireUser, async (req, res) => {
   const id = Number(req.params.id);
-  const items = readJSON(WALLPAPERS_FILE);
-  const item = items.find(w => w.id === id);
-  if (!item) return res.status(404).json({ error: 'Not found' });
-
-  const likes = readJSON(LIKES_FILE);
-  likes[username] = likes[username] || [];
-  const idx = likes[username].indexOf(id);
-  let liked;
-  if (idx === -1) {
-    likes[username].push(id);
-    item.likes += 1;
-    liked = true;
-  } else {
-    likes[username].splice(idx, 1);
-    item.likes = Math.max(0, item.likes - 1);
-    liked = false;
-  }
-  writeJSON(LIKES_FILE, likes);
-  writeJSON(WALLPAPERS_FILE, items);
+  if (!readJSON(WALLPAPERS_FILE).some(w => w.id === id)) return res.status(404).json({ error: 'Not found' });
+  const { liked } = await store.toggleLike(req.user.id, id);
+  const item = (await loadWallpapers()).find(w => w.id === id);
   res.json({ liked, likes: item.likes });
 });
 
-app.get('/api/me/likes', (req, res) => {
-  const username = getUser(req);
-  if (!username) return res.status(401).json({ error: 'Login required' });
-  const likes = readJSON(LIKES_FILE);
-  const ids = new Set(likes[username] || []);
-  const items = readJSON(WALLPAPERS_FILE).filter(w => ids.has(w.id));
-  res.json(items);
+async function wallpapersByIds(ids) {
+  const byId = new Map((await loadWallpapers()).map(w => [w.id, w]));
+  return ids.map(i => byId.get(i)).filter(Boolean); // keeps the order the ids came in (most recent first)
+}
+app.get('/api/me/likes', requireUser, async (req, res) => {
+  res.json(await wallpapersByIds(await store.likedIds(req.user.id)));
+});
+app.get('/api/me/downloads', requireUser, async (req, res) => {
+  res.json(await wallpapersByIds(await store.downloadedIds(req.user.id)));
 });
 
-app.get('/api/wallpapers/:id/liked', (req, res) => {
-  const username = getUser(req);
-  if (!username) return res.json({ liked: false });
-  const likes = readJSON(LIKES_FILE);
-  const liked = (likes[username] || []).includes(Number(req.params.id));
-  res.json({ liked });
-});
-
-// ---------- download ----------
-// counts the download and tells the browser where the file is and what to name it; the browser then
-// saves /images/<file> itself (that file comes from the CDN on Vercel, not from this function)
+// Records the download against the signed-in user, then tells the browser where the file is and
+// what to name it; the browser saves /images/<file> itself (it comes from the CDN on Vercel).
 function downloadName(item) {
   return `${item.title.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '')}${path.extname(item.filename)}`;
 }
-app.post('/api/wallpapers/:id/download', (req, res) => {
-  const items = readJSON(WALLPAPERS_FILE);
-  const item = items.find(w => w.id === Number(req.params.id));
-  if (!item) return res.status(404).json({ error: 'Not found' });
-  item.downloads += 1;
-  writeJSON(WALLPAPERS_FILE, items);
-  res.json({ url: `/images/${item.filename}`, name: downloadName(item), downloads: item.downloads });
+app.post('/api/wallpapers/:id/download', requireUser, async (req, res) => {
+  const id = Number(req.params.id);
+  const base = readJSON(WALLPAPERS_FILE).find(w => w.id === id);
+  if (!base) return res.status(404).json({ error: 'Not found' });
+  await store.recordDownload(req.user.id, id);
+  const item = (await loadWallpapers()).find(w => w.id === id);
+  res.json({ url: `/images/${base.filename}`, name: downloadName(base), downloads: item.downloads });
 });
 
-// ---------- admin ----------
-function requireAdmin(req, res, next) {
-  if (!ADMIN_KEY || req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized' });
-  next();
-}
-
-app.post('/api/admin/login', (req, res) => {
-  if (ADMIN_KEY && req.body.key === ADMIN_KEY) return res.json({ ok: true });
-  res.status(401).json({ ok: false });
-});
-
-app.get('/api/admin/stats', requireAdmin, (req, res) => {
-  const items = readJSON(WALLPAPERS_FILE);
-  const users = readJSON(USERS_FILE);
-  res.json({
-    totalWallpapers: items.length,
-    totalLikes: items.reduce((s, w) => s + w.likes, 0),
-    totalDownloads: items.reduce((s, w) => s + w.downloads, 0),
-    totalUsers: Object.keys(users).length,
-    totalCategories: readJSON(CATEGORIES_FILE).length,  });
-});
-
-app.put('/api/admin/wallpapers/:id', requireAdmin, (req, res) => {
-  const items = readJSON(WALLPAPERS_FILE);
-  const item = items.find(w => w.id === Number(req.params.id));
-  if (!item) return res.status(404).json({ error: 'Not found' });
-  const { title, category, tags, featured } = req.body;
-  if (title !== undefined) item.title = title;
-  if (category !== undefined) item.category = category;
-  if (tags !== undefined) item.tags = Array.isArray(tags) ? tags : String(tags).split(',').map(t => t.trim()).filter(Boolean);
-  if (featured !== undefined) item.featured = !!featured;
-  writeJSON(WALLPAPERS_FILE, items);
-  res.json(item);
-});
-
-app.delete('/api/admin/wallpapers/:id', requireAdmin, (req, res) => {
-  const items = readJSON(WALLPAPERS_FILE);
-  const idx = items.findIndex(w => w.id === Number(req.params.id));
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  const [removed] = items.splice(idx, 1);
-  writeJSON(WALLPAPERS_FILE, items);
-  // the image files can only be removed where the disk is writable (not on Vercel)
-  if (!IS_SERVERLESS) {
-    for (const file of [
-      path.join(IMAGES_DIR, removed.filename),
-      path.join(THUMBS_DIR, removed.filename + '.webp'),
-      path.join(DISPLAY_DIR, removed.filename + '.webp'),
-      path.join(THUMBS_AVIF_DIR, removed.filename + '.avif'),
-      path.join(DISPLAY_AVIF_DIR, removed.filename + '.avif'),
-    ]) {
-      if (fs.existsSync(file)) fs.unlinkSync(file);
-    }
-  }
-  res.json({ ok: true });
-});
-
-app.post('/api/admin/categories', requireAdmin, (req, res) => {
-  const { name, icon } = req.body;
-  if (!name) return res.status(400).json({ error: 'Name required' });
-  const categories = readJSON(CATEGORIES_FILE);
-  if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
-    return res.status(400).json({ error: 'Category already exists' });
-  }
-  categories.push({ name, icon: icon || '🏷️' });
-  writeJSON(CATEGORIES_FILE, categories);
-  res.json(categories);
+// a failed database call should look like an API error, not an HTML page
+app.use('/api', (err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ error: 'Something went wrong on our side. Please try again.' });
 });
 
 // the SPA shell for any non-API route that isn't a static file
