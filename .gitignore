@@ -14,3 +14,15 @@ Thumbs.db
 
 .vercel
 .env*.local
+
+# wallpaper images live on Cloudinary (see media.js), never in this repo
+public/images/
+public/thumbs/
+public/thumbs-avif/
+public/display/
+public/display-avif/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.avif
