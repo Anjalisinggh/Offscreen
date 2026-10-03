@@ -15,6 +15,11 @@ import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 try { process.loadEnvFile(path.join(ROOT, '.env')); } catch { /* no .env */ }
+// imports run before the line above, so the SDK never saw CLOUDINARY_URL; hand it over now
+if (process.env.CLOUDINARY_URL) {
+  const u = new URL(process.env.CLOUDINARY_URL);
+  cloudinary.config({ cloud_name: u.hostname, api_key: decodeURIComponent(u.username), api_secret: decodeURIComponent(u.password), secure: true });
+}
 
 const WALLPAPERS_FILE = path.join(ROOT, 'data', 'wallpapers.json');
 const IMAGES_DIR = path.join(ROOT, 'public', 'images');
