@@ -1890,5 +1890,27 @@
     "width": 561,
     "height": 998,
     "device": "phone"
+  },
+  {
+    "id": 107,
+    "title": "Autumn Cosmos",
+    "filename": "autumn-cosmos-107.webp",
+    "source": "autumn_cosmos_floral.webp",
+    "category": "Nature",
+    "tags": [
+      "floral",
+      "autumn",
+      "flowers",
+      "painterly",
+      "warm",
+      "phone"
+    ],
+    "likes": 0,
+    "downloads": 0,
+    "featured": false,
+    "createdAt": "2026-10-03T11:00:33.919Z",
+    "width": 941,
+    "height": 1672,
+    "device": "phone"
   }
 ]
