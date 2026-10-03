@@ -52,12 +52,13 @@ Sign-up and log-in send a 6-digit code by email. Set `SMTP_URL` and `MAIL_FROM`:
 
 Locally, with no `SMTP_URL`, the code is printed in the server console instead. On Vercel without it, sign-up and log-in show "Sign-in emails aren't set up on this site yet".
 
-Codes expire after 10 minutes, allow 5 tries, can be re-sent every 30 seconds, and only a hash of each code is stored.
+Codes expire after 10 minutes, allow 5 tries, can be re-sent every 30 seconds, and only a hash of each code is stored. Each visitor can have at most 5 codes emailed per 10 minutes, whichever addresses they enter, so the mail quota can't be used up by one person.
 
 | Table | What's in it |
 |---|---|
 | `users` | id, name, email (unique, case-insensitive), created_at, avatar (256px webp), avatar_updated_at |
 | `email_codes` | one pending sign-in code per email (hashed), with expiry and try count |
+| `code_sends` | a hashed visitor IP and time for each code emailed, kept for a day, for the per-visitor limit |
 | `likes` | user_id, wallpaper_id, created_at — one row per like, removed on unlike |
 | `downloads` | id, user_id, wallpaper_id, created_at — one row per download |
 

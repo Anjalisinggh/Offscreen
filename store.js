@@ -57,6 +57,12 @@ function postgresStore(url) {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
       expires_at TIMESTAMPTZ NOT NULL
     );
+    -- one row per code email sent, keyed by a hash of the visitor's IP, for the per-visitor limit
+    CREATE TABLE IF NOT EXISTS code_sends (
+      ip_hash    TEXT        NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS code_sends_ip_idx ON code_sends (ip_hash, created_at);
   `).catch((e) => { ready = null; throw e; }));
 
   const COLS = 'id, name, email, created_at, avatar_updated_at';
@@ -145,6 +151,18 @@ function postgresStore(url) {
       await init();
       await q('DELETE FROM email_codes WHERE email = $1', [norm(email)]);
     },
+    async countCodeSends(ipHash, windowMs) {
+      await init();
+      const { rows } = await q(`SELECT count(*)::int AS n, min(created_at) AS oldest FROM code_sends
+                                WHERE ip_hash = $1 AND created_at > now() - ($2 || ' milliseconds')::interval`,
+        [ipHash, String(windowMs)]);
+      return { count: rows[0].n, oldest: rows[0].oldest ? new Date(rows[0].oldest).getTime() : null };
+    },
+    async recordCodeSend(ipHash) {
+      await init();
+      await q('INSERT INTO code_sends (ip_hash) VALUES ($1)', [ipHash]);
+      await q("DELETE FROM code_sends WHERE created_at < now() - interval '1 day'");
+    },
     async totals() {
       await init();
       const { rows } = await q(`SELECT
@@ -232,6 +250,18 @@ function jsonStore(dir) {
     async deleteCode(email) {
       const db = load();
       if (db.codes) { delete db.codes[norm(email)]; save(db); }
+    },
+    async countCodeSends(ipHash, windowMs) {
+      const since = Date.now() - windowMs;
+      const times = (load().codeSends || []).filter((s) => s.ipHash === ipHash && s.at > since).map((s) => s.at);
+      return { count: times.length, oldest: times.length ? Math.min(...times) : null };
+    },
+    async recordCodeSend(ipHash) {
+      const db = load();
+      const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      db.codeSends = (db.codeSends || []).filter((s) => s.at > dayAgo);
+      db.codeSends.push({ ipHash, at: Date.now() });
+      save(db);
     },
     async totals() {
       const db = load();
