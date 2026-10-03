@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "generate-data": "node generate-data.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "upload-images": "node scripts/upload-to-cloudinary.js"
   },
   "keywords": [
     "wallpapers",
@@ -16,6 +17,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
     "nodemailer": "^10.0.13",

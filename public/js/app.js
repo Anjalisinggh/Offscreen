@@ -64,6 +64,13 @@ async function api(path, opts = {}) {
   }
   return res.status === 204 ? null : res.json();
 }
+// The full wallpaper list and the collections are fetched once and shared by every page that
+// needs them (footer count, explore chips, collections); a like or download refreshes the list.
+const cached = {};
+const once = (key, path) => (cached[key] ||= api(path).catch((err) => { delete cached[key]; throw err; }));
+const allWallpapers = () => once('wallpapers', '/wallpapers');
+const allCategories = () => once('categories', '/categories');
+
 function initial(name) {
   return (name || '?').trim().charAt(0).toUpperCase();
 }
@@ -84,31 +91,30 @@ function shuffle(arr) {
   }
   return arr;
 }
-const thumb = (w) => `/thumbs/${w.filename}.webp`;
-const thumbAvif = (w) => `/thumbs-avif/${w.filename}.avif`;
-// a lighter, still-sharp stand-in for the original — for anywhere an image is shown large
-// on screen (the wallpaper page, collection tiles) but isn't the actual file being downloaded
-const display = (w) => `/display/${w.filename}.webp`;
-const displayAvif = (w) => `/display-avif/${w.filename}.avif`;
-const full = (w) => `/images/${w.filename}`;
+// Signed Cloudinary URLs from the API (Cloudinary sends AVIF or WebP, whichever the browser
+// supports). thumb is 520px for cards; display is a lighter, still-sharp 1100px stand-in for
+// anywhere an image is shown large. The original is only ever handed out by the Download button.
+const thumb = (w) => w.thumb;
+const display = (w) => w.display;
 
-// <picture> markup: the browser picks AVIF if it can decode it (typically 15-35% smaller
-// than WebP at matched quality), falling back to the WebP <img> everywhere else. `attrs` is
-// any extra attributes to put on the <img> itself (class, data-full, loading, etc).
-function picture(avifSrc, webpSrc, alt, attrs = '') {
-  return `<picture><source type="image/avif" srcset="${avifSrc}" /><img src="${webpSrc}" alt="${alt}" ${attrs} /></picture>`;
+// `attrs` is any extra attributes to put on the <img> (class, loading, etc)
+function picture(src, alt, attrs = '') {
+  return `<img src="${src}" alt="${alt}" draggable="false" ${attrs} />`;
 }
 const pad = (n) => String(n).padStart(2, '0');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// images fade in once loaded; fall back to the full image if a thumbnail is missing
+// images fade in once loaded
 document.addEventListener('load', (e) => {
   if (e.target.tagName === 'IMG') e.target.classList.add('loaded');
 }, true);
-document.addEventListener('error', (e) => {
-  const img = e.target;
-  if (img.tagName === 'IMG' && img.dataset.full && img.src.indexOf(img.dataset.full) === -1) img.src = img.dataset.full;
-}, true);
+// no "Save image as…" / dragging wallpapers off the page: Download is the way to get one
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.tagName === 'IMG' || e.target.closest('.card-media, .phone, .device')) e.preventDefault();
+});
+document.addEventListener('dragstart', (e) => {
+  if (e.target.tagName === 'IMG') e.preventDefault();
+});
 
 // ---------------- motion ----------------
 const revealObserver = new IntersectionObserver((entries) => {
@@ -152,7 +158,7 @@ function cardHTML(w, i = 0) {
   <article class="card reveal" style="--i:${i % 8}" data-id="${w.id}">
     <div class="card-media" style="--ar:${ratio(w)}">
       ${w.featured ? '<span class="badge">Featured</span>' : ''}
-      ${picture(thumbAvif(w), thumb(w), esc(w.title), `data-full="${full(w)}" loading="lazy" decoding="async"`)}
+      ${picture(thumb(w), esc(w.title), `loading="lazy" decoding="async"`)}
       <div class="card-actions">
         <button class="like-btn ${liked ? 'liked' : ''}" data-id="${w.id}" aria-label="Like">${ICON.heart}</button>
         <button class="dl-btn" data-id="${w.id}" aria-label="Download">${ICON.download}</button>
@@ -261,6 +267,7 @@ async function toggleLike(id) {
   try {
     const res = await api(`/wallpapers/${id}/like`, { method: 'POST' });
     if (res.liked) state.likedIds.add(Number(id)); else state.likedIds.delete(Number(id));
+    delete cached.wallpapers;
     toast(res.liked ? 'Added to your likes' : 'Removed from your likes');
     return res;
   } catch (err) {
@@ -276,6 +283,7 @@ async function downloadWallpaper(id) {
   }
   try {
     const { url, name } = await api(`/wallpapers/${id}/download`, { method: 'POST' });
+    delete cached.wallpapers;
     // fetch as a blob so the file is saved (with a readable name) instead of opened in a tab
     const blob = await (await fetch(url)).blob();
     const a = document.createElement('a');
@@ -492,14 +500,9 @@ const loaderHTML = '<div class="loader"><span></span></div>';
 
 async function pageHome() {
   app.classList.add('is-home');
-  const [all, trending, fresh, popular, categories] = await Promise.all([
-    api('/wallpapers?dedupe=1'),
-    api('/wallpapers?sort=trending&dedupe=1'),
-    api('/wallpapers?sort=new&dedupe=1'),
-    api('/wallpapers?sort=popular&dedupe=1'),
-    api('/categories'),
-  ]);
+  const { all, trending, fresh, popular, categories } = await api('/home');
   state.categories = categories;
+  cached.categories ||= Promise.resolve(categories);
 
   // three drifting columns of wallpapers, each doubled so the loop is seamless
   // the plain colour-glass renders are flat next to everything else, so keep the hero to
@@ -508,7 +511,7 @@ async function pageHome() {
   const desktops = shuffle(all.filter(isDesktop));
   const cols = [0, 1, 2].map(c => pool.filter((_, i) => i % 3 === c).slice(0, 7));
   const colHTML = cols.map(col => {
-    const imgs = col.map(w => `<a href="/wallpaper/${w.id}" tabindex="-1">${picture(thumbAvif(w), thumb(w), '', `data-full="${full(w)}"`)}</a>`).join('');
+    const imgs = col.map(w => `<a href="/wallpaper/${w.id}" tabindex="-1">${picture(thumb(w), '')}</a>`).join('');
     return `<div class="hero-col">${imgs}${imgs}</div>`;
   }).join('');
 
@@ -518,7 +521,7 @@ async function pageHome() {
   const lockTime = `${now.getHours() % 12 || 12}:${pad(now.getMinutes())}`;
   const deckHTML = deck.map((w, k) => `
     <a class="deck-card" href="/wallpaper/${w.id}" data-k="${k}" aria-label="${esc(w.title)}">
-      ${picture(displayAvif(w), display(w), '', `data-full="${full(w)}"`)}
+      ${picture(display(w), '')}
       <span class="deck-island"></span>
       <span class="deck-time">${lockTime}</span>
     </a>`).join('');
@@ -652,7 +655,7 @@ function collHTML(c, items, i) {
   const cover = [...items].sort((a, b) => b.likes - a.likes)[0];
   return `
     <a class="coll reveal" style="--i:${i}" href="/explore?category=${encodeURIComponent(c.name)}">
-      ${cover ? picture(displayAvif(cover), display(cover), '', `data-full="${full(cover)}" loading="lazy"`) : ''}
+      ${cover ? picture(display(cover), '', `loading="lazy"`) : ''}
       <span class="coll-num">${pad(i + 1)}</span>
       <h3>${esc(c.name)}</h3>
       <p>${items.length} wallpaper${items.length === 1 ? '' : 's'} ${ICON.arrow}</p>
@@ -665,7 +668,7 @@ async function pageExplore(params) {
   const device = params.get('device') || '';
   // counts (category/device chip numbers) use the full, undeduped set so they read as
   // "how many wallpapers total" — only the rendered grid below hides paired duplicates
-  const [categories, all] = await Promise.all([api('/categories'), api('/wallpapers')]);
+  const [categories, all] = await Promise.all([allCategories(), allWallpapers()]);
   state.categories = categories;
 
   const query = new URLSearchParams();
@@ -722,7 +725,7 @@ async function pageExplore(params) {
 }
 
 async function pageCategories() {
-  const [categories, all] = await Promise.all([api('/categories'), api('/wallpapers')]);
+  const [categories, all] = await Promise.all([allCategories(), allWallpapers()]);
   app.innerHTML = `
     <div class="page-head">
       <span class="eyebrow reveal">${categories.length} collections</span>
@@ -909,7 +912,7 @@ async function pageDetail(id) {
           <div class="laptop-lid">
             <div class="laptop-screen">
               <div class="laptop-notch"></div>
-              ${picture(displayAvif(w), display(w), esc(w.title), `data-full="${full(w)}"`)}
+              ${picture(display(w), esc(w.title))}
               <div class="mac-bar"><span><b>Finder</b><span>File</span><span>Edit</span><span>View</span></span><span id="macTime"></span></div>
               <div class="mac-win"></div>
               <div class="mac-dock">${'<i></i>'.repeat(8)}</div>
@@ -926,7 +929,7 @@ async function pageDetail(id) {
         <div class="phone" id="device">
           <div class="phone-screen">
             <div class="phone-island"></div>
-            ${picture(displayAvif(w), display(w), esc(w.title), `data-full="${full(w)}"`)}
+            ${picture(display(w), esc(w.title))}
             <div class="ls">
               <div class="ls-date" id="lsDate"></div>
               <div class="ls-time" id="lsTime"></div>
@@ -1021,6 +1024,7 @@ async function pageDetail(id) {
 
   // ambient glow tinted by the wallpaper's own colour
   const probe = new Image();
+  probe.crossOrigin = 'anonymous'; // the image is on Cloudinary; needed to read its pixels
   probe.src = thumb(w);
   probe.onload = () => {
     try {
@@ -1164,7 +1168,7 @@ document.getElementById('backToTop').addEventListener('click', () => {
   window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
 });
 
-api('/wallpapers').then(all => {
+allWallpapers().then(all => {
   document.getElementById('footCount').textContent = `${all.length} wallpapers`;
 }).catch(() => { /* keep the generic label */ });
 

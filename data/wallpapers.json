@@ -19,7 +19,8 @@
     "source": "01_silver_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/silver-glass-dark-1"
   },
   {
     "id": 3,
@@ -41,7 +42,8 @@
     "source": "02_champagne_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/champagne-glass-dark-3"
   },
   {
     "id": 5,
@@ -63,7 +65,8 @@
     "source": "03_pink_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/pink-glass-dark-5"
   },
   {
     "id": 7,
@@ -85,7 +88,8 @@
     "source": "04_purple_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/purple-glass-dark-7"
   },
   {
     "id": 9,
@@ -107,7 +111,8 @@
     "source": "05_ice_blue_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/ice-blue-glass-dark-9"
   },
   {
     "id": 11,
@@ -129,7 +134,8 @@
     "source": "06_navy_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/navy-glass-dark-11"
   },
   {
     "id": 13,
@@ -151,7 +157,8 @@
     "source": "07_sage_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/sage-glass-dark-13"
   },
   {
     "id": 15,
@@ -173,7 +180,8 @@
     "source": "08_amber_darkmode_iphone16.png",
     "width": 1179,
     "height": 2556,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/amber-glass-dark-15"
   },
   {
     "id": 17,
@@ -194,7 +202,8 @@
     "source": "3153e706-f629-4160-b2de-2904cef3dee9.png",
     "width": 852,
     "height": 1846,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/crimson-flow-abstract-17"
   },
   {
     "id": 18,
@@ -215,7 +224,8 @@
     "source": "4da59d8f-2e58-4b67-84d2-623c08fa4758.png",
     "width": 852,
     "height": 1846,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/normal-is-boring-collage-18"
   },
   {
     "id": 19,
@@ -236,7 +246,8 @@
     "source": "b6ed877a-2a5c-4737-b9d8-34084251da52.png",
     "width": 852,
     "height": 1846,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/easier-than-you-think-light-19"
   },
   {
     "id": 20,
@@ -257,7 +268,8 @@
     "source": "ramen-cat-collage-20.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/ramen-cat-collage-20"
   },
   {
     "id": 21,
@@ -278,7 +290,8 @@
     "source": "dont-stress-stars-21.png",
     "width": 852,
     "height": 1846,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/dont-stress-stars-21"
   },
   {
     "id": 22,
@@ -299,7 +312,8 @@
     "source": "dont-stress-stars-wide-22.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/dont-stress-stars-wide-22"
   },
   {
     "id": 23,
@@ -320,7 +334,8 @@
     "source": "you-will-make-it-happen-light-23.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/you-will-make-it-happen-light-23"
   },
   {
     "id": 24,
@@ -341,7 +356,8 @@
     "source": "you-will-make-it-happen-dark-24.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/you-will-make-it-happen-dark-24"
   },
   {
     "id": 25,
@@ -362,7 +378,8 @@
     "source": "moonlit-garden-25.png",
     "width": 852,
     "height": 1846,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/moonlit-garden-25"
   },
   {
     "id": 26,
@@ -382,7 +399,8 @@
     "source": "ganesha-strings-26.png",
     "width": 852,
     "height": 1846,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/ganesha-strings-26"
   },
   {
     "id": 27,
@@ -402,7 +420,8 @@
     "source": "sleepy-golden-pup-27.png",
     "width": 852,
     "height": 1846,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/sleepy-golden-pup-27"
   },
   {
     "id": 28,
@@ -422,7 +441,8 @@
     "source": "crimson-wanderers-28.png",
     "width": 904,
     "height": 1740,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/crimson-wanderers-28"
   },
   {
     "id": 29,
@@ -443,7 +463,8 @@
     "source": "angel-in-bloom-29.png",
     "width": 1671,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/angel-in-bloom-29"
   },
   {
     "id": 30,
@@ -464,7 +485,8 @@
     "source": "dark-dreamscape-30-30.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/dark-dreamscape-30-30"
   },
   {
     "id": 31,
@@ -484,7 +506,8 @@
     "source": "motivational-dreamscape-31-31.png",
     "width": 941,
     "height": 1672,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/motivational-dreamscape-31-31"
   },
   {
     "id": 32,
@@ -505,7 +528,8 @@
     "source": "vintage-dreamscape-32-32.png",
     "width": 941,
     "height": 1672,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/vintage-dreamscape-32-32"
   },
   {
     "id": 33,
@@ -525,7 +549,8 @@
     "source": "cute-dreamscape-33-33.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/cute-dreamscape-33-33"
   },
   {
     "id": 34,
@@ -546,7 +571,8 @@
     "source": "abstract-dreamscape-34-34.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/abstract-dreamscape-34-34"
   },
   {
     "id": 35,
@@ -566,7 +592,8 @@
     "source": "nature-dreamscape-35-35.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/nature-dreamscape-35-35"
   },
   {
     "id": 36,
@@ -586,7 +613,8 @@
     "source": "pink-dreamscape-36-36.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/pink-dreamscape-36-36"
   },
   {
     "id": 37,
@@ -607,7 +635,8 @@
     "source": "retro-dreamscape-37-37.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/retro-dreamscape-37-37"
   },
   {
     "id": 38,
@@ -627,7 +656,8 @@
     "source": "psychedelic-dreamscape-38-38.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/psychedelic-dreamscape-38-38"
   },
   {
     "id": 39,
@@ -648,7 +678,8 @@
     "source": "minimal-dreamscape-39-39.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/minimal-dreamscape-39-39"
   },
   {
     "id": 40,
@@ -669,7 +700,8 @@
     "source": "dark-dreamscape-40-40.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/dark-dreamscape-40-40"
   },
   {
     "id": 41,
@@ -690,7 +722,8 @@
     "source": "motivational-dreamscape-41-41.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/motivational-dreamscape-41-41"
   },
   {
     "id": 42,
@@ -710,7 +743,8 @@
     "source": "vintage-dreamscape-42-42.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/vintage-dreamscape-42-42"
   },
   {
     "id": 43,
@@ -731,7 +765,8 @@
     "source": "cute-dreamscape-43-43.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/cute-dreamscape-43-43"
   },
   {
     "id": 44,
@@ -751,7 +786,8 @@
     "source": "abstract-dreamscape-44-44.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/abstract-dreamscape-44-44"
   },
   {
     "id": 45,
@@ -772,7 +808,8 @@
     "source": "hidden-side-45.png",
     "width": 1535,
     "height": 1024,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/hidden-side-45"
   },
   {
     "id": 46,
@@ -793,7 +830,8 @@
     "source": "nature-dreamscape-46-46.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/nature-dreamscape-46-46"
   },
   {
     "id": 47,
@@ -814,7 +852,8 @@
     "source": "pink-dreamscape-47-47.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/pink-dreamscape-47-47"
   },
   {
     "id": 48,
@@ -834,7 +873,8 @@
     "source": "retro-dreamscape-48-48.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/retro-dreamscape-48-48"
   },
   {
     "id": 49,
@@ -855,7 +895,8 @@
     "source": "psychedelic-dreamscape-49-49.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/psychedelic-dreamscape-49-49"
   },
   {
     "id": 50,
@@ -876,7 +917,8 @@
     "source": "minimal-dreamscape-50-50.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/minimal-dreamscape-50-50"
   },
   {
     "id": 51,
@@ -897,7 +939,8 @@
     "source": "dark-dreamscape-51-51.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/dark-dreamscape-51-51"
   },
   {
     "id": 52,
@@ -918,7 +961,8 @@
     "source": "motivational-dreamscape-52-52.png",
     "width": 864,
     "height": 1821,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/motivational-dreamscape-52-52"
   },
   {
     "id": 53,
@@ -937,7 +981,8 @@
     "source": "vintage-dreamscape-53-53.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/vintage-dreamscape-53-53"
   },
   {
     "id": 54,
@@ -956,7 +1001,8 @@
     "source": "cute-dreamscape-54-54.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/cute-dreamscape-54-54"
   },
   {
     "id": 55,
@@ -976,7 +1022,8 @@
     "source": "abstract-dreamscape-55-55.png",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/abstract-dreamscape-55-55"
   },
   {
     "id": 56,
@@ -996,7 +1043,8 @@
     "source": "nature-dreamscape-56-56.png",
     "width": 941,
     "height": 1672,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/nature-dreamscape-56-56"
   },
   {
     "id": 57,
@@ -1016,7 +1064,8 @@
     "source": "pink-dreamscape-57-57.png",
     "width": 1536,
     "height": 1024,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/pink-dreamscape-57-57"
   },
   {
     "id": 58,
@@ -1036,7 +1085,8 @@
     "source": "retro-dreamscape-58-58.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/retro-dreamscape-58-58"
   },
   {
     "id": 59,
@@ -1056,7 +1106,8 @@
     "source": "psychedelic-dreamscape-59-59.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/psychedelic-dreamscape-59-59"
   },
   {
     "id": 60,
@@ -1076,7 +1127,8 @@
     "source": "maybe-it-is-easier-60.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/maybe-it-is-easier-60"
   },
   {
     "id": 61,
@@ -1096,7 +1148,8 @@
     "source": "minimal-dreamscape-61-61.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/minimal-dreamscape-61-61"
   },
   {
     "id": 62,
@@ -1117,7 +1170,8 @@
     "source": "dark-dreamscape-62-62.png",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/dark-dreamscape-62-62"
   },
   {
     "id": 63,
@@ -1137,7 +1191,8 @@
     "source": "f63d722f-de62-4da9-b28a-f333820af4a5.png",
     "width": 887,
     "height": 1774,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/purple-glass-drop-63"
   },
   {
     "id": 64,
@@ -1160,7 +1215,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "you-must-burn"
+    "series": "you-must-burn",
+    "publicId": "offscreen/you-must-burn-64"
   },
   {
     "id": 65,
@@ -1181,7 +1237,8 @@
     "createdAt": "2026-09-28T15:09:51.483Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/cathedral-of-stars-65"
   },
   {
     "id": 66,
@@ -1203,7 +1260,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "into-the-pink-deep"
+    "series": "into-the-pink-deep",
+    "publicId": "offscreen/into-the-pink-deep-66"
   },
   {
     "id": 67,
@@ -1225,7 +1283,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "in-the-right-eyes"
+    "series": "in-the-right-eyes",
+    "publicId": "offscreen/in-the-right-eyes-67"
   },
   {
     "id": 68,
@@ -1247,7 +1306,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "too-lazy-orange"
+    "series": "too-lazy-orange",
+    "publicId": "offscreen/too-lazy-to-explain-68"
   },
   {
     "id": 69,
@@ -1269,7 +1329,8 @@
     "width": 1920,
     "height": 1080,
     "device": "desktop",
-    "series": "too-lazy-orange"
+    "series": "too-lazy-orange",
+    "publicId": "offscreen/too-lazy-to-explain-wide-69"
   },
   {
     "id": 70,
@@ -1291,7 +1352,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "focus-follow-the-plan"
+    "series": "focus-follow-the-plan",
+    "publicId": "offscreen/focus-follow-the-plan-70"
   },
   {
     "id": 71,
@@ -1313,7 +1375,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "sparks-between-us"
+    "series": "sparks-between-us",
+    "publicId": "offscreen/sparks-between-us-71"
   },
   {
     "id": 72,
@@ -1335,7 +1398,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "focus-follow-the-plan"
+    "series": "focus-follow-the-plan",
+    "publicId": "offscreen/focus-follow-the-plan-portrait-72"
   },
   {
     "id": 73,
@@ -1356,7 +1420,8 @@
     "createdAt": "2026-09-28T15:09:51.672Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/poppy-in-motion-73"
   },
   {
     "id": 74,
@@ -1377,7 +1442,8 @@
     "createdAt": "2026-09-28T15:09:51.697Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/the-last-dance-74"
   },
   {
     "id": 75,
@@ -1399,7 +1465,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "itll-pass"
+    "series": "itll-pass",
+    "publicId": "offscreen/it-ll-pass-75"
   },
   {
     "id": 76,
@@ -1419,7 +1486,8 @@
     "createdAt": "2026-09-28T15:09:51.743Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/too-lazy-in-pink-76"
   },
   {
     "id": 77,
@@ -1441,7 +1509,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "itll-pass"
+    "series": "itll-pass",
+    "publicId": "offscreen/it-ll-pass-close-77"
   },
   {
     "id": 78,
@@ -1462,7 +1531,8 @@
     "createdAt": "2026-09-28T15:09:51.792Z",
     "width": 853,
     "height": 1844,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/running-into-sunset-78"
   },
   {
     "id": 79,
@@ -1483,7 +1553,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "itll-pass"
+    "series": "itll-pass",
+    "publicId": "offscreen/it-ll-pass-portrait-79"
   },
   {
     "id": 80,
@@ -1504,7 +1575,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "stitched-sky"
+    "series": "stitched-sky",
+    "publicId": "offscreen/stitched-sky-80"
   },
   {
     "id": 81,
@@ -1526,7 +1598,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "in-the-right-eyes"
+    "series": "in-the-right-eyes",
+    "publicId": "offscreen/in-the-right-eyes-wide-81"
   },
   {
     "id": 82,
@@ -1547,7 +1620,8 @@
     "createdAt": "2026-09-28T15:09:51.892Z",
     "width": 1672,
     "height": 941,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/spiral-horizon-82"
   },
   {
     "id": 83,
@@ -1569,7 +1643,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "into-the-pink-deep"
+    "series": "into-the-pink-deep",
+    "publicId": "offscreen/into-the-pink-deep-wide-83"
   },
   {
     "id": 84,
@@ -1591,7 +1666,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "you-must-burn"
+    "series": "you-must-burn",
+    "publicId": "offscreen/you-must-burn-wide-84"
   },
   {
     "id": 85,
@@ -1613,7 +1689,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "sparks-between-us"
+    "series": "sparks-between-us",
+    "publicId": "offscreen/sparks-between-us-wide-85"
   },
   {
     "id": 86,
@@ -1635,7 +1712,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "wheel-of-dharma"
+    "series": "wheel-of-dharma",
+    "publicId": "offscreen/the-wheel-of-dharma-86"
   },
   {
     "id": 87,
@@ -1657,7 +1735,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "wheel-of-dharma"
+    "series": "wheel-of-dharma",
+    "publicId": "offscreen/the-wheel-of-dharma-wide-87"
   },
   {
     "id": 88,
@@ -1678,7 +1757,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "krishnas-gaze"
+    "series": "krishnas-gaze",
+    "publicId": "offscreen/krishna-s-gaze-wide-88"
   },
   {
     "id": 89,
@@ -1699,7 +1779,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "krishnas-gaze"
+    "series": "krishnas-gaze",
+    "publicId": "offscreen/krishna-s-gaze-89"
   },
   {
     "id": 90,
@@ -1721,7 +1802,8 @@
     "width": 853,
     "height": 1844,
     "device": "phone",
-    "series": "radha-in-bloom"
+    "series": "radha-in-bloom",
+    "publicId": "offscreen/radha-in-bloom-90"
   },
   {
     "id": 91,
@@ -1743,7 +1825,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "radha-in-bloom"
+    "series": "radha-in-bloom",
+    "publicId": "offscreen/radha-in-bloom-wide-91"
   },
   {
     "id": 92,
@@ -1764,7 +1847,8 @@
     "width": 1672,
     "height": 941,
     "device": "desktop",
-    "series": "stitched-sky"
+    "series": "stitched-sky",
+    "publicId": "offscreen/stitched-sky-wide-92"
   },
   {
     "id": 101,
@@ -1784,7 +1868,8 @@
     "createdAt": "2026-10-02T17:22:33.221Z",
     "width": 736,
     "height": 414,
-    "device": "desktop"
+    "device": "desktop",
+    "publicId": "offscreen/but-what-if-i-can-101"
   },
   {
     "id": 102,
@@ -1805,7 +1890,8 @@
     "createdAt": "2026-10-02T17:22:33.232Z",
     "width": 561,
     "height": 998,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/no-next-time-102"
   },
   {
     "id": 103,
@@ -1826,7 +1912,8 @@
     "createdAt": "2026-10-02T17:22:33.238Z",
     "width": 570,
     "height": 991,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/blue-blade-103"
   },
   {
     "id": 104,
@@ -1847,7 +1934,8 @@
     "createdAt": "2026-10-02T17:22:33.250Z",
     "width": 561,
     "height": 998,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/krishna-s-flute-104"
   },
   {
     "id": 105,
@@ -1868,7 +1956,8 @@
     "createdAt": "2026-10-02T17:22:33.257Z",
     "width": 561,
     "height": 998,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/madhav-105"
   },
   {
     "id": 106,
@@ -1889,7 +1978,8 @@
     "createdAt": "2026-10-02T17:22:33.268Z",
     "width": 561,
     "height": 998,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/better-plans-106"
   },
   {
     "id": 107,
@@ -1911,6 +2001,7 @@
     "createdAt": "2026-10-03T11:00:33.919Z",
     "width": 941,
     "height": 1672,
-    "device": "phone"
+    "device": "phone",
+    "publicId": "offscreen/autumn-cosmos-107"
   }
 ]
