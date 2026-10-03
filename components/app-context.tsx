@@ -80,7 +80,7 @@ export function AppProvider({ initialUser, initialLikedIds, children }: {
 
   const downloadWallpaper = useCallback(async (id: number): Promise<void> => {
     if (!userRef.current) {
-      openAuth({ reason: 'Sign in to download. It only takes your name and email.', then: () => { downloadWallpaper(id); } });
+      openAuth({ reason: 'Sign in to download wallpapers.', then: () => { downloadWallpaper(id); } });
       return;
     }
     try {

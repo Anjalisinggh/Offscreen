@@ -1,6 +1,7 @@
-// Sign-up and log-in both prove the email by sending a 6-digit code to it:
-//   1. POST /api/auth/request-code  { mode: 'signup'|'login', email, name? }
-//   2. POST /api/auth/verify-code   { email, code }
+// A 6-digit emailed code proves an email address is theirs, at sign-up and for a password reset:
+//   1. POST /api/auth/request-code  { mode: 'signup', name, email, password } | { mode: 'reset', email }
+//   2. POST /api/auth/verify-code   { email, code, password? (the new one, for a reset) }
+// Logging in is POST /api/auth/login { email, password }, with no code.
 // Only a hash of the code is stored; it expires after 10 minutes, allows 5 tries, and a new one
 // can be requested every 30 seconds. Each visitor (by IP) can have at most 5 codes emailed per
 // 10 minutes, whatever addresses they type, so nobody can burn through the mail quota.

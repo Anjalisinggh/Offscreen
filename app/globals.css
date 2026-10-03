@@ -614,6 +614,8 @@ a.filter { display: inline-block; line-height: normal; }
 .auth-switch button.active { background: var(--ink); color: var(--bg); }
 .auth-field { display: block; }
 .auth-field[hidden] { display: none; }
+.auth-link { display: block; margin: -10px 0 14px auto; padding: 0; border: 0; background: none; font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.auth-link:hover { color: var(--accent); }
 .auth-field span { display: block; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
 .auth-error { min-height: 1.4em; margin: -6px 0 14px; font-size: 13px; color: var(--danger); }
 .auth-error:empty { margin-bottom: 4px; }

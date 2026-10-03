@@ -17,11 +17,13 @@ export interface StoredUser {
   createdAt: string;
   avatarUpdatedAt: string | null;
 }
+export type CodePurpose = 'signup' | 'reset';
 export interface PendingCode {
   email: string;
   codeHash: string;
-  purpose: 'signup' | 'login';
+  purpose: CodePurpose;
   name: string | null;
+  passwordHash: string | null; // chosen at sign-up, set on the account once the email is verified
   attempts: number;
   createdAt: number;
   expiresAt: number;
@@ -30,7 +32,12 @@ type Tally = Record<number, number>;
 
 export interface Store {
   kind: 'postgres' | 'json';
-  createUser(u: { name: string; email: string }): Promise<StoredUser | null>;
+  createUser(u: { name: string; email: string; passwordHash: string | null }): Promise<StoredUser | null>;
+  getPasswordHash(userId: number): Promise<string | null>;
+  setPassword(userId: number, passwordHash: string): Promise<void>;
+  countFailedLogins(email: string, windowMs: number): Promise<number>;
+  recordFailedLogin(email: string): Promise<void>;
+  clearFailedLogins(email: string): Promise<void>;
   findUserByEmail(email: string): Promise<StoredUser | null>;
   findUserById(id: number): Promise<StoredUser | null>;
   toggleLike(userId: number, wid: number): Promise<{ liked: boolean }>;
@@ -40,7 +47,7 @@ export interface Store {
   counts(): Promise<{ likes: Tally; downloads: Tally }>;
   setAvatar(userId: number, data: Buffer | null): Promise<void>;
   getAvatar(userId: number): Promise<Buffer | null>;
-  saveCode(c: { email: string; codeHash: string; purpose: 'signup' | 'login'; name: string; ttlMs: number }): Promise<void>;
+  saveCode(c: { email: string; codeHash: string; purpose: CodePurpose; name: string; passwordHash: string | null; ttlMs: number }): Promise<void>;
   getCode(email: string): Promise<PendingCode | null>;
   bumpCodeAttempts(email: string): Promise<void>;
   deleteCode(email: string): Promise<void>;
@@ -53,7 +60,9 @@ const norm = (email: string) => String(email).trim().toLowerCase();
 // ---------------------------------------------------------------- Postgres
 function postgresStore(url: string): Store {
   const local = /localhost|127\.0\.0\.1/.test(url);
-  const pool = new Pool({
+  // one connection pool per server process (kept across dev reloads, which re-run this module)
+  const g = globalThis as unknown as { offscreenPool?: Pool };
+  const pool = g.offscreenPool ||= new Pool({
     connectionString: url,
     ssl: local ? false : { rejectUnauthorized: false },
     max: 3, // each serverless instance only needs a couple of connections
@@ -101,6 +110,15 @@ function postgresStore(url: string): Store {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS code_sends_ip_idx ON code_sends (ip_hash, created_at);
+    -- passwords (scrypt hashes, see lib/password.ts); a pending sign-up keeps its hash with the code
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    ALTER TABLE email_codes ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    -- wrong-password tries per email, for slowing down guessing
+    CREATE TABLE IF NOT EXISTS failed_logins (
+      email      TEXT        NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS failed_logins_idx ON failed_logins (email, created_at);
   `).catch((e) => { ready = null; throw e; }));
 
   const COLS = 'id, name, email, created_at, avatar_updated_at';
@@ -114,11 +132,11 @@ function postgresStore(url: string): Store {
 
   return {
     kind: 'postgres',
-    async createUser({ name, email }) {
+    async createUser({ name, email, passwordHash }) {
       await init();
       const { rows } = await q(
-        `INSERT INTO users (name, email) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING ${COLS}`,
-        [name, norm(email)]);
+        `INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING RETURNING ${COLS}`,
+        [name, norm(email), passwordHash]);
       return user(rows[0]); // null = that email already has an account
     },
     async findUserByEmail(email) {
@@ -130,6 +148,30 @@ function postgresStore(url: string): Store {
       await init();
       const { rows } = await q(`SELECT ${COLS} FROM users WHERE id = $1`, [id]);
       return user(rows[0]);
+    },
+    async getPasswordHash(userId) {
+      await init();
+      const { rows } = await q('SELECT password_hash FROM users WHERE id = $1', [userId]);
+      return rows[0]?.password_hash ?? null;
+    },
+    async setPassword(userId, passwordHash) {
+      await init();
+      await q('UPDATE users SET password_hash = $2 WHERE id = $1', [userId, passwordHash]);
+    },
+    async countFailedLogins(email, windowMs) {
+      await init();
+      const { rows } = await q(`SELECT count(*)::int AS n FROM failed_logins
+                                WHERE email = $1 AND created_at > now() - ($2 || ' milliseconds')::interval`, [norm(email), String(windowMs)]);
+      return rows[0].n;
+    },
+    async recordFailedLogin(email) {
+      await init();
+      await q('INSERT INTO failed_logins (email) VALUES ($1)', [norm(email)]);
+      await q("DELETE FROM failed_logins WHERE created_at < now() - interval '1 day'");
+    },
+    async clearFailedLogins(email) {
+      await init();
+      await q('DELETE FROM failed_logins WHERE email = $1', [norm(email)]);
     },
     async toggleLike(userId, wid) {
       await init();
@@ -170,19 +212,19 @@ function postgresStore(url: string): Store {
       const { rows } = await q('SELECT avatar FROM users WHERE id = $1 AND avatar IS NOT NULL', [userId]);
       return rows[0] ? rows[0].avatar : null;
     },
-    async saveCode({ email, codeHash, purpose, name, ttlMs }) {
+    async saveCode({ email, codeHash, purpose, name, passwordHash, ttlMs }) {
       await init();
-      await q(`INSERT INTO email_codes (email, code_hash, purpose, name, attempts, created_at, expires_at)
-               VALUES ($1, $2, $3, $4, 0, now(), now() + ($5 || ' milliseconds')::interval)
-               ON CONFLICT (email) DO UPDATE SET code_hash = $2, purpose = $3, name = $4, attempts = 0,
+      await q(`INSERT INTO email_codes (email, code_hash, purpose, name, password_hash, attempts, created_at, expires_at)
+               VALUES ($1, $2, $3, $4, $6, 0, now(), now() + ($5 || ' milliseconds')::interval)
+               ON CONFLICT (email) DO UPDATE SET code_hash = $2, purpose = $3, name = $4, password_hash = $6, attempts = 0,
                  created_at = now(), expires_at = now() + ($5 || ' milliseconds')::interval`,
-        [norm(email), codeHash, purpose, name || null, String(ttlMs)]);
+        [norm(email), codeHash, purpose, name || null, String(ttlMs), passwordHash]);
     },
     async getCode(email) {
       await init();
       const { rows } = await q('SELECT * FROM email_codes WHERE email = $1', [norm(email)]);
       const r = rows[0];
-      return r ? { email: r.email, codeHash: r.code_hash, purpose: r.purpose, name: r.name, attempts: r.attempts,
+      return r ? { email: r.email, codeHash: r.code_hash, purpose: r.purpose, name: r.name, passwordHash: r.password_hash ?? null, attempts: r.attempts,
         createdAt: new Date(r.created_at).getTime(), expiresAt: new Date(r.expires_at).getTime() } : null;
     },
     async bumpCodeAttempts(email) {
@@ -210,7 +252,8 @@ function postgresStore(url: string): Store {
 
 // -------------------------------------------------------------------- JSON
 interface JsonDb {
-  users: (StoredUser & { avatar?: string | null })[];
+  users: (StoredUser & { avatar?: string | null; passwordHash?: string | null })[];
+  failedLogins?: { email: string; at: number }[];
   likes: { userId: number; wid: number; at: string }[];
   downloads: { userId: number; wid: number; at: string }[];
   codes?: Record<string, PendingCode>;
@@ -232,18 +275,40 @@ function jsonStore(dir: string): Store {
 
   return {
     kind: 'json',
-    async createUser({ name, email }) {
+    async createUser({ name, email, passwordHash }) {
       const db = load();
       if (db.users.some((u) => norm(u.email) === norm(email))) return null;
       // like a Postgres sequence, never hand out an id again, even after an account is deleted
       db.lastUserId = Math.max(db.lastUserId || 0, db.users.reduce((m, x) => Math.max(m, x.id), 0)) + 1;
-      const u = { id: db.lastUserId, name, email: norm(email), createdAt: new Date().toISOString(), avatarUpdatedAt: null };
+      const u = { id: db.lastUserId, name, email: norm(email), createdAt: new Date().toISOString(), avatarUpdatedAt: null, passwordHash };
       db.users.push(u);
       save(db);
       return user(u);
     },
     async findUserByEmail(email) { return user(load().users.find((u) => norm(u.email) === norm(email))); },
     async findUserById(id) { return user(load().users.find((u) => u.id === id)); },
+    async getPasswordHash(userId) { return load().users.find((u) => u.id === userId)?.passwordHash ?? null; },
+    async setPassword(userId, passwordHash) {
+      const db = load();
+      const u = db.users.find((x) => x.id === userId);
+      if (u) { u.passwordHash = passwordHash; save(db); }
+    },
+    async countFailedLogins(email, windowMs) {
+      const since = Date.now() - windowMs;
+      return (load().failedLogins || []).filter((f) => f.email === norm(email) && f.at > since).length;
+    },
+    async recordFailedLogin(email) {
+      const db = load();
+      const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      db.failedLogins = (db.failedLogins || []).filter((f) => f.at > dayAgo);
+      db.failedLogins.push({ email: norm(email), at: Date.now() });
+      save(db);
+    },
+    async clearFailedLogins(email) {
+      const db = load();
+      db.failedLogins = (db.failedLogins || []).filter((f) => f.email !== norm(email));
+      save(db);
+    },
     async toggleLike(userId, wid) {
       const db = load();
       const i = db.likes.findIndex((l) => l.userId === userId && l.wid === wid);
@@ -279,10 +344,10 @@ function jsonStore(dir: string): Store {
       const u = load().users.find((x) => x.id === userId);
       return u && u.avatar ? Buffer.from(u.avatar, 'base64') : null;
     },
-    async saveCode({ email, codeHash, purpose, name, ttlMs }) {
+    async saveCode({ email, codeHash, purpose, name, passwordHash, ttlMs }) {
       const db = load();
       db.codes = db.codes || {};
-      db.codes[norm(email)] = { email: norm(email), codeHash, purpose, name: name || null, attempts: 0, createdAt: Date.now(), expiresAt: Date.now() + ttlMs };
+      db.codes[norm(email)] = { email: norm(email), codeHash, purpose, name: name || null, passwordHash, attempts: 0, createdAt: Date.now(), expiresAt: Date.now() + ttlMs };
       save(db);
     },
     async getCode(email) { return (load().codes || {})[norm(email)] || null; },
@@ -312,9 +377,7 @@ function jsonStore(dir: string): Store {
 
 export const IS_SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-// one store per server instance; on Vercel without DATABASE_URL the JSON file lives in /tmp
-// (and is lost), which is only meant as a fallback
-const globalStore = globalThis as unknown as { offscreenStore?: Store };
-export const store: Store = globalStore.offscreenStore ||= process.env.DATABASE_URL
+// on Vercel without DATABASE_URL the JSON file lives in /tmp (and is lost), which is only a fallback
+export const store: Store = process.env.DATABASE_URL
   ? postgresStore(process.env.DATABASE_URL)
   : jsonStore(IS_SERVERLESS ? path.join('/tmp', 'offscreen-data') : path.join(process.cwd(), 'data'));
