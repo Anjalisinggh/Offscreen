@@ -1,4 +1,4 @@
-// Sends the 6-digit sign-in code.
+// Sends the 6-digit code for a sign-up or a password reset.
 //
 // Set SMTP_URL to any SMTP server, for example:
 //   Gmail (with an app password):  smtps://you%40gmail.com:APP_PASSWORD@smtp.gmail.com:465
@@ -19,9 +19,9 @@ function getTransport() {
 
 export const canSendEmail = () => !!process.env.SMTP_URL;
 
-export async function sendCode({ to, code, purpose }: { to: string; code: string; purpose: 'signup' | 'login' }) {
+export async function sendCode({ to, code, purpose }: { to: string; code: string; purpose: 'signup' | 'reset' }) {
   const t = getTransport();
-  const action = purpose === 'signup' ? 'finish creating your account' : 'log in';
+  const action = purpose === 'signup' ? 'finish creating your account' : 'set your new password';
   if (!t) {
     console.log(`\n[dev] Offscreen code for ${to}: ${code}  (set SMTP_URL to send real emails)\n`);
     return;

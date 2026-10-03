@@ -1,7 +1,11 @@
+// Sends a 6-digit code to prove the email is theirs: once at sign-up (with the chosen password,
+// which is set on the account when the code is entered) and when resetting a forgotten password.
+// Logging in itself is email + password (/api/auth/login), no code.
 import { NextResponse } from 'next/server';
 import { store, IS_SERVERLESS } from '@/lib/store';
 import { sendCode, canSendEmail } from '@/lib/mailer';
 import { fail, readJson } from '@/lib/http';
+import { hashPassword, passwordProblem } from '@/lib/password';
 import {
   CODE_TTL_MS, RESEND_AFTER_MS, SENDS_PER_IP, SENDS_WINDOW_MS,
   EMAIL_RE, cleanEmail, hashCode, newCode, clientIp, hashIp,
@@ -9,16 +13,20 @@ import {
 
 export async function POST(req: Request) {
   const body = await readJson(req);
-  const mode = body.mode === 'login' ? 'login' : 'signup';
+  const mode = body.mode === 'reset' ? 'reset' : 'signup';
   const email = cleanEmail(body.email);
   const name = String(body.name || '').trim().slice(0, 60);
   if (mode === 'signup' && !name) return fail(400, 'Please enter your name');
   if (!EMAIL_RE.test(email) || email.length > 200) return fail(400, 'Please enter a valid email address');
+  if (mode === 'signup') {
+    const problem = passwordProblem(body.password);
+    if (problem) return fail(400, problem);
+  }
   if (IS_SERVERLESS && !canSendEmail()) return fail(503, "Sign-in emails aren't set up on this site yet. Please try again later.");
 
   const existing = await store.findUserByEmail(email);
   if (mode === 'signup' && existing) return fail(409, 'That email already has an account. Log in instead.');
-  if (mode === 'login' && !existing) return fail(404, 'No account with that email yet. Sign up first.');
+  if (mode === 'reset' && !existing) return fail(404, 'No account with that email yet. Sign up first.');
 
   const pending = await store.getCode(email);
   if (pending && Date.now() - pending.createdAt < RESEND_AFTER_MS) {
@@ -35,7 +43,8 @@ export async function POST(req: Request) {
   }
 
   const code = newCode();
-  await store.saveCode({ email, codeHash: hashCode(email, code), purpose: mode, name, ttlMs: CODE_TTL_MS });
+  const passwordHash = mode === 'signup' ? await hashPassword(String(body.password)) : null;
+  await store.saveCode({ email, codeHash: hashCode(email, code), purpose: mode, name, passwordHash, ttlMs: CODE_TTL_MS });
   try {
     await sendCode({ to: email, code, purpose: mode });
   } catch (err) {
