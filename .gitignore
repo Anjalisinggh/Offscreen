@@ -26,3 +26,8 @@ public/display-avif/
 *.jpeg
 *.webp
 *.avif
+
+# Next.js build output
+.next/
+next-env.d.ts
+*.tsbuildinfo

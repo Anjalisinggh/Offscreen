@@ -2,26 +2,37 @@
   "name": "offscreen",
   "version": "1.0.0",
   "description": "Offscreen, a collection for your screen",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "generate-data": "node generate-data.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "upload-images": "node scripts/upload-to-cloudinary.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "generate-data": "node scripts/generate-data.mts",
+    "upload-images": "node scripts/upload-to-cloudinary.mts",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "wallpapers",
     "gallery",
-    "express"
+    "nextjs"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "cloudinary": "^2.11.0",
-    "cookie-parser": "^1.4.7",
-    "express": "^5.2.1",
+    "next": "^16.3.8",
     "nodemailer": "^10.0.13",
     "pg": "^8.23.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
     "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3"
   }
 }

@@ -1,28 +1,66 @@
-// Everything the site remembers about people: accounts, likes and downloads.
+// Everything the site remembers about people: accounts, likes, downloads and sign-in codes.
 // (The wallpapers themselves are committed content in data/wallpapers.json.)
 //
 // Two backends with the same async interface:
-//  - Postgres, when DATABASE_URL is set (Supabase, Neon, any Postgres). This is the one to use
-//    in production: it survives restarts and is shared by every Vercel instance.
-//  - A JSON file (data/db.json) otherwise, so `npm start` works with zero setup.
+//  - Postgres, when DATABASE_URL is set (Neon on Vercel). This is the one to use in production:
+//    it survives restarts and is shared by every Vercel instance. Tables are created on first use.
+//  - A JSON file (data/db.json) otherwise, so `npm run dev` works with zero setup.
+import 'server-only';
+import fs from 'fs';
+import path from 'path';
+import { Pool } from 'pg';
 
-const fs = require('fs');
-const path = require('path');
+export interface StoredUser {
+  id: number;
+  name: string;
+  email: string;
+  createdAt: string;
+  avatarUpdatedAt: string | null;
+}
+export interface PendingCode {
+  email: string;
+  codeHash: string;
+  purpose: 'signup' | 'login';
+  name: string | null;
+  attempts: number;
+  createdAt: number;
+  expiresAt: number;
+}
+type Tally = Record<number, number>;
 
-const norm = (email) => String(email).trim().toLowerCase();
+export interface Store {
+  kind: 'postgres' | 'json';
+  createUser(u: { name: string; email: string }): Promise<StoredUser | null>;
+  findUserByEmail(email: string): Promise<StoredUser | null>;
+  findUserById(id: number): Promise<StoredUser | null>;
+  toggleLike(userId: number, wid: number): Promise<{ liked: boolean }>;
+  likedIds(userId: number): Promise<number[]>;
+  recordDownload(userId: number, wid: number): Promise<void>;
+  downloadedIds(userId: number): Promise<number[]>;
+  counts(): Promise<{ likes: Tally; downloads: Tally }>;
+  setAvatar(userId: number, data: Buffer | null): Promise<void>;
+  getAvatar(userId: number): Promise<Buffer | null>;
+  saveCode(c: { email: string; codeHash: string; purpose: 'signup' | 'login'; name: string; ttlMs: number }): Promise<void>;
+  getCode(email: string): Promise<PendingCode | null>;
+  bumpCodeAttempts(email: string): Promise<void>;
+  deleteCode(email: string): Promise<void>;
+  countCodeSends(ipHash: string, windowMs: number): Promise<{ count: number; oldest: number | null }>;
+  recordCodeSend(ipHash: string): Promise<void>;
+}
+
+const norm = (email: string) => String(email).trim().toLowerCase();
 
 // ---------------------------------------------------------------- Postgres
-function postgresStore(url) {
-  const { Pool } = require('pg');
+function postgresStore(url: string): Store {
   const local = /localhost|127\.0\.0\.1/.test(url);
   const pool = new Pool({
     connectionString: url,
     ssl: local ? false : { rejectUnauthorized: false },
     max: 3, // each serverless instance only needs a couple of connections
   });
-  const q = (text, params) => pool.query(text, params);
+  const q = (text: string, params?: unknown[]) => pool.query(text, params);
 
-  let ready;
+  let ready: Promise<unknown> | null = null;
   const init = () => (ready ||= q(`
     CREATE TABLE IF NOT EXISTS users (
       id         BIGSERIAL PRIMARY KEY,
@@ -66,17 +104,22 @@ function postgresStore(url) {
   `).catch((e) => { ready = null; throw e; }));
 
   const COLS = 'id, name, email, created_at, avatar_updated_at';
-  const user = (r) => r && { id: Number(r.id), name: r.name, email: r.email, createdAt: r.created_at, avatarUpdatedAt: r.avatar_updated_at };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const user = (r: any): StoredUser | null => r ? {
+    id: Number(r.id), name: r.name, email: r.email,
+    createdAt: new Date(r.created_at).toISOString(),
+    avatarUpdatedAt: r.avatar_updated_at ? new Date(r.avatar_updated_at).toISOString() : null,
+  } : null;
+  const toMap = (rows: { wallpaper_id: number; n: number }[]): Tally => Object.fromEntries(rows.map((r) => [r.wallpaper_id, r.n]));
 
   return {
     kind: 'postgres',
-    init,
     async createUser({ name, email }) {
       await init();
       const { rows } = await q(
         `INSERT INTO users (name, email) VALUES ($1, $2) ON CONFLICT DO NOTHING RETURNING ${COLS}`,
         [name, norm(email)]);
-      return rows[0] ? user(rows[0]) : null; // null = that email already has an account
+      return user(rows[0]); // null = that email already has an account
     },
     async findUserByEmail(email) {
       await init();
@@ -116,7 +159,6 @@ function postgresStore(url) {
         q('SELECT wallpaper_id, count(*)::int AS n FROM likes GROUP BY wallpaper_id'),
         q('SELECT wallpaper_id, count(*)::int AS n FROM downloads GROUP BY wallpaper_id'),
       ]);
-      const toMap = (rows) => Object.fromEntries(rows.map((r) => [r.wallpaper_id, r.n]));
       return { likes: toMap(l.rows), downloads: toMap(d.rows) };
     },
     async setAvatar(userId, data) {
@@ -140,8 +182,8 @@ function postgresStore(url) {
       await init();
       const { rows } = await q('SELECT * FROM email_codes WHERE email = $1', [norm(email)]);
       const r = rows[0];
-      return r && { email: r.email, codeHash: r.code_hash, purpose: r.purpose, name: r.name, attempts: r.attempts,
-        createdAt: new Date(r.created_at).getTime(), expiresAt: new Date(r.expires_at).getTime() };
+      return r ? { email: r.email, codeHash: r.code_hash, purpose: r.purpose, name: r.name, attempts: r.attempts,
+        createdAt: new Date(r.created_at).getTime(), expiresAt: new Date(r.expires_at).getTime() } : null;
     },
     async bumpCodeAttempts(email) {
       await init();
@@ -163,36 +205,39 @@ function postgresStore(url) {
       await q('INSERT INTO code_sends (ip_hash) VALUES ($1)', [ipHash]);
       await q("DELETE FROM code_sends WHERE created_at < now() - interval '1 day'");
     },
-    async totals() {
-      await init();
-      const { rows } = await q(`SELECT
-        (SELECT count(*)::int FROM users) AS users,
-        (SELECT count(*)::int FROM likes) AS likes,
-        (SELECT count(*)::int FROM downloads) AS downloads`);
-      return rows[0];
-    },
   };
 }
 
 // -------------------------------------------------------------------- JSON
-function jsonStore(dir) {
+interface JsonDb {
+  users: (StoredUser & { avatar?: string | null })[];
+  likes: { userId: number; wid: number; at: string }[];
+  downloads: { userId: number; wid: number; at: string }[];
+  codes?: Record<string, PendingCode>;
+  codeSends?: { ipHash: string; at: number }[];
+  lastUserId?: number;
+}
+
+function jsonStore(dir: string): Store {
   const file = path.join(dir, 'db.json');
-  const load = () => {
+  const load = (): JsonDb => {
     try { return JSON.parse(fs.readFileSync(file, 'utf8')); }
     catch { return { users: [], likes: [], downloads: [], codes: {} }; }
   };
-  const save = (db) => fs.writeFileSync(file, JSON.stringify(db, null, 2));
-  const user = (u) => u && { id: u.id, name: u.name, email: u.email, createdAt: u.createdAt, avatarUpdatedAt: u.avatarUpdatedAt || null };
+  const save = (db: JsonDb) => { fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(file, JSON.stringify(db, null, 2)); };
+  const user = (u: JsonDb['users'][number] | undefined): StoredUser | null => u ? {
+    id: u.id, name: u.name, email: u.email, createdAt: u.createdAt, avatarUpdatedAt: u.avatarUpdatedAt || null,
+  } : null;
+  const tally = (rows: { wid: number }[]) => rows.reduce<Tally>((m, r) => ((m[r.wid] = (m[r.wid] || 0) + 1), m), {});
 
   return {
     kind: 'json',
-    async init() { fs.mkdirSync(dir, { recursive: true }); },
     async createUser({ name, email }) {
       const db = load();
       if (db.users.some((u) => norm(u.email) === norm(email))) return null;
       // like a Postgres sequence, never hand out an id again, even after an account is deleted
       db.lastUserId = Math.max(db.lastUserId || 0, db.users.reduce((m, x) => Math.max(m, x.id), 0)) + 1;
-      const u = { id: db.lastUserId, name, email: norm(email), createdAt: new Date().toISOString() };
+      const u = { id: db.lastUserId, name, email: norm(email), createdAt: new Date().toISOString(), avatarUpdatedAt: null };
       db.users.push(u);
       save(db);
       return user(u);
@@ -214,13 +259,12 @@ function jsonStore(dir) {
       save(db);
     },
     async downloadedIds(userId) {
-      const seen = new Set();
+      const seen = new Set<number>();
       return load().downloads.filter((d) => d.userId === userId).reverse()
-        .map((d) => d.wid).filter((w) => !seen.has(w) && seen.add(w));
+        .map((d) => d.wid).filter((w) => !seen.has(w) && !!seen.add(w));
     },
     async counts() {
       const db = load();
-      const tally = (rows) => rows.reduce((m, r) => ((m[r.wid] = (m[r.wid] || 0) + 1), m), {});
       return { likes: tally(db.likes), downloads: tally(db.downloads) };
     },
     async setAvatar(userId, data) {
@@ -263,15 +307,14 @@ function jsonStore(dir) {
       db.codeSends.push({ ipHash, at: Date.now() });
       save(db);
     },
-    async totals() {
-      const db = load();
-      return { users: db.users.length, likes: db.likes.length, downloads: db.downloads.length };
-    },
   };
 }
 
-function createStore({ dataDir, databaseUrl }) {
-  return databaseUrl ? postgresStore(databaseUrl) : jsonStore(dataDir);
-}
+export const IS_SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-module.exports = { createStore };
+// one store per server instance; on Vercel without DATABASE_URL the JSON file lives in /tmp
+// (and is lost), which is only meant as a fallback
+const globalStore = globalThis as unknown as { offscreenStore?: Store };
+export const store: Store = globalStore.offscreenStore ||= process.env.DATABASE_URL
+  ? postgresStore(process.env.DATABASE_URL)
+  : jsonStore(IS_SERVERLESS ? path.join('/tmp', 'offscreen-data') : path.join(process.cwd(), 'data'));
