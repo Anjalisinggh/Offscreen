@@ -151,11 +151,17 @@ const publicUser = (u) => u && {
 //   1. POST /api/auth/request-code  { mode: 'signup'|'login', email, name? }
 //   2. POST /api/auth/verify-code   { email, code }
 // Only a hash of the code is stored; it expires after 10 minutes, allows 5 tries, and a new one
-// can be requested every 30 seconds.
+// can be requested every 30 seconds. Each visitor (by IP) can have at most 5 codes emailed per
+// 10 minutes, whatever addresses they type, so nobody can burn through the mail quota.
 const CODE_TTL_MS = 10 * 60 * 1000;
 const RESEND_AFTER_MS = 30 * 1000;
 const MAX_TRIES = 5;
+const SENDS_PER_IP = 5;
+const SENDS_WINDOW_MS = 10 * 60 * 1000;
 const hashCode = (email, code) => crypto.createHmac('sha256', SESSION_SECRET).update(`${email}:${code}`).digest('hex');
+// Vercel sets x-real-ip / x-forwarded-for itself; only a hash of the IP is stored
+const clientIp = (req) => req.headers['x-real-ip'] || String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
+const hashIp = (ip) => crypto.createHmac('sha256', SESSION_SECRET).update(`ip:${ip}`).digest('hex');
 
 app.post('/api/auth/request-code', async (req, res) => {
   const mode = req.body.mode === 'login' ? 'login' : 'signup';
@@ -177,6 +183,14 @@ app.post('/api/auth/request-code', async (req, res) => {
     return res.status(429).json({ error: `Please wait ${wait}s before asking for another code`, retryAfter: wait });
   }
 
+  const ipHash = hashIp(clientIp(req));
+  const sends = await store.countCodeSends(ipHash, SENDS_WINDOW_MS);
+  if (sends.count >= SENDS_PER_IP) {
+    const wait = Math.max(1, Math.ceil((sends.oldest + SENDS_WINDOW_MS - Date.now()) / 1000));
+    const mins = Math.ceil(wait / 60);
+    return res.status(429).json({ error: `Too many codes requested. Please try again in ${mins} minute${mins === 1 ? '' : 's'}.`, retryAfter: wait });
+  }
+
   const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
   await store.saveCode({ email, codeHash: hashCode(email, code), purpose: mode, name, ttlMs: CODE_TTL_MS });
   try {
@@ -186,6 +200,7 @@ app.post('/api/auth/request-code', async (req, res) => {
     await store.deleteCode(email);
     return res.status(502).json({ error: "We couldn't send the email. Please check the address and try again." });
   }
+  await store.recordCodeSend(ipHash);
   res.json({ ok: true, email, resendAfter: RESEND_AFTER_MS / 1000 });
 });
 
