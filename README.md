@@ -15,7 +15,7 @@ Offscreen is a small, self-hosted wallpaper gallery. Browse, like and download p
 - **Phone and desktop wallpapers**, detected automatically by image aspect ratio. Each wallpaper opens in a realistic preview — an iPhone mockup with a live lock screen clock, or a MacBook mockup with a menu bar and dock.
 - **Collections and search** by style, plus tag-based discovery ("you might also like").
 - **Light and dark themes**, remembered per browser.
-- **Fast to load.** Every wallpaper is served as a small thumbnail for grid cards and a mid-size image for the wallpaper page, each in AVIF with a WebP fallback; the original file is only sent for the actual Download.
+- **Fast to load.** Every wallpaper is served from Cloudinary as a small thumbnail for grid cards and a mid-size image for the wallpaper page, in AVIF or WebP; the original file is only sent for the actual Download.
 
 ## Getting started
 
@@ -64,24 +64,29 @@ Codes expire after 10 minutes, allow 5 tries, can be re-sent every 30 seconds, a
 
 The `likes` and `downloads` numbers in `data/wallpapers.json` are starting totals; the counts shown on the site are those plus the rows in the database.
 
+## Images (Cloudinary)
+
+Wallpaper images live on Cloudinary, not in this repo. Set `CLOUDINARY_URL` (Cloudinary dashboard → API Keys → "API environment variable") locally in `.env` and on Vercel.
+
+They're uploaded as **authenticated** assets, so nothing can be fetched from Cloudinary without a URL signed with the API secret. The server signs exactly three kinds of URL (`media.js`): a 520px card thumbnail, an 1100px preview for the wallpaper page, and — only for a signed-in user pressing Download — the original. Cloudinary picks AVIF or WebP for the previews. Each image is re-encoded without its metadata before upload. Right-click "Save image" and dragging are turned off on wallpaper images, and the previews it would save are only the smaller sizes anyway.
+
+`npm run upload-images` uploads every wallpaper in `data/wallpapers.json` that has no `publicId` yet (it was used once to move the library over).
+
 ## Project structure
 
 ```
 server.js             Express API + static file server
 store.js              Accounts, photos, sign-in codes, likes, downloads: Postgres (DATABASE_URL) or data/db.json
 mailer.js             Sends the 6-digit sign-in code over SMTP (SMTP_URL)
-generate-data.js      Imports new images from a source folder into public/images + data/wallpapers.json
+media.js              Signed Cloudinary URLs for thumbnails, previews and downloads (CLOUDINARY_URL)
+generate-data.js      Uploads new images from a source folder to Cloudinary + adds them to data/wallpapers.json
+scripts/upload-to-cloudinary.js   Strips metadata and uploads wallpapers to Cloudinary
 data/                 wallpapers.json, categories.json (committed); db.json (local only, gitignored)
 public/
   index.html          App shell
   css/style.css       Design system (light + dark themes)
   js/app.js           Single-page app: routing, rendering, all interactions
-  images/             Full-resolution wallpapers (only sent for Download)
-  thumbs/, thumbs-avif/     520px previews for grid cards (WebP + AVIF)
-  display/, display-avif/   1100px previews for the wallpaper page and collection tiles
 ```
-
-The generated preview folders are committed (Vercel's filesystem can't generate them at request time), and are only a fraction of `images/`'s size. They're rebuilt automatically for any new wallpaper when the server starts locally.
 
 ## Adding your own wallpapers
 
@@ -91,17 +96,15 @@ Drop new images into the folder `generate-data.js` reads from (see `SRC_DIR` at 
 npm run generate-data
 ```
 
-This copies new images into `public/images`, detects phone vs. desktop by aspect ratio, and appends them to `data/wallpapers.json`. Edit titles, tags and collections in that file, then start the server once to generate the previews, and commit.
+This uploads each new image to Cloudinary (without its metadata), detects phone vs. desktop by aspect ratio, and appends it to `data/wallpapers.json`. The source file is renamed to the wallpaper's own file name, so no tool- or camera-given name is kept. Edit titles, tags and collections in `data/wallpapers.json`, then commit.
 
 ## Deploying to Vercel
 
-The project deploys to Vercel as is: `server.js` exports the Express app, and everything in `public/` is served from Vercel's CDN. Add `DATABASE_URL` as described above.
-
-Static files under `public/` bypass the Express app on Vercel, so the `Cache-Control` header `server.js` sets only applies locally. `vercel.json` sets a one-year immutable cache for the image folders; if you replace a wallpaper's image, give the new file a different name rather than overwriting it.
+The project deploys to Vercel as is: `server.js` exports the Express app, and everything in `public/` is served from Vercel's CDN. Add `DATABASE_URL`, `SMTP_URL`, `MAIL_FROM` and `CLOUDINARY_URL` as described above.
 
 ## Tech stack
 
-Node.js, Express, Postgres (`pg`), Nodemailer, and vanilla JavaScript on the front end (no framework, no build step). Image resizing via [sharp](https://sharp.pixelplumbing.com/).
+Node.js, Express, Postgres (`pg`), Nodemailer, Cloudinary, and vanilla JavaScript on the front end (no framework, no build step). Profile photos and upload clean-up via [sharp](https://sharp.pixelplumbing.com/).
 
 ## License
 

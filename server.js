@@ -10,6 +10,7 @@ try { process.loadEnvFile(path.join(__dirname, '.env')); } catch {}
 const cookieParser = require('cookie-parser');
 const { createStore } = require('./store');
 const { sendCode, canSendEmail } = require('./mailer');
+const media = require('./media');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,69 +46,24 @@ if (IS_SERVERLESS && store.kind === 'json') {
   console.warn('DATABASE_URL is not set: accounts, likes and downloads will not survive on Vercel.');
 }
 
-// ---------- images & thumbnails ----------
+// ---------- images ----------
+// Wallpapers are served from Cloudinary (see media.js); this app only hands out signed URLs.
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const IMAGES_DIR = path.join(PUBLIC_DIR, 'images');
-const THUMBS_DIR = path.join(PUBLIC_DIR, 'thumbs');
-const DISPLAY_DIR = path.join(PUBLIC_DIR, 'display');
-const THUMBS_AVIF_DIR = path.join(PUBLIC_DIR, 'thumbs-avif');
-const DISPLAY_AVIF_DIR = path.join(PUBLIC_DIR, 'display-avif');
+if (!media.configured()) console.warn('CLOUDINARY_URL is not set: wallpaper images will not load.');
 
-// sharp is only needed to make thumbnails and read upload sizes, so load it lazily
+// sharp is only needed to resize profile photos, so load it lazily
 let sharpLib;
 function sharp(...args) {
   sharpLib = sharpLib || require('sharp');
   return sharpLib(...args);
 }
 
-// Two derived sizes per wallpaper, both much lighter than the original upload (often 1-3MB):
-//  - thumbs (520px):   grid/rail cards, where dozens can be on screen at once
-//  - display (1100px): the single large image on a wallpaper's own page and on collection
-//                       tiles — sharp at those sizes, but nowhere near the full original
-// Each also gets an AVIF twin (smaller again than WebP for photographic images); the page
-// picks whichever the browser supports via a <picture> element, WebP if neither does.
-// The original file is only ever sent back whole for the actual Download button.
-async function ensureThumb(filename) {
-  const out = path.join(THUMBS_DIR, filename + '.webp');
-  if (!fs.existsSync(out)) {
-    await sharp(path.join(IMAGES_DIR, filename)).resize({ width: 520, withoutEnlargement: true }).webp({ quality: 78 }).toFile(out);
-  }
-  const outAvif = path.join(THUMBS_AVIF_DIR, filename + '.avif');
-  if (!fs.existsSync(outAvif)) {
-    await sharp(path.join(IMAGES_DIR, filename)).resize({ width: 520, withoutEnlargement: true }).avif({ quality: 50, effort: 4 }).toFile(outAvif);
-  }
-}
-async function ensureDisplay(filename) {
-  const out = path.join(DISPLAY_DIR, filename + '.webp');
-  if (!fs.existsSync(out)) {
-    await sharp(path.join(IMAGES_DIR, filename)).resize({ width: 1100, withoutEnlargement: true }).webp({ quality: 82 }).toFile(out);
-  }
-  const outAvif = path.join(DISPLAY_AVIF_DIR, filename + '.avif');
-  if (!fs.existsSync(outAvif)) {
-    await sharp(path.join(IMAGES_DIR, filename)).resize({ width: 1100, withoutEnlargement: true }).avif({ quality: 50, effort: 4 }).toFile(outAvif);
-  }
-}
-
-// all four are committed to the repo; locally any missing ones (e.g. new uploads) are generated
-if (!IS_SERVERLESS) {
-  (async () => {
-    for (const dir of [THUMBS_DIR, DISPLAY_DIR, THUMBS_AVIF_DIR, DISPLAY_AVIF_DIR]) fs.mkdirSync(dir, { recursive: true });
-    for (const w of readJSON(WALLPAPERS_FILE)) {
-      try { await ensureThumb(w.filename); await ensureDisplay(w.filename); } catch (e) { console.warn('resize failed', w.filename, e.message); }
-    }
-    console.log('Thumbnails ready');
-  })();
-}
-
 app.use(express.json());
 app.use(cookieParser());
-// images can be cached; html/css/js are revalidated so design changes show up immediately
+// html/css/js are revalidated so design changes show up immediately
 // (on Vercel, files in public/ are served by the CDN before requests reach this app)
 app.use(express.static(PUBLIC_DIR, {
-  setHeaders(res, filePath) {
-    const isImage = /[\\/](images|thumbs|thumbs-avif|display|display-avif)[\\/]/.test(filePath);
-    res.setHeader('Cache-Control', isImage ? 'public, max-age=86400' : 'no-cache');
-  },
+  setHeaders(res) { res.setHeader('Cache-Control', 'no-cache'); },
 }));
 
 // ---------- auth: name + email to sign up, email alone to log in ----------
@@ -277,10 +233,46 @@ async function loadWallpapers() {
   return items.map((w) => ({ ...w, likes: (w.likes || 0) + (c.likes[w.id] || 0), downloads: (w.downloads || 0) + (c.downloads[w.id] || 0) }));
 }
 
+// What the site is told about a wallpaper: its signed preview URLs, never the internal fields
+// (source file name, storage id, original file name) and never a URL for the original.
+function publicWallpaper(w) {
+  const { source, publicId, filename, ...rest } = w;
+  return { ...rest, thumb: media.thumbUrl(w), display: media.displayUrl(w) };
+}
+
+// collapses phone/desktop crops of the same artwork to one result
+function dedupeSeries(items) {
+  const seen = new Set();
+  return items.filter(w => !w.series || (!seen.has(w.series) && seen.add(w.series)));
+}
+function sortWallpapers(items, sort) {
+  if (sort === 'trending') {
+    // activity weighted toward recently added wallpapers
+    const score = w => (w.likes * 2 + w.downloads) / Math.pow((Date.now() - new Date(w.createdAt)) / 86400000 + 2, 0.8);
+    return [...items].sort((a, b) => score(b) - score(a));
+  }
+  if (sort === 'popular') return [...items].sort((a, b) => b.likes - a.likes);
+  if (sort === 'new') return [...items].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  if (sort === 'featured') return items.filter(w => w.featured);
+  return items;
+}
+
 // ---------- wallpapers ----------
+// everything the home page needs in one request
+app.get('/api/home', async (req, res) => {
+  const all = dedupeSeries((await loadWallpapers()).map(publicWallpaper));
+  res.json({
+    all,
+    trending: sortWallpapers(all, 'trending'),
+    fresh: sortWallpapers(all, 'new'),
+    popular: sortWallpapers(all, 'popular'),
+    categories: readJSON(CATEGORIES_FILE),
+  });
+});
+
 app.get('/api/wallpapers', async (req, res) => {
   const { category, q, sort, device, dedupe } = req.query;
-  let items = await loadWallpapers();
+  let items = (await loadWallpapers()).map(publicWallpaper);
 
   if (device === 'phone' || device === 'desktop') {
     items = items.filter(w => w.device === device);
@@ -299,34 +291,15 @@ app.get('/api/wallpapers', async (req, res) => {
   // dedupe=1 collapses phone/desktop crops of the same artwork to one result (run after the
   // filters above so a device filter still keeps its own member of the pair). Public browsing
   // views pass this; the plain list (used for counts) leaves it off.
-  if (dedupe === '1') {
-    const seenSeries = new Set();
-    items = items.filter(w => {
-      if (!w.series) return true;
-      if (seenSeries.has(w.series)) return false;
-      seenSeries.add(w.series);
-      return true;
-    });
-  }
-  if (sort === 'trending') {
-    // activity weighted toward recently added wallpapers
-    const score = w => (w.likes * 2 + w.downloads) / Math.pow((Date.now() - new Date(w.createdAt)) / 86400000 + 2, 0.8);
-    items = [...items].sort((a, b) => score(b) - score(a));
-  } else if (sort === 'popular') {
-    items = [...items].sort((a, b) => b.likes - a.likes);
-  } else if (sort === 'new') {
-    items = [...items].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  } else if (sort === 'featured') {
-    items = items.filter(w => w.featured);
-  }
-  res.json(items);
+  if (dedupe === '1') items = dedupeSeries(items);
+  res.json(sortWallpapers(items, sort));
 });
 
 app.get('/api/wallpapers/:id', async (req, res) => {
   const items = await loadWallpapers();
   const item = items.find(w => w.id === Number(req.params.id));
   if (!item) return res.status(404).json({ error: 'Not found' });
-  res.json(item);
+  res.json(publicWallpaper(item));
 });
 
 app.get('/api/wallpapers/:id/similar', async (req, res) => {
@@ -353,7 +326,7 @@ app.get('/api/wallpapers/:id/similar', async (req, res) => {
       return true;
     })
     .slice(0, 8)
-    .map(x => x.w);
+    .map(x => publicWallpaper(x.w));
   res.json(similar);
 });
 
@@ -372,7 +345,7 @@ app.post('/api/wallpapers/:id/like', requireUser, async (req, res) => {
 
 async function wallpapersByIds(ids) {
   const byId = new Map((await loadWallpapers()).map(w => [w.id, w]));
-  return ids.map(i => byId.get(i)).filter(Boolean); // keeps the order the ids came in (most recent first)
+  return ids.map(i => byId.get(i)).filter(Boolean).map(publicWallpaper); // keeps the order the ids came in (most recent first)
 }
 app.get('/api/me/likes', requireUser, async (req, res) => {
   res.json(await wallpapersByIds(await store.likedIds(req.user.id)));
@@ -381,8 +354,8 @@ app.get('/api/me/downloads', requireUser, async (req, res) => {
   res.json(await wallpapersByIds(await store.downloadedIds(req.user.id)));
 });
 
-// Records the download against the signed-in user, then tells the browser where the file is and
-// what to name it; the browser saves /images/<file> itself (it comes from the CDN on Vercel).
+// Records the download against the signed-in user, then hands over a signed Cloudinary URL for
+// the original and what to name it; this is the only place a URL for the original is given out.
 function downloadName(item) {
   return `${item.title.replace(/[^a-z0-9]+/gi, '-').replace(/(^-|-$)/g, '')}${path.extname(item.filename)}`;
 }
@@ -392,7 +365,7 @@ app.post('/api/wallpapers/:id/download', requireUser, async (req, res) => {
   if (!base) return res.status(404).json({ error: 'Not found' });
   await store.recordDownload(req.user.id, id);
   const item = (await loadWallpapers()).find(w => w.id === id);
-  res.json({ url: `/images/${base.filename}`, name: downloadName(base), downloads: item.downloads });
+  res.json({ url: media.downloadUrl(base), name: downloadName(base), downloads: item.downloads });
 });
 
 // unknown API routes answer in JSON too, never with an HTML page
