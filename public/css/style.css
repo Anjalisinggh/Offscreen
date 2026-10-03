@@ -783,3 +783,8 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .card-cat .dev { margin-left: 8px; opacity: .8; }
 
 @media (max-width: 900px) { .detail.is-desktop { grid-template-columns: 1fr; } }
+
+/* iOS Safari zooms the page into any text box under 16px when it's tapped; keep them at 16px on touch screens */
+@media (pointer: coarse) {
+  .modal .field:not(.code-input), .modal select, .hero-search input { font-size: 16px; }
+}
