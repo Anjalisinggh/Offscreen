@@ -7,17 +7,19 @@
 // and MAIL_FROM to the sender, e.g. "Offscreen <you@gmail.com>".
 //
 // With no SMTP_URL, local development prints the code to the server console instead.
+import 'server-only';
+import nodemailer, { type Transporter } from 'nodemailer';
 
-let transport;
+let transport: Transporter | undefined;
 function getTransport() {
   if (!process.env.SMTP_URL) return null;
-  transport ||= require('nodemailer').createTransport(process.env.SMTP_URL);
+  transport ||= nodemailer.createTransport(process.env.SMTP_URL);
   return transport;
 }
 
-const canSendEmail = () => !!process.env.SMTP_URL;
+export const canSendEmail = () => !!process.env.SMTP_URL;
 
-async function sendCode({ to, code, purpose }) {
+export async function sendCode({ to, code, purpose }: { to: string; code: string; purpose: 'signup' | 'login' }) {
   const t = getTransport();
   const action = purpose === 'signup' ? 'finish creating your account' : 'log in';
   if (!t) {
@@ -38,5 +40,3 @@ async function sendCode({ to, code, purpose }) {
     </div>`,
   });
 }
-
-module.exports = { sendCode, canSendEmail };

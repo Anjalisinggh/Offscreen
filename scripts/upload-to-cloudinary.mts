@@ -6,18 +6,26 @@
 // losslessly for PNGs, so what people download is just the picture.
 //
 //   npm run upload-images   uploads whatever is in public/images (the one-time move to Cloudinary);
-//                           new wallpapers are uploaded by generate-data.js straight from their source file
-try { process.loadEnvFile(require('path').join(__dirname, '..', '.env')); } catch {}
+//                           new wallpapers are uploaded by generate-data.mts straight from their source file
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+import { v2 as cloudinary, type UploadApiResponse } from 'cloudinary';
 
-const fs = require('fs');
-const path = require('path');
-const sharp = require('sharp');
-const { cloudinary, configured, publicIdFor } = require('../media');
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+try { process.loadEnvFile(path.join(ROOT, '.env')); } catch { /* no .env */ }
 
-const WALLPAPERS_FILE = path.join(__dirname, '..', 'data', 'wallpapers.json');
-const IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
+const WALLPAPERS_FILE = path.join(ROOT, 'data', 'wallpapers.json');
+const IMAGES_DIR = path.join(ROOT, 'public', 'images');
+const FOLDER = 'offscreen';
 
-async function clean(file) {
+export interface Item { id: number; filename: string; publicId?: string; [k: string]: unknown }
+
+export const configured = () => !!process.env.CLOUDINARY_URL;
+export const publicIdFor = (filename: string) => `${FOLDER}/${filename.replace(/\.[^.]+$/, '')}`;
+
+async function clean(file: string) {
   const img = sharp(file);
   const ext = path.extname(file).toLowerCase();
   const out = ext === '.png' ? img.png({ compressionLevel: 9 })
@@ -29,18 +37,17 @@ async function clean(file) {
   return buf;
 }
 
-function upload(buf, publicId) {
-  return new Promise((resolve, reject) => {
+function upload(buf: Buffer, publicId: string) {
+  return new Promise<UploadApiResponse>((resolve, reject) => {
     cloudinary.uploader.upload_stream(
       { public_id: publicId, type: 'authenticated', resource_type: 'image', overwrite: true },
-      (err, res) => (err ? reject(err) : resolve(res)),
+      (err, res) => (err || !res ? reject(err) : resolve(res)),
     ).end(buf);
   });
 }
 
-async function uploadWallpaper(w, file) {
-  const publicId = publicIdFor(w.filename);
-  const res = await upload(await clean(file), publicId);
+export async function uploadWallpaper(w: Item, file: string) {
+  const res = await upload(await clean(file), publicIdFor(w.filename));
   w.publicId = res.public_id;
   return res;
 }
@@ -50,7 +57,7 @@ async function main() {
     console.error('Set CLOUDINARY_URL in .env first (Cloudinary dashboard → API Keys → "API environment variable").');
     process.exit(1);
   }
-  const items = JSON.parse(fs.readFileSync(WALLPAPERS_FILE, 'utf8'));
+  const items: Item[] = JSON.parse(fs.readFileSync(WALLPAPERS_FILE, 'utf8'));
   const todo = items.filter((w) => !w.publicId);
   console.log(`${items.length - todo.length} already on Cloudinary, ${todo.length} to upload`);
 
@@ -58,14 +65,13 @@ async function main() {
   const queue = [...todo];
   const worker = async () => {
     for (let w; (w = queue.shift());) {
-      const file = path.join(IMAGES_DIR, w.filename);
       try {
-        const res = await uploadWallpaper(w, file);
+        const res = await uploadWallpaper(w, path.join(IMAGES_DIR, w.filename));
         fs.writeFileSync(WALLPAPERS_FILE, JSON.stringify(items, null, 2));
         console.log(`  ${++done}/${todo.length}  ${w.filename}  (${Math.round(res.bytes / 1024)} KB)`);
       } catch (e) {
         failed++;
-        console.error(`  failed  ${w.filename}: ${e.message || e.error?.message || e}`);
+        console.error(`  failed  ${w.filename}: ${(e as Error).message || e}`);
       }
     }
   };
@@ -74,5 +80,4 @@ async function main() {
   if (failed) process.exit(1);
 }
 
-if (require.main === module) main();
-module.exports = { uploadWallpaper };
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
