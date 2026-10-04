@@ -35,7 +35,7 @@ export default function Card({ w, i }: { w: PublicWallpaper; i: number }) {
           <h3 className="card-title">{w.title}</h3>
           <div className="card-cat">{w.category}{isDesktop(w) && <span className="dev">· Desktop</span>}</div>
         </div>
-        <span className="card-likes"><Heart /><b>{fmt(likeCount(w))}</b></span>
+        <span className={`card-likes${liked ? ' liked' : ''}`} title={liked ? 'You liked this' : undefined}><Heart /><b>{fmt(likeCount(w))}</b></span>
       </div>
     </article>
   );
