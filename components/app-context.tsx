@@ -27,8 +27,14 @@ export const useApp = () => {
   return v;
 };
 
-export function AppProvider({ initialUser, initialLikedIds, children }: {
-  initialUser: PublicUser | null; initialLikedIds: number[]; children: ReactNode;
+// coming back from "Continue with Google" (see app/api/auth/google/callback)
+const GOOGLE_RESULT: Record<string, string> = {
+  'google-failed': 'Signing in with Google didn’t work. Please try again.',
+  'google-off': 'Google sign-in isn’t set up on this site yet.',
+};
+
+export function AppProvider({ initialUser, initialLikedIds, googleEnabled, children }: {
+  initialUser: PublicUser | null; initialLikedIds: number[]; googleEnabled: boolean; children: ReactNode;
 }) {
   const router = useRouter();
   const [user, setUserState] = useState(initialUser);
@@ -56,6 +62,16 @@ export function AppProvider({ initialUser, initialLikedIds, children }: {
   }, []);
 
   const openAuth = useCallback((opts: AuthOptions = {}) => setAuth(opts), []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const result = params.get('signin');
+    if (!result) return;
+    if (result === 'google' && initialUser) toast(`Welcome, ${initialUser.name.split(' ')[0]}`);
+    else if (GOOGLE_RESULT[result]) toast(GOOGLE_RESULT[result]);
+    params.delete('signin');
+    history.replaceState(null, '', location.pathname + (params.size ? `?${params}` : ''));
+  }, [initialUser, toast]);
 
   const refreshLikes = useCallback(async () => {
     try {
@@ -127,7 +143,7 @@ export function AppProvider({ initialUser, initialLikedIds, children }: {
     <Ctx.Provider value={value}>
       {children}
       <div id="modalRoot">
-        {auth && <AuthModal {...auth} onClose={() => setAuth(null)} onSignedIn={onSignedIn} />}
+        {auth && <AuthModal {...auth} google={googleEnabled} onClose={() => setAuth(null)} onSignedIn={onSignedIn} />}
       </div>
       <div id="toastRoot">
         {toastMsg && <div key={toastMsg.key} className={`toast${toastMsg.out ? ' out' : ''}`}>{toastMsg.text}</div>}

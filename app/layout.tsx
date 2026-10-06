@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { store } from '@/lib/store';
 import { currentUser, publicUser } from '@/lib/session';
 import { libraryCount } from '@/lib/wallpapers';
+import { googleEnabled } from '@/lib/google';
 import { AppProvider } from '@/components/app-context';
 import Topbar from '@/components/topbar';
 import Footer from '@/components/footer';
@@ -42,7 +43,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </div>
         <div className="grain" aria-hidden="true"></div>
 
-        <AppProvider initialUser={publicUser(user)} initialLikedIds={likedIds}>
+        <AppProvider initialUser={publicUser(user)} initialLikedIds={likedIds} googleEnabled={googleEnabled()}>
           <Topbar />
           <Main>{children}</Main>
           <Footer count={libraryCount()} />

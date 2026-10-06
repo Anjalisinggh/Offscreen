@@ -619,6 +619,10 @@ a.filter { display: inline-block; line-height: normal; }
 .auth-field[hidden] { display: none; }
 .auth-link { display: block; margin: -10px 0 14px auto; padding: 0; border: 0; background: none; font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .auth-link:hover { color: var(--accent); }
+.google-btn { width: 100%; justify-content: center; gap: 10px; }
+.google-btn svg { width: 18px; height: 18px; }
+.auth-or { display: flex; align-items: center; gap: 12px; margin: 18px 0; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); }
+.auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .auth-field span { display: block; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
 .auth-error { min-height: 1.4em; margin: -6px 0 14px; font-size: 13px; color: var(--danger); }
 .auth-error:empty { margin-bottom: 4px; }
