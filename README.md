@@ -2,6 +2,8 @@
 
 **A collection for your screen.**
 
+**Live:** [offscreen.wtf](https://offscreen.wtf)
+
 Offscreen is a small wallpaper gallery. Browse, like and download phone and desktop wallpapers, organized into collections by mood — Retro, Dark, Minimal, Motivational, Cute, Abstract, Nature, Pink, Vintage, Psychedelic. The wallpaper list lives in `data/wallpapers.json` and the images on Cloudinary; accounts, likes and downloads live in a Postgres database.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-3b1f2c) ![TypeScript](https://img.shields.io/badge/TypeScript-5-c25a7c) ![License](https://img.shields.io/badge/license-MIT-c25a7c)
