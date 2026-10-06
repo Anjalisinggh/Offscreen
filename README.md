@@ -56,6 +56,7 @@ The `likes` and `downloads` numbers in `data/wallpapers.json` are starting total
 - **Sign up**: name, email, password (8+ characters) → a 6-digit code is emailed → entering it creates the account.
 - **Log in**: email + password, no code. After 10 wrong passwords for an email in 15 minutes, that email is paused for the rest of the 15 minutes; resetting the password clears it.
 - **Forgot password**: a code is emailed and entered together with the new password. Accounts made before passwords existed use this once to set one.
+- **Continue with Google**: signs in the account with the same (Google-verified) email, or creates one with the Google name; no code or password needed. The button only shows when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set — create them in Google Cloud → APIs & Services → Credentials → OAuth client ID (Web application), with `https://<your site>/api/auth/google/callback` as an authorized redirect URI.
 
 Passwords are only stored as scrypt hashes. Codes expire after 10 minutes, allow 5 tries, can be re-sent every 30 seconds, and only a hash of each code is stored. Each visitor can have at most 5 codes emailed per 10 minutes, whichever addresses they enter, so the mail quota can't be used up by one person.
 
@@ -106,7 +107,7 @@ data/                      wallpapers.json, categories.json (committed); db.json
 
 ## Deploying to Vercel
 
-The project deploys to Vercel as a Next.js app (`vercel.json` sets the framework). Add `DATABASE_URL`, `SMTP_URL`, `MAIL_FROM` and `CLOUDINARY_URL` as described above.
+The project deploys to Vercel as a Next.js app (`vercel.json` sets the framework). Add `DATABASE_URL`, `SMTP_URL`, `MAIL_FROM`, `CLOUDINARY_URL` and (optionally) `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as described above.
 
 ## Tech stack
 
