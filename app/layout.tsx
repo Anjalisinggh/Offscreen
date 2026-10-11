@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { Analytics } from '@vercel/analytics/next';
 import { store } from '@/lib/store';
 import { currentUser, publicUser } from '@/lib/session';
 import { libraryCount } from '@/lib/wallpapers';
@@ -49,6 +50,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <Footer count={libraryCount()} />
         </AppProvider>
         <Motion />
+        {/* visitor counts, top pages, countries and referrers, shown under Analytics on Vercel */}
+        <Analytics />
       </body>
     </html>
   );
