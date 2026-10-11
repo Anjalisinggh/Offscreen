@@ -64,7 +64,8 @@ function postgresStore(url: string): Store {
   const g = globalThis as unknown as { offscreenPool?: Pool };
   const pool = g.offscreenPool ||= new Pool({
     connectionString: url,
-    ssl: local ? false : { rejectUnauthorized: false },
+    // verify the database's certificate (DATABASE_URL should end in sslmode=verify-full)
+    ssl: local ? false : true,
     max: 3, // each serverless instance only needs a couple of connections
   });
   const q = (text: string, params?: unknown[]) => pool.query(text, params);
