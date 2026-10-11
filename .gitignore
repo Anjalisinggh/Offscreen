@@ -31,3 +31,6 @@ public/display-avif/
 .next/
 next-env.d.ts
 *.tsbuildinfo
+
+# editor/tool config
+.claude/
