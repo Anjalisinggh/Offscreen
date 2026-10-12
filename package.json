@@ -8,7 +8,8 @@
     "start": "next start",
     "generate-data": "node scripts/generate-data.mts",
     "upload-images": "node scripts/upload-to-cloudinary.mts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node -C react-server --test tests/mailer.test.mts"
   },
   "keywords": [
     "wallpapers",

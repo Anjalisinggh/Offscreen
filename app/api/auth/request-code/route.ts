@@ -2,8 +2,8 @@
 // which is set on the account when the code is entered) and when resetting a forgotten password.
 // Logging in itself is email + password (/api/auth/login), no code.
 import { NextResponse } from 'next/server';
-import { store, IS_SERVERLESS } from '@/lib/store';
-import { sendCode, canSendEmail } from '@/lib/mailer';
+import { store } from '@/lib/store';
+import { sendCode, canSendEmail, isLocalDev, sanitizeErrorMessage } from '@/lib/mailer';
 import { fail, readJson } from '@/lib/http';
 import { hashPassword, passwordProblem } from '@/lib/password';
 import {
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const problem = passwordProblem(body.password);
     if (problem) return fail(400, problem);
   }
-  if (IS_SERVERLESS && !canSendEmail()) return fail(503, "Sign-in emails aren't set up on this site yet. Please try again later.");
+  if (!isLocalDev() && !canSendEmail()) return fail(503, "Sign-in emails aren't set up on this site yet. Please try again later.");
 
   const existing = await store.findUserByEmail(email);
   if (mode === 'signup' && existing) return fail(409, 'That email already has an account. Log in instead.');
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   try {
     await sendCode({ to: email, code, purpose: mode });
   } catch (err) {
-    console.error('sending code failed:', (err as Error).message);
+    console.error('sending code failed:', sanitizeErrorMessage((err as Error).message));
     await store.deleteCode(email);
     return fail(502, "We couldn't send the email. Please check the address and try again.");
   }
