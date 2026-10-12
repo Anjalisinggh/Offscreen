@@ -62,7 +62,7 @@ export default function AuthModal({ reason, mode = 'signup', then, google, onClo
   const go = (s: Step, msg = '') => { setStep(s); setError(''); setNote(msg); };
 
   const requestCode = (purpose: 'signup' | 'reset') =>
-    api<{ email: string; resendAfter: number }>('/auth/request-code', {
+    api<{ email: string; resendAfter: number; user?: PublicUser }>('/auth/request-code', {
       method: 'POST',
       body: JSON.stringify(purpose === 'signup'
         ? { mode: 'signup', name: name.trim(), email: email.trim(), password }
@@ -73,6 +73,7 @@ export default function AuthModal({ reason, mode = 'signup', then, google, onClo
     setBusy(true);
     try {
       const res = await requestCode(purpose);
+      if (res.user) { onSignedIn(res.user, 'signup', then); return; } // email was down, account made directly
       setCodeFor(purpose);
       setSentTo(res.email);
       setCode('');

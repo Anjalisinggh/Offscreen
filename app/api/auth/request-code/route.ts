@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { store, IS_SERVERLESS } from '@/lib/store';
 import { sendCode, canSendEmail } from '@/lib/mailer';
 import { fail, readJson } from '@/lib/http';
+import { startSession, publicUser } from '@/lib/session';
 import { hashPassword, passwordProblem } from '@/lib/password';
 import {
   CODE_TTL_MS, RESEND_AFTER_MS, SENDS_PER_IP, SENDS_WINDOW_MS,
@@ -50,6 +51,16 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error('sending code failed:', (err as Error).message);
     await store.deleteCode(email);
+    // Temporary fallback while email is down: let new sign-ups in without the code
+    // (their email is unverified). Password resets still need a working email.
+    if (mode === 'signup' && passwordHash) {
+      const user = (await store.createUser({ name, email, passwordHash })) || await store.findUserByEmail(email);
+      if (user) {
+        const res = NextResponse.json({ ok: true, email, user: publicUser(user) });
+        startSession(res, user);
+        return res;
+      }
+    }
     return fail(502, "We couldn't send the email. Please check the address and try again.");
   }
   await store.recordCodeSend(ipHash);
