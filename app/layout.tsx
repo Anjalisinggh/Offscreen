@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/next';
 import { store } from '@/lib/store';
 import { currentUser, publicUser } from '@/lib/session';
@@ -10,6 +11,7 @@ import Topbar from '@/components/topbar';
 import Footer from '@/components/footer';
 import Main from '@/components/main';
 import Motion from '@/components/motion';
+import ThemeScript from '@/components/theme-script';
 import { SITE_URL } from './sitemap';
 import './globals.css';
 
@@ -27,8 +29,9 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { themeColor: '#faf3f1' };
 
-// the saved theme is applied before the page paints, so dark mode never flashes light first
-const THEME_SCRIPT = "try{if(localStorage.getItem('offscreen_theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}";
+// Google Analytics measurement ID, from Admin › Data streams › Off Screen
+const GA_ID = 'G-B6NCM0WLTH';
+const GA_SCRIPT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`;
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const user = await currentUser();
@@ -37,7 +40,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <ThemeScript />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
@@ -58,6 +61,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <Motion />
         {/* visitor counts, top pages, countries and referrers, shown under Analytics on Vercel */}
         <Analytics />
+        {/* the same visits, sent to Google Analytics (the "Off Screen" web stream) */}
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+        <Script id="ga-init" strategy="afterInteractive">{GA_SCRIPT}</Script>
       </body>
     </html>
   );

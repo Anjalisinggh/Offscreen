@@ -9,9 +9,9 @@ import { useApp } from './app-context';
 import CountUp from './count-up';
 import Grid from './grid';
 import SectionHead, { ArrowLink } from './section-head';
-import { Camera, Desktop, Download, Heart, Phone, Pin, Share, Torch } from './icons';
+import { Camera, Desktop, Download, Heart, Phone, Share, Torch } from './icons';
 
-export default function DetailView({ w, similar, pinImage }: { w: PublicWallpaper; similar: PublicWallpaper[]; pinImage: string }) {
+export default function DetailView({ w, similar }: { w: PublicWallpaper; similar: PublicWallpaper[] }) {
   const { likedIds, likeCount, toggleLike, downloadWallpaper, toast } = useApp();
   const desktop = isDesktop(w);
   const liked = likedIds.has(w.id);
@@ -93,16 +93,6 @@ export default function DetailView({ w, similar, pinImage }: { w: PublicWallpape
     }
   };
 
-  // opens Pinterest's own "create pin" window with this wallpaper, its page and a caption filled in
-  const onPin = () => {
-    const q = new URLSearchParams({
-      url: location.origin + location.pathname,
-      media: pinImage,
-      description: `${w.title} · ${w.category.toLowerCase()} ${desktop ? 'desktop' : 'phone'} wallpaper from Offscreen`,
-    });
-    window.open(`https://www.pinterest.com/pin/create/button/?${q}`, '_blank', 'noopener,width=760,height=640');
-  };
-
   const time = now ? clockTime(now) : '';
   const image = <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={w.display} alt={w.title} draggable={false} /></>;
   const segButtons = (main: string, other: string) => (
@@ -175,7 +165,6 @@ export default function DetailView({ w, similar, pinImage }: { w: PublicWallpape
               <Heart key={likePop} className={likePop ? 'pop' : undefined} /> <span>{liked ? 'Liked' : 'Like'}</span>
             </button>
             <button className="btn" onClick={onShare}><Share /> Share</button>
-            <button className="btn" onClick={onPin}><Pin /> Pin it</button>
           </div>
           <div className="meta-block reveal">
             <h4>Tags</h4>

@@ -28,6 +28,10 @@ export const useApp = () => {
 };
 
 // coming back from "Continue with Google" (see app/api/auth/google/callback)
+// the small pop-up after signing in: one greeting for a new member, another for a returning one
+const welcome = (u: PublicUser, isNew: boolean) =>
+  isNew ? `Welcome to Offscreen, ${u.name.split(' ')[0]}` : `Welcome back, ${u.name.split(' ')[0]}`;
+
 const GOOGLE_RESULT: Record<string, string> = {
   'google-failed': 'Signing in with Google didn’t work. Please try again.',
   'google-off': 'Google sign-in isn’t set up on this site yet.',
@@ -67,7 +71,7 @@ export function AppProvider({ initialUser, initialLikedIds, googleEnabled, child
     const params = new URLSearchParams(location.search);
     const result = params.get('signin');
     if (!result) return;
-    if (result === 'google' && initialUser) toast(`Welcome, ${initialUser.name.split(' ')[0]}`);
+    if ((result === 'google' || result === 'google-new') && initialUser) toast(welcome(initialUser, result === 'google-new'));
     else if (GOOGLE_RESULT[result]) toast(GOOGLE_RESULT[result]);
     params.delete('signin');
     history.replaceState(null, '', location.pathname + (params.size ? `?${params}` : ''));
@@ -128,7 +132,7 @@ export function AppProvider({ initialUser, initialLikedIds, googleEnabled, child
     setUser(u);
     setAuth(null);
     await refreshLikes();
-    toast(mode === 'signup' ? `Welcome, ${u.name.split(' ')[0]}` : `Welcome back, ${u.name.split(' ')[0]}`);
+    toast(welcome(u, mode === 'signup'));
     router.refresh();
     then?.();
   }, [setUser, refreshLikes, toast, router]);

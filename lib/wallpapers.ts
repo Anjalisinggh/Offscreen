@@ -11,6 +11,7 @@ const WALLPAPERS = wallpapersJson as Wallpaper[];
 export const categories: Category[] = categoriesJson;
 
 export const findWallpaper = (id: number) => WALLPAPERS.find((w) => w.id === id);
+export const wallpaperIds = WALLPAPERS.map((w) => w.id);
 
 // the likes/downloads numbers in wallpapers.json are just the starting totals; what people
 // actually do is added on top of them
@@ -31,7 +32,7 @@ export function dedupeSeries<T extends { series?: string }>(items: T[]): T[] {
   return items.filter((w) => !w.series || (!seen.has(w.series) && !!seen.add(w.series)));
 }
 
-export type Sort = 'trending' | 'popular' | 'new' | 'featured' | '';
+export type Sort = 'trending' | 'popular' | 'downloads' | 'new' | 'featured' | '';
 export function sortWallpapers<T extends PublicWallpaper | Wallpaper>(items: T[], sort: string): T[] {
   if (sort === 'trending') {
     // activity weighted toward recently added wallpapers
@@ -39,6 +40,8 @@ export function sortWallpapers<T extends PublicWallpaper | Wallpaper>(items: T[]
     return [...items].sort((a, b) => score(b) - score(a));
   }
   if (sort === 'popular') return [...items].sort((a, b) => b.likes - a.likes);
+  // most downloaded first; likes settle a tie
+  if (sort === 'downloads') return [...items].sort((a, b) => b.downloads - a.downloads || b.likes - a.likes);
   if (sort === 'new') return [...items].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   if (sort === 'featured') return items.filter((w) => w.featured);
   return items;

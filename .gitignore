@@ -26,6 +26,8 @@ public/display-avif/
 *.jpeg
 *.webp
 *.avif
+# the one picture that does live here: the 404 page's background
+!public/404-bg.webp
 
 # Next.js build output
 .next/

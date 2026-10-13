@@ -337,36 +337,6 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 }
 
 
-/* ---------------- marquee ---------------- */
-/* a slim strip of collection pills drifting past, faded out at both edges */
-.marquee {
-  overflow: hidden; padding: 12px 0; margin: 40px calc(var(--gutter) * -1) 0;
-  background: rgba(var(--accent-rgb), .06);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
-}
-.marquee-track { display: flex; gap: 10px; width: max-content; padding-right: 10px; animation: marquee 50s linear infinite; }
-.marquee:hover .marquee-track { animation-play-state: paused; }
-.marquee a {
-  display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;
-  padding: 9px 18px 9px 20px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--bg);
-  font-family: var(--serif); font-size: 19px; font-style: italic; color: var(--ink);
-  transition: background .35s var(--ease), color .35s var(--ease), border-color .35s var(--ease), transform .35s var(--ease);
-}
-.marquee a small {
-  font-family: var(--sans); font-style: normal; font-size: 10.5px; font-weight: 600; letter-spacing: .06em;
-  min-width: 22px; padding: 3px 7px; border-radius: 999px; text-align: center;
-  background: rgba(var(--accent-rgb), .12); color: var(--accent-deep);
-}
-:root[data-theme="dark"] .marquee a small { color: var(--accent); }
-.marquee a:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); transform: translateY(-1px); }
-.marquee a:hover small { background: rgba(var(--accent-rgb), .3); color: var(--bg); }
-@keyframes marquee { to { transform: translateX(-50%); } }
-@media (max-width: 640px) {
-  .marquee { padding: 10px 0; margin-top: 28px; }
-  .marquee a { font-size: 16px; padding: 7px 14px 7px 16px; }
-}
-
 /* ---------------- sections ---------------- */
 .section { margin-top: 110px; }
 .section-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
@@ -450,29 +420,65 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .home-cta-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 
 /* ---------------- 404 ---------------- */
-.nf { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1fr); gap: clamp(36px, 7vw, 110px); align-items: center; padding: 30px 0 20px; }
-.nf-stage { position: relative; display: flex; justify-content: center; }
-.nf-stage::before {
-  content: ''; position: absolute; width: 80%; aspect-ratio: 1; border-radius: 50%; top: 14%;
-  background: rgba(var(--accent-rgb), .3); filter: blur(90px); opacity: .6;
+/* a full-screen blossom scene over the whole page (top bar and footer included): the painting in
+   public/404-bg.webp, a soft wash behind the words so they stay readable, and drifting petals */
+.nf404 {
+  --nf-ink: #5a2a3e; --nf-em: #a0486c; --nf-sub: #6f4353; --nf-btn: #5c2a3e; --nf-btn-ink: #fff;
+  --nf-wash: rgba(255, 228, 234, .5); --nf-shade: none;
+  position: fixed; inset: 0; z-index: 200; overflow: hidden; color: var(--nf-ink);
+  background: #f3c6d0 url('/404-bg.webp') center / cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
 }
-.phone.nf-phone { height: min(540px, 62vh); transform: rotate(-5deg); animation-name: nf-phone-in; }
-@keyframes nf-phone-in { from { opacity: 0; transform: translateY(60px) rotate(-12deg) scale(.94); } to { opacity: 1; transform: rotate(-5deg); } }
-/* an empty lock screen: a blush wash instead of a wallpaper */
-.phone.nf-phone .phone-screen { background: radial-gradient(120% 80% at 30% 15%, var(--accent-soft), transparent 60%), linear-gradient(160deg, var(--accent) 0%, var(--accent-deep) 55%, #3b1f2c 100%); }
-.nf-copy h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(46px, 6vw, 92px); line-height: .95; letter-spacing: -.01em; margin: 20px 0 22px; }
-.nf-copy h1 em { color: var(--accent); }
-.nf-copy h1 .line-mask { padding-bottom: .16em; margin-bottom: -.1em; }
-.nf-copy p { color: var(--muted); max-width: 440px; margin: 0 0 32px; }
-@media (max-width: 820px) {
-  .nf { grid-template-columns: 1fr; text-align: center; gap: 36px; padding-top: 10px; }
-  .phone.nf-phone { height: min(340px, 44vh); border-radius: 34px; }
-  .phone.nf-phone .phone-screen { border-radius: 30px; }
-  .phone.nf-phone .phone-island { height: 16px; top: 9px; }
-  .phone.nf-phone .ls-time { font-size: 44px; }
-  .phone.nf-phone .ls-date { font-size: 10px; }
-  .nf-copy .eyebrow, .nf-copy .actions, .nf-copy .tags { justify-content: center; }
-  .nf-copy p { margin-left: auto; margin-right: auto; }
+/* night: the same painting, dimmed and tinted plum */
+:root[data-theme="dark"] .nf404 {
+  --nf-ink: #fbe6ee; --nf-em: #f7b6cb; --nf-sub: #ecd0da; --nf-btn: #f7d1dd; --nf-btn-ink: #2a1520;
+  --nf-wash: rgba(30, 12, 24, .5);
+  --nf-shade: linear-gradient(180deg, rgba(24, 9, 20, .78), rgba(54, 20, 44, .62));
+}
+.nf404::before { content: ''; position: absolute; inset: 0; background: var(--nf-shade); pointer-events: none; }
+body:has(.nf404) { overflow: hidden; }
+.nf404-scene { position: absolute; inset: 0; pointer-events: none; }
+.nf404-petal {
+  position: absolute; border-radius: 85% 12% 85% 12%; transform: rotate(var(--turn));
+  background: linear-gradient(140deg, #ffe3ea 0%, #f7a5bb 55%, #ea7f9f 100%);
+  box-shadow: inset -2px -2px 6px rgba(214, 84, 124, .25);
+  animation: nf-petal-0 10s ease-in-out infinite alternate;
+}
+.nf404-petal.a1 { animation-name: nf-petal-1; }
+.nf404-petal.a2 { animation-name: nf-petal-2; }
+@keyframes nf-petal-0 { to { transform: translate(26px, 34px) rotate(calc(var(--turn) + 70deg)); } }
+@keyframes nf-petal-1 { to { transform: translate(-30px, 22px) rotate(calc(var(--turn) - 90deg)); } }
+@keyframes nf-petal-2 { to { transform: translate(14px, -26px) rotate(calc(var(--turn) + 120deg)); } }
+
+/* the same light/dark switch as the top bar, pinned to the corner */
+.nf404-theme { position: absolute; right: clamp(20px, 3vw, 44px); top: clamp(18px, 3vh, 32px); z-index: 2; }
+
+.nf404-copy { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 22px; margin-top: 4vh; }
+.nf404-copy::before { /* the wash behind the words */
+  content: ''; position: absolute; inset: -18% -16%; z-index: -1; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--nf-wash), transparent); filter: blur(12px);
+}
+.nf404-copy h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(40px, 5.6vw, 80px); line-height: 1; letter-spacing: -.02em; margin: 0 0 18px; color: var(--nf-ink); animation: nf-rise .9s .15s var(--ease-slow) both; }
+.nf404-copy h1 em { font-weight: 400; color: var(--nf-em); }
+.nf404-copy p { font-size: clamp(15px, 1.35vw, 19px); color: var(--nf-sub); margin: 0 0 30px; animation: nf-rise .9s .25s var(--ease-slow) both; }
+.nf404-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 22px; animation: nf-rise .9s .35s var(--ease-slow) both; }
+.nf404-btn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 14px 34px; border-radius: 999px; font-size: 14.5px; font-weight: 600;
+  border: 1px solid var(--nf-btn); background: transparent; color: var(--nf-ink);
+  transition: transform .4s var(--ease), background .4s var(--ease), color .4s var(--ease), box-shadow .4s var(--ease);
+}
+.nf404-btn.solid { background: var(--nf-btn); color: var(--nf-btn-ink); }
+.nf404-btn:hover { transform: translateY(-2px); background: var(--nf-btn); color: var(--nf-btn-ink); box-shadow: 0 14px 30px rgba(92, 42, 62, .22); }
+.nf404-code { margin-top: 34px; font-size: 11px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--nf-sub); animation: nf-rise .9s .45s var(--ease-slow) both; }
+@keyframes nf-rise { from { opacity: 0; transform: translateY(18px); } }
+@media (max-width: 640px) {
+  /* a tall screen shows the middle of the wide painting; lean toward the sun and the big bloom */
+  .nf404 { background-position: 68% center; }
+  .nf404-btn { padding: 13px 26px; font-size: 13.5px; }
+  .nf404-code { margin-top: 26px; font-size: 10px; letter-spacing: .24em; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nf404-petal, .nf404-copy h1, .nf404-copy p, .nf404-actions, .nf404-code { animation: none; }
 }
 
 /* ---------------- collections ---------------- */

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { categories, dedupeSeries, loadWallpapers, publicWallpaper, sortWallpapers } from '@/lib/wallpapers';
-import { isDesktop, moodPath } from '@/lib/client';
+import { isDesktop } from '@/lib/client';
 import type { PublicWallpaper } from '@/lib/types';
 import Grid from '@/components/grid';
 import CountUp from '@/components/count-up';
@@ -21,8 +21,6 @@ function shuffle<T>(arr: T[]): T[] {
 export default async function Home() {
   const all = dedupeSeries((await loadWallpapers()).map(publicWallpaper));
 
-  const moods = categories.map((c) => ({ ...c, n: all.filter((w) => w.category === c.name).length })).filter((c) => c.n);
-
   // three drifting columns of wallpapers, each doubled so the loop is seamless. The plain
   // colour-glass renders are flat next to everything else, so the hero keeps to the more
   // visually rich wallpapers (they still show up everywhere else on the site)
@@ -39,7 +37,7 @@ export default async function Home() {
     </Link>
   ));
 
-  // three short sections, and a wallpaper shown in one never comes back in a later one
+  // four short sections, and a wallpaper shown in one never comes back in a later one
   const shown = new Set<number>();
   const take = (items: PublicWallpaper[], n: number) => {
     const out = items.filter((w) => !shown.has(w.id)).slice(0, n);
@@ -47,13 +45,10 @@ export default async function Home() {
     return out;
   };
   const phones = all.filter((w) => !isDesktop(w));
+  const mostDownloaded = take(sortWallpapers(phones, 'downloads'), 4);
   const trending = take(sortWallpapers(phones, 'trending'), 8);
   const fresh = take(sortWallpapers(phones, 'new'), 8);
   const desktops = take(sortWallpapers(all.filter(isDesktop), 'trending'), 6);
-
-  const moodLinks = (copy: number) => moods.map((c) => (
-    <Link key={`${copy}-${c.name}`} href={moodPath(c.name)}>{c.name}<small>{c.n}</small></Link>
-  ));
 
   return (
     <>
@@ -79,21 +74,24 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="marquee"><div className="marquee-track">{moodLinks(0)}{moodLinks(1)}</div></div>
+      <section className="section">
+        <SectionHead num="01" eyebrow="Most downloaded" title={<>The ones people <em>keep</em></>} link={<ArrowLink href="/explore?sort=downloads">View all</ArrowLink>} />
+        <Grid items={mostDownloaded} />
+      </section>
 
       <section className="section">
-        <SectionHead num="01" eyebrow="Trending" title={<>What everyone is <em>saving</em></>} link={<ArrowLink href="/explore?sort=trending">View all</ArrowLink>} />
+        <SectionHead num="02" eyebrow="Trending" title={<>What everyone is <em>saving</em></>} link={<ArrowLink href="/explore?sort=trending">View all</ArrowLink>} />
         <Grid items={trending} />
       </section>
 
       <section className="section">
-        <SectionHead num="02" eyebrow="New arrivals" title={<>Just <em>added</em></>} link={<ArrowLink href="/explore?sort=new">View all</ArrowLink>} />
+        <SectionHead num="03" eyebrow="New arrivals" title={<>Just <em>added</em></>} link={<ArrowLink href="/explore?sort=new">View all</ArrowLink>} />
         <Grid items={fresh} />
       </section>
 
       {desktops.length > 0 && (
         <section className="section">
-          <SectionHead num="03" eyebrow="Desktop" title={<>For your <em>desktop</em></>} link={<ArrowLink href="/explore?device=desktop">All desktop</ArrowLink>} />
+          <SectionHead num="04" eyebrow="Desktop" title={<>For your <em>desktop</em></>} link={<ArrowLink href="/explore?device=desktop">All desktop</ArrowLink>} />
           <Grid items={desktops} />
         </section>
       )}

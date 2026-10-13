@@ -56,6 +56,7 @@ export async function POST(req: Request) {
     if (mode === 'signup' && passwordHash) {
       const user = (await store.createUser({ name, email, passwordHash })) || await store.findUserByEmail(email);
       if (user) {
+        await store.recordCodeSend(ipHash); // counts toward the per-visitor limit, like a sent code
         const res = NextResponse.json({ ok: true, email, user: publicUser(user) });
         startSession(res, user);
         return res;

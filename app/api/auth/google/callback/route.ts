@@ -24,12 +24,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const { email, name } = await profileFromCode(req, code);
-    const user = (await store.findUserByEmail(email))
+    const existing = await store.findUserByEmail(email);
+    const user = existing
       || (await store.createUser({ name, email, passwordHash: null }))
       || (await store.findUserByEmail(email));
     if (!user) return back('google-failed');
     await store.clearFailedLogins(email);
-    const res = back('google');
+    const res = back(existing ? 'google' : 'google-new'); // picks the welcome message
     startSession(res, user);
     return res;
   } catch (err) {

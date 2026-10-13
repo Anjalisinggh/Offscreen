@@ -16,7 +16,7 @@ const NAV = [
 
 // light (blush) is the default; the choice is remembered per browser. Switching plays a circular
 // reveal that grows from the toggle button (View Transitions API); elsewhere it swaps instantly.
-function toggleTheme(e: MouseEvent<HTMLButtonElement>) {
+export function toggleTheme(e: MouseEvent<HTMLButtonElement>) {
   const dark = document.documentElement.dataset.theme !== 'dark';
   const apply = () => {
     if (dark) document.documentElement.dataset.theme = 'dark';

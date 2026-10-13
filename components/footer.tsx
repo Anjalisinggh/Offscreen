@@ -1,8 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import { ArrowUp, GitHub } from './icons';
-import { prefersReducedMotion } from '@/lib/client';
+import { GitHub, Globe, Instagram, XLogo } from './icons';
 
 export default function Footer({ count }: { count: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -39,10 +38,9 @@ export default function Footer({ count }: { count: number }) {
             <p className="foot-status"><span className="foot-dot"></span><span>{count} wallpapers</span> · New every Sunday</p>
             <div className="foot-icons">
               <a href="https://github.com/Anjalisinggh/Offscreen" target="_blank" rel="noopener" aria-label="Offscreen on GitHub"><GitHub /></a>
-              <button type="button" aria-label="Back to top"
-                onClick={() => window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' })}>
-                <ArrowUp />
-              </button>
+              <a href="https://instagram.com/anjalisinggh.12" target="_blank" rel="noopener" aria-label="Instagram"><Instagram /></a>
+              <a href="https://x.com/anjalisinggh12" target="_blank" rel="noopener" aria-label="X (Twitter)"><XLogo /></a>
+              <a href="https://anjali.monster" target="_blank" rel="noopener" aria-label="Portfolio"><Globe /></a>
             </div>
           </div>
 
@@ -57,6 +55,7 @@ export default function Footer({ count }: { count: number }) {
             <h4>For you</h4>
             <Link href="/explore?sort=new">New arrivals</Link>
             <Link href="/explore?sort=popular">Most loved</Link>
+            <Link href="/explore?sort=downloads">Most downloaded</Link>
             <Link href="/likes">Your likes</Link>
             <Link href="/profile">Profile</Link>
           </div>

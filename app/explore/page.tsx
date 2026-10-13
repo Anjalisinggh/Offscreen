@@ -13,7 +13,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Params 
   const c = categories.find((x) => x.name.toLowerCase() === category?.toLowerCase());
   return { title: 'Explore · Offscreen', alternates: { canonical: c ? moodPath(c.name) : '/explore' } };
 }
-const SORT_LABEL: Record<string, string> = { trending: 'Trending', popular: 'Most loved', new: 'New arrivals', featured: 'Featured' };
+const SORT_LABEL: Record<string, string> = { trending: 'Trending', popular: 'Most loved', downloads: 'Most downloaded', new: 'New arrivals', featured: 'Featured' };
 
 export default async function Explore({ searchParams }: { searchParams: Params }) {
   const { category = 'All', sort = '', device = '' } = await searchParams;
