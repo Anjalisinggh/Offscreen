@@ -62,10 +62,10 @@ export default function Footer({ count }: { count: number }) {
           </div>
           <div className="foot-col">
             <h4>Moods</h4>
-            <Link href="/explore?category=Pink">Pink</Link>
-            <Link href="/explore?category=Dark">Dark</Link>
-            <Link href="/explore?category=Vintage">Vintage</Link>
-            <Link href="/explore?category=Minimal">Minimal</Link>
+            <Link href="/pink-wallpapers">Pink</Link>
+            <Link href="/dark-wallpapers">Dark</Link>
+            <Link href="/vintage-wallpapers">Vintage</Link>
+            <Link href="/minimal-wallpapers">Minimal</Link>
           </div>
         </div>
 

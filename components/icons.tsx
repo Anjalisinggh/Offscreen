@@ -6,6 +6,7 @@ const Svg = (props: SVGProps<SVGSVGElement>) => <svg viewBox="0 0 24 24" aria-hi
 export const Heart = (p: SVGProps<SVGSVGElement>) => <Svg {...p}><path d="M12 20s-7.5-4.6-7.5-10.1A4.2 4.2 0 0 1 12 7.6a4.2 4.2 0 0 1 7.5 2.3C19.5 15.4 12 20 12 20z" /></Svg>;
 export const Download = () => <Svg><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" /></Svg>;
 export const Share = () => <Svg><path d="M12 15V4M8 8l4-4 4 4M6 12v7h12v-7" /></Svg>;
+export const Pin = () => <Svg><path d="M9 3.5h6l-1 5.5 3 3v2H7v-2l3-3zM12 14v7" /></Svg>;
 export const Arrow = () => <Svg><path d="M5 12h14M13 6l6 6-6 6" /></Svg>;
 export const Close = () => <Svg><path d="M6 6l12 12M18 6L6 18" /></Svg>;
 export const Search = () => <Svg><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></Svg>;

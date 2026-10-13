@@ -3,15 +3,15 @@
 // wallpaper only), with a live clock, a cursor-following tilt and a glow in the image's colour.
 import Link from 'next/link';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { clockTime, fmt, isDesktop, prefersReducedMotion, timeAgo } from '@/lib/client';
+import { clockTime, fmt, isDesktop, moodPath, prefersReducedMotion, timeAgo } from '@/lib/client';
 import type { PublicWallpaper } from '@/lib/types';
 import { useApp } from './app-context';
 import CountUp from './count-up';
 import Grid from './grid';
 import SectionHead, { ArrowLink } from './section-head';
-import { Camera, Desktop, Download, Heart, Phone, Share, Torch } from './icons';
+import { Camera, Desktop, Download, Heart, Phone, Pin, Share, Torch } from './icons';
 
-export default function DetailView({ w, similar }: { w: PublicWallpaper; similar: PublicWallpaper[] }) {
+export default function DetailView({ w, similar, pinImage }: { w: PublicWallpaper; similar: PublicWallpaper[]; pinImage: string }) {
   const { likedIds, likeCount, toggleLike, downloadWallpaper, toast } = useApp();
   const desktop = isDesktop(w);
   const liked = likedIds.has(w.id);
@@ -93,6 +93,16 @@ export default function DetailView({ w, similar }: { w: PublicWallpaper; similar
     }
   };
 
+  // opens Pinterest's own "create pin" window with this wallpaper, its page and a caption filled in
+  const onPin = () => {
+    const q = new URLSearchParams({
+      url: location.origin + location.pathname,
+      media: pinImage,
+      description: `${w.title} · ${w.category.toLowerCase()} ${desktop ? 'desktop' : 'phone'} wallpaper from Offscreen`,
+    });
+    window.open(`https://www.pinterest.com/pin/create/button/?${q}`, '_blank', 'noopener,width=760,height=640');
+  };
+
   const time = now ? clockTime(now) : '';
   const image = <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={w.display} alt={w.title} draggable={false} /></>;
   const segButtons = (main: string, other: string) => (
@@ -107,7 +117,7 @@ export default function DetailView({ w, similar }: { w: PublicWallpaper; similar
     <>
       <nav className="crumbs reveal">
         <Link href="/explore">Gallery</Link><span>/</span>
-        <Link href={`/explore?category=${encodeURIComponent(w.category)}`}>{w.category}</Link>
+        <Link href={moodPath(w.category)}>{w.category}</Link>
       </nav>
       <div className={`detail${desktop ? ' is-desktop' : ''}`}>
         <div className="detail-stage" ref={stage}>
@@ -165,6 +175,7 @@ export default function DetailView({ w, similar }: { w: PublicWallpaper; similar
               <Heart key={likePop} className={likePop ? 'pop' : undefined} /> <span>{liked ? 'Liked' : 'Like'}</span>
             </button>
             <button className="btn" onClick={onShare}><Share /> Share</button>
+            <button className="btn" onClick={onPin}><Pin /> Pin it</button>
           </div>
           <div className="meta-block reveal">
             <h4>Tags</h4>
@@ -175,7 +186,7 @@ export default function DetailView({ w, similar }: { w: PublicWallpaper; similar
 
       <section className="section">
         <SectionHead eyebrow="Similar style" title={<>You might also <em>like</em></>}
-          link={<ArrowLink href={`/explore?category=${encodeURIComponent(w.category)}`}>{`More ${w.category}`}</ArrowLink>} />
+          link={<ArrowLink href={moodPath(w.category)}>{`More ${w.category}`}</ArrowLink>} />
         <Grid items={similar} empty={<div className="empty-state">No similar wallpapers yet.</div>} />
       </section>
     </>

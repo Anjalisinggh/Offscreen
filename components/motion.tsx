@@ -43,7 +43,7 @@ export default function Motion() {
     document.addEventListener('contextmenu', onContext);
     document.addEventListener('dragstart', onDrag);
 
-    const lift = setTimeout(() => document.body.classList.add('loaded'), prefersReducedMotion() ? 0 : 700);
+    const lift = setTimeout(() => document.body.classList.add('loaded'), prefersReducedMotion() ? 0 : 150);
 
     return () => {
       io.disconnect(); mo.disconnect(); clearTimeout(lift);

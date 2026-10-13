@@ -1,12 +1,12 @@
 import Link from 'next/link';
-import { categories, loadWallpapers, publicWallpaper } from '@/lib/wallpapers';
-import { pad } from '@/lib/client';
+import { categories, dedupeSeries, loadWallpapers, publicWallpaper } from '@/lib/wallpapers';
+import { moodPath, pad } from '@/lib/client';
 import { Arrow } from '@/components/icons';
 
 export const metadata = { title: 'Collections · Offscreen' };
 
 export default async function Categories() {
-  const all = (await loadWallpapers()).map(publicWallpaper);
+  const all = dedupeSeries((await loadWallpapers()).map(publicWallpaper));
   return (
     <>
       <div className="page-head">
@@ -19,7 +19,7 @@ export default async function Categories() {
           const items = all.filter((w) => w.category === c.name);
           const cover = [...items].sort((a, b) => b.likes - a.likes)[0];
           return (
-            <Link key={c.name} className="coll reveal" style={{ '--i': i } as React.CSSProperties} href={`/explore?category=${encodeURIComponent(c.name)}`}>
+            <Link key={c.name} className="coll reveal" style={{ '--i': i } as React.CSSProperties} href={moodPath(c.name)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {cover && <img src={cover.display} alt="" draggable={false} loading="lazy" />}
               <span className="coll-num">{pad(i + 1)}</span>

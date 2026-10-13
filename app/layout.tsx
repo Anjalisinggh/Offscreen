@@ -10,14 +10,20 @@ import Topbar from '@/components/topbar';
 import Footer from '@/components/footer';
 import Main from '@/components/main';
 import Motion from '@/components/motion';
+import { SITE_URL } from './sitemap';
 import './globals.css';
 
+const TITLE = 'Offscreen · A collection for your screen';
+const DESCRIPTION = 'A collection for your screen. Wallpapers for phone and desktop, picked by mood.';
+
 export const metadata: Metadata = {
-  title: 'Offscreen · A collection for your screen',
-  description: 'A collection for your screen. Wallpapers for phone and desktop, picked by mood.',
-  icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%23f4c7d4'/><text x='50' y='70' font-family='Georgia,serif' font-size='62' fill='%238e3456' text-anchor='middle' font-style='italic'>O</text></svg>",
-  },
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  // what a shared link looks like in chats and on social sites; the picture is
+  // app/opengraph-image.tsx, and each wallpaper page swaps in its own (app/wallpaper/[id])
+  openGraph: { title: TITLE, description: DESCRIPTION, siteName: 'Offscreen', type: 'website' },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 };
 export const viewport: Viewport = { themeColor: '#faf3f1' };
 

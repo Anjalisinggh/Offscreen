@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { categories, dedupeSeries, loadWallpapers, publicWallpaper, sortWallpapers } from '@/lib/wallpapers';
-import { isDesktop } from '@/lib/client';
+import { isDesktop, moodPath } from '@/lib/client';
 import type { PublicWallpaper } from '@/lib/types';
-import CountUp from '@/components/count-up';
 import Grid from '@/components/grid';
+import CountUp from '@/components/count-up';
 import HeroDeck from '@/components/hero-deck';
 import SearchForm from '@/components/search-form';
 import SectionHead, { ArrowLink } from '@/components/section-head';
+import { Arrow } from '@/components/icons';
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -20,15 +21,15 @@ function shuffle<T>(arr: T[]): T[] {
 export default async function Home() {
   const all = dedupeSeries((await loadWallpapers()).map(publicWallpaper));
 
+  const moods = categories.map((c) => ({ ...c, n: all.filter((w) => w.category === c.name).length })).filter((c) => c.n);
+
   // three drifting columns of wallpapers, each doubled so the loop is seamless. The plain
   // colour-glass renders are flat next to everything else, so the hero keeps to the more
   // visually rich wallpapers (they still show up everywhere else on the site)
   const pool = shuffle(all.filter((w) => !isDesktop(w) && !w.tags.includes('glass')));
-  const desktops = shuffle(all.filter(isDesktop));
   const cols = [0, 1, 2].map((c) => pool.filter((_, i) => i % 3 === c).slice(0, 7));
   // phones/tablets get a fanned deck instead of the columns
   const deck = [...pool.filter((w) => w.featured), ...pool.filter((w) => !w.featured)].slice(0, 5);
-  const moods = categories.map((c) => ({ ...c, n: all.filter((w) => w.category === c.name).length })).filter((c) => c.n);
   const downloads = all.reduce((s, w) => s + w.downloads, 0);
 
   const heroCol = (col: PublicWallpaper[], copy: number) => col.map((w) => (
@@ -37,8 +38,21 @@ export default async function Home() {
       <img src={w.thumb} alt="" draggable={false} />
     </Link>
   ));
+
+  // three short sections, and a wallpaper shown in one never comes back in a later one
+  const shown = new Set<number>();
+  const take = (items: PublicWallpaper[], n: number) => {
+    const out = items.filter((w) => !shown.has(w.id)).slice(0, n);
+    out.forEach((w) => shown.add(w.id));
+    return out;
+  };
+  const phones = all.filter((w) => !isDesktop(w));
+  const trending = take(sortWallpapers(phones, 'trending'), 8);
+  const fresh = take(sortWallpapers(phones, 'new'), 8);
+  const desktops = take(sortWallpapers(all.filter(isDesktop), 'trending'), 6);
+
   const moodLinks = (copy: number) => moods.map((c) => (
-    <Link key={`${copy}-${c.name}`} href={`/explore?category=${encodeURIComponent(c.name)}`}>{c.name}<small>{c.n}</small></Link>
+    <Link key={`${copy}-${c.name}`} href={moodPath(c.name)}>{c.name}<small>{c.n}</small></Link>
   ));
 
   return (
@@ -69,29 +83,27 @@ export default async function Home() {
 
       <section className="section">
         <SectionHead num="01" eyebrow="Trending" title={<>What everyone is <em>saving</em></>} link={<ArrowLink href="/explore?sort=trending">View all</ArrowLink>} />
-        <Grid items={sortWallpapers(all, 'trending').slice(0, 12)} />
+        <Grid items={trending} />
       </section>
 
       <section className="section">
         <SectionHead num="02" eyebrow="New arrivals" title={<>Just <em>added</em></>} link={<ArrowLink href="/explore?sort=new">View all</ArrowLink>} />
-        <Grid items={sortWallpapers(all, 'new').slice(0, 12)} />
-      </section>
-
-      <section className="section">
-        <SectionHead num="03" eyebrow="Popular" title={<>Most <em>loved</em></>} link={<ArrowLink href="/explore?sort=popular">View all</ArrowLink>} />
-        <Grid items={sortWallpapers(all, 'popular').slice(0, 8)} />
+        <Grid items={fresh} />
       </section>
 
       {desktops.length > 0 && (
         <section className="section">
-          <SectionHead num="04" eyebrow="Desktop" title={<>For your <em>desktop</em></>} link={<ArrowLink href="/explore?device=desktop">All desktop</ArrowLink>} />
-          <Grid items={desktops.slice(0, 10)} />
+          <SectionHead num="03" eyebrow="Desktop" title={<>For your <em>desktop</em></>} link={<ArrowLink href="/explore?device=desktop">All desktop</ArrowLink>} />
+          <Grid items={desktops} />
         </section>
       )}
 
-      <section className="section">
-        <SectionHead num={desktops.length ? '05' : '04'} eyebrow="The gallery" title={<>Keep <em>discovering</em></>} link={<ArrowLink href="/explore">Full gallery</ArrowLink>} />
-        <Grid items={shuffle(all).slice(0, 12)} />
+      <section className="home-cta reveal">
+        <h2>{all.length} wallpapers, sorted by <em>mood</em></h2>
+        <div className="home-cta-actions">
+          <Link className="btn accent" href="/explore">Browse the full gallery <Arrow /></Link>
+          <Link className="btn" href="/categories">See the collections</Link>
+        </div>
       </section>
     </>
   );

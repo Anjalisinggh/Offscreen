@@ -1,20 +1,27 @@
 import Link from 'next/link';
 import { categories, dedupeSeries, filterWallpapers, loadWallpapers, publicWallpaper, sortWallpapers } from '@/lib/wallpapers';
-import { isDesktop } from '@/lib/client';
+import { moodPath } from '@/lib/client';
 import Grid from '@/components/grid';
-
-export const metadata = { title: 'Explore · Offscreen' };
+import type { Metadata } from 'next';
 
 type Params = Promise<{ category?: string; sort?: string; device?: string }>;
+
+// a category on its own is the same list as that collection's page (/dark-wallpapers), so search
+// engines are pointed there instead of at this filtered view
+export async function generateMetadata({ searchParams }: { searchParams: Params }): Promise<Metadata> {
+  const { category } = await searchParams;
+  const c = categories.find((x) => x.name.toLowerCase() === category?.toLowerCase());
+  return { title: 'Explore · Offscreen', alternates: { canonical: c ? moodPath(c.name) : '/explore' } };
+}
 const SORT_LABEL: Record<string, string> = { trending: 'Trending', popular: 'Most loved', new: 'New arrivals', featured: 'Featured' };
 
 export default async function Explore({ searchParams }: { searchParams: Params }) {
   const { category = 'All', sort = '', device = '' } = await searchParams;
-  // chip counts use the full, undeduped set so they read as "how many wallpapers in total";
-  // only the grid below hides paired phone/desktop duplicates
   const all = (await loadWallpapers()).map(publicWallpaper);
   const items = sortWallpapers(dedupeSeries(filterWallpapers(all, { category, device })), sort);
-  const scope = device ? all.filter((w) => w.device === device) : all; // category counts follow the device
+  // every chip shows how many cards it leads to, so paired phone/desktop crops count once here
+  // too, the same as in the grid below, the home page and the footer
+  const count = (cat: string, dev: string) => dedupeSeries(filterWallpapers(all, { category: cat, device: dev })).length;
 
   const href = (cat: string, dev: string) => {
     const q = new URLSearchParams();
@@ -37,14 +44,14 @@ export default async function Explore({ searchParams }: { searchParams: Params }
       </div>
       <div className="filter-row reveal" style={{ paddingBottom: 14 }}>
         <Link className={`filter${!device ? ' active' : ''}`} href={href(category, '')}>All devices</Link>
-        <Link className={`filter${device === 'phone' ? ' active' : ''}`} href={href(category, 'phone')}>Phone<sup>{all.filter((w) => !isDesktop(w)).length}</sup></Link>
-        <Link className={`filter${device === 'desktop' ? ' active' : ''}`} href={href(category, 'desktop')}>Desktop<sup>{all.filter(isDesktop).length}</sup></Link>
+        <Link className={`filter${device === 'phone' ? ' active' : ''}`} href={href(category, 'phone')}>Phone<sup>{count(category, 'phone')}</sup></Link>
+        <Link className={`filter${device === 'desktop' ? ' active' : ''}`} href={href(category, 'desktop')}>Desktop<sup>{count(category, 'desktop')}</sup></Link>
       </div>
       <div className="filter-row reveal">
-        <Link className={`filter${category === 'All' ? ' active' : ''}`} href={href('All', device)}>All<sup>{scope.length}</sup></Link>
+        <Link className={`filter${category === 'All' ? ' active' : ''}`} href={href('All', device)}>All<sup>{count('All', device)}</sup></Link>
         {categories.map((c) => (
           <Link key={c.name} className={`filter${category === c.name ? ' active' : ''}`} href={href(c.name, device)}>
-            {c.name}<sup>{scope.filter((w) => w.category === c.name).length}</sup>
+            {c.name}<sup>{count(c.name, device)}</sup>
           </Link>
         ))}
       </div>

@@ -32,6 +32,8 @@ export async function api<T = unknown>(path: string, opts: RequestInit = {}): Pr
 }
 
 export const ratio = (w: Pick<PublicWallpaper, 'width' | 'height'>) => (w.width && w.height ? `${w.width} / ${w.height}` : '9 / 16');
+// a collection's own page: /dark-wallpapers, /pink-wallpapers…
+export const moodPath = (category: string) => `/${category.toLowerCase()}-wallpapers`;
 export const isDesktop = (w: Pick<PublicWallpaper, 'device'>) => w.device === 'desktop';
 export const initial = (name?: string) => (name || '?').trim().charAt(0).toUpperCase();
 export const pad = (n: number) => String(n).padStart(2, '0');

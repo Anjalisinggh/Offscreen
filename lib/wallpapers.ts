@@ -81,4 +81,5 @@ export async function wallpapersByIds(ids: number[]): Promise<PublicWallpaper[]>
   return ids.map((i) => byId.get(i)).filter((w): w is Wallpaper => !!w).map(publicWallpaper);
 }
 
-export const libraryCount = () => WALLPAPERS.length;
+// counted the way the gallery shows them: a phone/desktop pair of one artwork is one wallpaper
+export const libraryCount = () => dedupeSeries(WALLPAPERS).length;
