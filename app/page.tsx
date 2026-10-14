@@ -4,7 +4,6 @@ import { isDesktop } from '@/lib/client';
 import type { PublicWallpaper } from '@/lib/types';
 import Grid from '@/components/grid';
 import CountUp from '@/components/count-up';
-import HeroDeck from '@/components/hero-deck';
 import SearchForm from '@/components/search-form';
 import SectionHead, { ArrowLink } from '@/components/section-head';
 import { Arrow } from '@/components/icons';
@@ -26,8 +25,6 @@ export default async function Home() {
   // visually rich wallpapers (they still show up everywhere else on the site)
   const pool = shuffle(all.filter((w) => !isDesktop(w) && !w.tags.includes('glass')));
   const cols = [0, 1, 2].map((c) => pool.filter((_, i) => i % 3 === c).slice(0, 7));
-  // phones/tablets get a fanned deck instead of the columns
-  const deck = [...pool.filter((w) => w.featured), ...pool.filter((w) => !w.featured)].slice(0, 5);
   const downloads = all.reduce((s, w) => s + w.downloads, 0);
 
   const heroCol = (col: PublicWallpaper[], copy: number) => col.map((w) => (
@@ -61,7 +58,6 @@ export default async function Home() {
             <span className="line-mask" style={{ '--i': 2 } as React.CSSProperties}><span><em>mood.</em></span></span>
           </h1>
           <p className="hero-sub">A collection for your screen. Hand-picked wallpapers, from quiet and minimal to bold and vintage. Find one you love, preview it, and keep it.</p>
-          <HeroDeck items={deck} />
           <SearchForm variant="hero" />
           <div className="hero-meta">
             <div><span><CountUp value={all.length} /></span><small>Wallpapers</small></div>

@@ -278,47 +278,16 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .scroll-cue i::after { content: ''; position: absolute; left: 0; top: -50%; width: 100%; height: 50%; background: var(--accent); animation: cue 2.2s var(--ease) infinite; }
 @keyframes cue { to { top: 110%; } }
 
-/* phones/tablets only: fanned deck (hidden on desktop, where the drifting columns are) */
-.hero-deck { display: none; }
-
+/* phones/tablets: a text-only hero, left-aligned (the drifting columns are desktop only) */
 @media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 96px; }
+  .hero { grid-template-columns: minmax(0, 1fr); min-height: auto; padding-top: 110px; }
   .hero-wall, .scroll-cue { display: none; }
-  .hero-copy { padding: 28px 0 48px; text-align: center; }
-  .hero .eyebrow { justify-content: center; }
-  .hero h1 { font-size: clamp(54px, 15vw, 84px); margin: 18px 0 18px; }
-  .hero-sub { margin: 0 auto; font-size: 15px; max-width: 340px; }
+  .hero-copy { padding: 24px 0 0; }
+  .hero h1 { font-size: clamp(64px, 19vw, 104px); line-height: .88; margin: 22px 0 26px; }
+  .hero-sub { font-size: 16px; max-width: 360px; margin: 0; }
 
-  /* fanned deck of phone-shaped cards */
-  .hero-deck { display: block; margin: 30px auto 6px; }
-  .deck-stage { position: relative; height: 380px; perspective: 1200px; }
-  .deck-card {
-    position: absolute; left: 50%; top: 8px; width: 164px; margin-left: -82px; aspect-ratio: 9 / 19.5;
-    border-radius: 28px; overflow: hidden; background: var(--surface);
-    border: 4px solid #fff; box-shadow: 0 24px 48px -18px rgba(90, 30, 55, .45), 0 6px 16px rgba(90, 30, 55, .14);
-    transition: transform .9s var(--ease-slow), opacity .7s var(--ease), filter .7s var(--ease);
-    -webkit-tap-highlight-color: transparent;
-  }
-  :root[data-theme="dark"] .deck-card { border-color: #3a2630; box-shadow: 0 24px 48px -18px rgba(0, 0, 0, .7); }
-  .deck-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .deck-card[data-pos="center"] { transform: none; z-index: 3; }
-  .deck-card[data-pos="left"]   { transform: translateX(-58%) translateY(22px) rotate(-10deg) scale(.86); z-index: 2; filter: brightness(.92) saturate(.9); }
-  .deck-card[data-pos="right"]  { transform: translateX(58%) translateY(22px) rotate(10deg) scale(.86); z-index: 2; filter: brightness(.92) saturate(.9); }
-  .deck-card[data-pos="back"]   { transform: translateY(40px) scale(.7); z-index: 1; opacity: 0; pointer-events: none; }
-  .deck-island { position: absolute; top: 9px; left: 50%; width: 46px; height: 14px; margin-left: -23px; border-radius: 10px; background: #000; }
-  .deck-time {
-    position: absolute; top: 34px; left: 0; right: 0; text-align: center; color: #fff;
-    font-family: var(--sans); font-weight: 300; font-size: 38px; letter-spacing: -.02em; text-shadow: 0 2px 14px rgba(0, 0, 0, .35);
-  }
-  .deck-caption { margin: 18px 0 10px; min-height: 40px; }
-  .deck-caption b { display: block; font-family: var(--serif); font-weight: 500; font-size: 21px; color: var(--ink); }
-  .deck-caption span { font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
-  .deck-dots { display: flex; justify-content: center; gap: 6px; }
-  .deck-dots i { width: 6px; height: 6px; border-radius: 999px; background: var(--line-strong); transition: width .5s var(--ease), background .5s var(--ease); }
-  .deck-dots i.on { width: 20px; background: var(--accent); }
-
-  /* pill search + stat chips */
-  .hero-search { max-width: 380px; margin: 32px auto 0; }
+  /* pill search */
+  .hero-search { max-width: 460px; margin: 36px 0 0; }
   .hero-search input {
     font-family: var(--sans); font-style: normal; font-size: 15px; padding: 15px 56px 15px 22px;
     border: 1px solid var(--line-strong); border-radius: 999px; background: rgba(255, 255, 255, .7);
@@ -327,13 +296,12 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
   :root[data-theme="dark"] .hero-search input { background: rgba(255, 255, 255, .05); box-shadow: none; }
   .hero-search button { right: 6px; width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; }
   .hero-search button:hover { transform: translateY(-50%); }
-  .hero-meta { justify-content: center; gap: 10px; margin-top: 22px; }
-  .hero-meta div {
-    flex: 1; max-width: 110px; padding: 14px 8px 12px; border-radius: 16px; font-size: 26px;
-    background: rgba(255, 255, 255, .55); border: 1px solid var(--line);
-  }
-  :root[data-theme="dark"] .hero-meta div { background: rgba(255, 255, 255, .04); }
-  .hero-meta small { font-size: 9px; letter-spacing: .18em; margin-top: 6px; }
+
+  /* the three numbers in a ruled row */
+  .hero-meta { gap: 0; margin-top: 40px; padding-top: 22px; border-top: 1px solid var(--line); max-width: 460px; }
+  .hero-meta div { flex: 1; font-size: 30px; }
+  .hero-meta div + div { padding-left: 18px; border-left: 1px solid var(--line); }
+  .hero-meta small { font-size: 9.5px; letter-spacing: .2em; margin-top: 8px; }
 }
 
 
