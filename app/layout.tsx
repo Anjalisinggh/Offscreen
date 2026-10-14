@@ -60,7 +60,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </AppProvider>
         <Motion />
         {/* visitor counts, top pages, countries and referrers, shown under Analytics on Vercel */}
-        <Analytics />
+        {process.env.VERCEL && <Analytics />}
         {/* the same visits, sent to Google Analytics (the "Off Screen" web stream) */}
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
         <Script id="ga-init" strategy="afterInteractive">{GA_SCRIPT}</Script>

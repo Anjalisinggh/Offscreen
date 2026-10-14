@@ -8,7 +8,9 @@
     "start": "next start",
     "generate-data": "node scripts/generate-data.mts",
     "upload-images": "node scripts/upload-to-cloudinary.mts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "keywords": [
     "wallpapers",
@@ -29,11 +31,13 @@
     "sharp": "^0.35.5"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.11",
     "@types/node": "^22.20.5",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "^4.150.0"
   }
 }

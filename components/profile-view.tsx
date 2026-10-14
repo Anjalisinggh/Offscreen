@@ -8,18 +8,20 @@ import Avatar from './avatar';
 import Grid from './grid';
 import { Camera } from './icons';
 
-// resized in the browser first, so a phone photo of several MB uploads as a small JPEG
-function shrinkImage(file: File, max: number) {
+// the browser does all the work: the photo is cropped to a centred square and saved as a small
+// webp (or JPEG where the browser can't write webp), so a phone photo of several MB uploads as ~20KB
+function squareAvatar(file: File, size: number) {
   return new Promise<Blob>((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
-      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const side = Math.min(img.width, img.height);
       const c = document.createElement('canvas');
-      c.width = Math.round(img.width * scale);
-      c.height = Math.round(img.height * scale);
-      c.getContext('2d')!.drawImage(img, 0, 0, c.width, c.height);
+      c.width = c.height = size;
+      c.getContext('2d')!.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
       URL.revokeObjectURL(img.src);
-      c.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not read that image'))), 'image/jpeg', 0.9);
+      const done = (b: Blob | null) => (b ? resolve(b) : reject(new Error('Could not read that image')));
+      // a browser that can't encode webp hands back a PNG instead; ask for a JPEG then
+      c.toBlob((b) => (b && b.type === 'image/webp' ? resolve(b) : c.toBlob(done, 'image/jpeg', 0.88)), 'image/webp', 0.82);
     };
     img.onerror = () => reject(new Error('Could not read that image'));
     img.src = URL.createObjectURL(file);
@@ -51,7 +53,7 @@ export default function ProfileView({ user: initialUser, liked, downloaded }: {
     if (!file.type.startsWith('image/')) { toast('Please choose an image'); return; }
     try {
       toast('Uploading your photo…');
-      const blob = await shrinkImage(file, 512);
+      const blob = await squareAvatar(file, 256);
       const res = await fetch('/api/me/avatar', { method: 'PUT', headers: { 'Content-Type': blob.type }, body: blob });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || friendlyError(res.status));

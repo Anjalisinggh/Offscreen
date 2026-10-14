@@ -21,7 +21,8 @@ export const cleanEmail = (v: unknown) => String(v || '').trim().toLowerCase();
 export const hashCode = (email: string, code: string) => crypto.createHmac('sha256', SESSION_SECRET).update(`${email}:${code}`).digest('hex');
 export const newCode = () => String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 
-// Vercel sets x-real-ip / x-forwarded-for itself; only a hash of the IP is stored
+// Cloudflare sets cf-connecting-ip, Vercel x-real-ip / x-forwarded-for; only a hash of the IP is stored
 export const clientIp = (req: Request) =>
-  req.headers.get('x-real-ip') || String(req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'local';
+  req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip')
+  || String(req.headers.get('x-forwarded-for') || '').split(',')[0].trim() || 'local';
 export const hashIp = (ip: string) => crypto.createHmac('sha256', SESSION_SECRET).update(`ip:${ip}`).digest('hex');

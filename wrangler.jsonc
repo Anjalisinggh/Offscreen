@@ -1,0 +1,27 @@
+// Cloudflare Workers config for the site, built with the OpenNext adapter (open-next.config.ts).
+// `npm run preview` runs the built Worker locally; `npm run deploy` builds and uploads it.
+// Secrets (DATABASE_URL, CLOUDINARY_URL, SESSION_SECRET, …) are set with `npx wrangler secret put`,
+// not here; see the README.
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "offscreen",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// self-reference the adapter uses for caching; the service name must match "name" above
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "offscreen"
+		}
+	],
+	"vars": {
+		// tells the app it's on Cloudflare (lib/store.ts)
+		"DEPLOY_TARGET": "cloudflare"
+	},
+	"observability": { "enabled": true }
+}

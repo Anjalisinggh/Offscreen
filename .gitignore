@@ -36,3 +36,8 @@ next-env.d.ts
 
 # editor/tool config
 .claude/
+
+# Cloudflare build output and local secrets
+.open-next/
+.wrangler/
+.dev.vars*

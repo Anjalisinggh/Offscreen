@@ -8,7 +8,7 @@
 import 'server-only';
 import fs from 'fs';
 import path from 'path';
-import { Pool } from 'pg';
+import { Client, Pool } from 'pg';
 
 export interface StoredUser {
   id: number;
@@ -59,16 +59,27 @@ const norm = (email: string) => String(email).trim().toLowerCase();
 
 // ---------------------------------------------------------------- Postgres
 function postgresStore(url: string): Store {
-  const local = /localhost|127\.0\.0\.1/.test(url);
+  // a database on this machine (or one whose URL says sslmode=disable) is reached without TLS
+  const local = /localhost|127\.0\.0\.1|sslmode=disable/.test(url);
   // one connection pool per server process (kept across dev reloads, which re-run this module)
   const g = globalThis as unknown as { offscreenPool?: Pool };
-  const pool = g.offscreenPool ||= new Pool({
+  const pool = () => g.offscreenPool ||= new Pool({
     connectionString: url,
     // verify the database's certificate (DATABASE_URL should end in sslmode=verify-full)
     ssl: local ? false : true,
     max: 3, // each serverless instance only needs a couple of connections
   });
-  const q = (text: string, params?: unknown[]) => pool.query(text, params);
+  // Cloudflare Workers can't keep a connection open from one request to the next, so each query
+  // opens its own. Through the HYPERDRIVE binding (wrangler.jsonc) that's a quick local hop to
+  // Cloudflare's pooled connection; without it, a direct connection to the database.
+  const once = async (text: string, params?: unknown[]) => {
+    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
+    const hyperdrive = (getCloudflareContext().env as { HYPERDRIVE?: { connectionString: string } }).HYPERDRIVE;
+    const client = new Client(hyperdrive ? { connectionString: hyperdrive.connectionString } : { connectionString: url, ssl: !local });
+    await client.connect();
+    try { return await client.query(text, params); } finally { client.end().catch(() => {}); }
+  };
+  const q = (text: string, params?: unknown[]) => (ON_CLOUDFLARE ? once(text, params) : pool().query(text, params));
 
   let ready: Promise<unknown> | null = null;
   const init = () => (ready ||= q(`
@@ -376,7 +387,9 @@ function jsonStore(dir: string): Store {
   };
 }
 
-export const IS_SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+// DEPLOY_TARGET is set to "cloudflare" in wrangler.jsonc
+export const ON_CLOUDFLARE = process.env.DEPLOY_TARGET === 'cloudflare';
+export const IS_SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || ON_CLOUDFLARE);
 
 // on Vercel without DATABASE_URL the JSON file lives in /tmp (and is lost), which is only a fallback
 export const store: Store = process.env.DATABASE_URL
