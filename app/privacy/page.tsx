@@ -63,10 +63,9 @@ export default function Privacy() {
 
         <h2>Services that handle data for us</h2>
         <ul>
-          <li><b>Vercel</b> hosts the website.</li>
-          <li><b>Neon</b> hosts the database that holds accounts, likes and downloads.</li>
-          <li><b>Cloudflare</b> stores and delivers the wallpaper images.</li>
-          <li>An <b>email provider</b> sends sign-in codes.</li>
+          <li><b>Cloudflare</b> serves the website and delivers the wallpaper images.</li>
+          <li>A <b>server we run</b> holds the database of accounts, likes and downloads, and the wallpaper files.</li>
+          <li><b>Gmail</b> sends sign-in codes.</li>
           <li><b>PostHog</b> measures how the site is used.</li>
           <li><b>Google</b> provides “Continue with Google”, Google Analytics and AdSense.</li>
         </ul>

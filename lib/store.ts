@@ -2,8 +2,8 @@
 // (The wallpapers themselves are committed content in data/wallpapers.json.)
 //
 // Two backends with the same async interface:
-//  - Postgres, when DATABASE_URL is set (Neon on Vercel). This is the one to use in production:
-//    it survives restarts and is shared by every Vercel instance. Tables are created on first use.
+//  - Postgres, when DATABASE_URL is set (in production, the API server's own, in podman). Tables
+//    are created on first use.
 //  - A JSON file (data/db.json) otherwise, so `npm run dev` works with zero setup.
 import 'server-only';
 import fs from 'fs';

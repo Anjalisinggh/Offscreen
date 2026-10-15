@@ -1,7 +1,7 @@
 // Login sessions: name + email to sign up, email alone to log in, both proven by an emailed code.
 // The session cookie holds the user id plus an HMAC of it, so it can't be forged or edited.
-// With a database the secret is derived from DATABASE_URL (itself secret), so nothing extra is
-// needed on Vercel; set SESSION_SECRET to use your own.
+// With a database the secret is derived from DATABASE_URL (itself secret); set SESSION_SECRET to use
+// your own (production does: the value derived from its old Vercel/Neon address, so logins carried over).
 import 'server-only';
 import crypto from 'crypto';
 import { cookies } from 'next/headers';

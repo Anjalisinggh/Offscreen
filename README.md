@@ -36,7 +36,7 @@ With no `DATABASE_URL`, accounts, likes and downloads are kept in `data/db.json`
 
 Set `DATABASE_URL` to any Postgres connection string and the app uses it instead of `data/db.json`. The tables are created (and new columns added) automatically on first use — there's no migration step.
 
-**On Vercel**, the quickest way is: Vercel dashboard → your project → **Storage** → **Create Database** → **Neon (Postgres)**, and connect it to the project. That sets `DATABASE_URL` for you.
+In production it's Postgres 18 in podman on the API server (`offscreen-db`, 127.0.0.1:4150), backed up nightly by `server/backup-db.sh` (7 days in `~/backups/db`).
 
 `SESSION_SECRET` (optional) signs the login cookie. If it's unset, a secret is derived from `DATABASE_URL`.
 
@@ -68,7 +68,7 @@ Codes are sent over SMTP. Set `SMTP_URL` and `MAIL_FROM`:
 | Resend | `smtps://resend:RESEND_API_KEY@smtp.resend.com:465` |
 | Brevo | `smtp://LOGIN:SMTP_KEY@smtp-relay.brevo.com:587` |
 
-`MAIL_FROM` is the sender, e.g. `Offscreen <you@gmail.com>`. Note the `@` in a Gmail address is written `%40` inside the URL. On Vercel without `SMTP_URL`, sign-up shows "Sign-in emails aren't set up on this site yet".
+`MAIL_FROM` is the sender, e.g. `Offscreen <you@gmail.com>`. Note the `@` in a Gmail address is written `%40` inside the URL. On the API server without `SMTP_URL`, sign-up shows "Sign-in emails aren't set up on this site yet".
 
 ## Images (Cloudflare R2)
 
@@ -83,7 +83,7 @@ Setting it up (once):
 
 1. `npx wrangler login`, then `npx wrangler r2 bucket create offscreen-images` and `npx wrangler r2 bucket create offscreen-originals`.
 2. `npx wrangler r2 bucket domain add offscreen-images --domain images.offscreen.wtf --zone-id <zone id>` (the domain must be on Cloudflare), and `npx wrangler r2 bucket cors set <bucket> --file r2-cors.json` on both buckets, so the site can read the pictures' pixels and fetch Downloads.
-3. Cloudflare dashboard → **R2 → Manage API tokens → Create API token**, "Object Read & Write" on those two buckets. Put the account ID, access key ID and secret in `.env` as `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, with `IMAGES_URL=https://images.offscreen.wtf`, and add the same four on Vercel.
+3. Cloudflare dashboard → **R2 → Manage API tokens → Create API token**, "Object Read & Write" on those two buckets. Put the account ID, access key ID and secret in `.env` as `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, with `IMAGES_URL=https://images.offscreen.wtf`.
 4. `npm run upload-images` uploads every wallpaper in `data/wallpapers.json` from its source file in the parent folder. Re-running skips what's already there; `--force` re-uploads everything.
 
 ## Adding your own wallpapers
