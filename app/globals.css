@@ -449,6 +449,19 @@ body:has(.nf404) { overflow: hidden; }
   .nf404-petal, .nf404-copy h1, .nf404-copy p, .nf404-actions, .nf404-code { animation: none; }
 }
 
+/* ---------------- privacy policy and other long reads ---------------- */
+.legal { max-width: 700px; padding-bottom: 40px; color: var(--muted); font-size: 16px; line-height: 1.75; }
+.legal h2 { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.1; color: var(--ink); margin: 52px 0 14px; }
+.legal h2:first-child { margin-top: 0; }
+.legal p, .legal ul { margin: 0 0 14px; }
+.legal ul { padding-left: 20px; }
+.legal li { margin-bottom: 8px; }
+.legal b { color: var(--ink); font-weight: 600; }
+.legal a:not(.link-arrow) { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }
+:root[data-theme="dark"] .legal a:not(.link-arrow) { color: var(--accent); }
+.legal code { font-family: var(--mono); font-size: .9em; padding: 1px 6px; border-radius: 4px; background: var(--surface); color: var(--ink); }
+.legal-back { margin-top: 48px; }
+
 /* ---------------- collections ---------------- */
 .coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
 .coll {

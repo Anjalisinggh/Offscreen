@@ -70,6 +70,7 @@ export default function Footer({ count }: { count: number }) {
 
         <div className="foot-meta">
           <span>© 2026 Offscreen</span>
+          <Link href="/privacy">Privacy policy</Link>
         </div>
       </div>
 
