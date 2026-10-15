@@ -1,0 +1,24 @@
+// Uploads the pages Worker bundled by server/build-pages.sh, as is:
+//   npx wrangler deploy -c server/wrangler.deploy.jsonc
+{
+	"name": "offscreen",
+	"main": "../.deploy/worker.js",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"no_bundle": true,
+	"find_additional_modules": true,
+	"base_dir": "../.deploy",
+	"rules": [
+		{ "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": true },
+		{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": true }
+	],
+	"assets": { "directory": "../.open-next/assets", "binding": "ASSETS" },
+	"services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "offscreen" }],
+	"vars": { "DEPLOY_TARGET": "cloudflare" },
+	"workers_dev": false,
+	"routes": [
+		{ "pattern": "offscreen.wtf", "custom_domain": true },
+		{ "pattern": "www.offscreen.wtf", "custom_domain": true }
+	],
+	"observability": { "enabled": true }
+}

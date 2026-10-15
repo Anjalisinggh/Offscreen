@@ -14,11 +14,18 @@ export class ApiError extends Error {
   constructor(message: string, public status: number, public retryAfter?: number) { super(message); }
 }
 
+// The API (accounts, likes, downloads) runs on its own server at NEXT_PUBLIC_API_URL
+// (https://api.offscreen.wtf); the browser calls it directly, with the login cookie. Unset, as in
+// local development, it's this same site.
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+export const apiUrl = (path: string) => `${API_URL}/api${path}`;
+
 export async function api<T = unknown>(path: string, opts: RequestInit = {}): Promise<T> {
   let res: Response;
   try {
-    res = await fetch('/api' + path, {
+    res = await fetch(apiUrl(path), {
       ...opts,
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
     });
   } catch {

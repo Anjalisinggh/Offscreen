@@ -2,7 +2,7 @@
 // Sign up: name + email + password, then the 6-digit code emailed once to prove the address.
 // Log in: email + password, no code. Forgot password: a code is emailed, entered with a new password.
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { api, ApiError } from '@/lib/client';
+import { api, apiUrl, ApiError } from '@/lib/client';
 import type { PublicUser } from '@/lib/types';
 import Modal from './modal';
 import { useApp } from './app-context';
@@ -159,7 +159,7 @@ export default function AuthModal({ reason, mode = 'signup', then, google, onClo
 
       {google && (step === 'signup' || step === 'login') && (
         <>
-          <a className="btn google-btn" href={`/api/auth/google?returnTo=${encodeURIComponent(typeof location === 'undefined' ? '/' : location.pathname + location.search)}`}>
+          <a className="btn google-btn" href={`${apiUrl('/auth/google')}?returnTo=${encodeURIComponent(typeof location === 'undefined' ? '/' : location.pathname + location.search)}`}>
             <GoogleG /> Continue with Google
           </a>
           <p className="auth-or"><span>or</span></p>

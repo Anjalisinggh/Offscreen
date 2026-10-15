@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import Script from 'next/script';
-import { store } from '@/lib/store';
-import { currentUser, publicUser } from '@/lib/session';
 import { libraryCount } from '@/lib/wallpapers';
-import { googleEnabled } from '@/lib/google';
 import { AppProvider } from '@/components/app-context';
 import Topbar from '@/components/topbar';
 import Footer from '@/components/footer';
@@ -34,10 +31,11 @@ export const viewport: Viewport = { themeColor: '#faf3f1' };
 const GA_ID = 'G-B6NCM0WLTH';
 const GA_SCRIPT = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`;
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const user = await currentUser();
-  const likedIds = user ? await store.likedIds(user.id) : [];
+// pages show live like/download counts, so they're rendered per request (the signed-in user is
+// loaded in the browser, from the API: components/app-context.tsx)
+export const dynamic = 'force-dynamic';
 
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -56,7 +54,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </div>
         <div className="grain" aria-hidden="true"></div>
 
-        <AppProvider initialUser={publicUser(user)} initialLikedIds={likedIds} googleEnabled={googleEnabled()}>
+        <AppProvider>
           <Topbar />
           <Main>{children}</Main>
           <Footer count={libraryCount()} />

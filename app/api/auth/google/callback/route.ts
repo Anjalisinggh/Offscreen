@@ -2,14 +2,15 @@
 // one is created with the Google name. Google has already verified the email, so no code is needed.
 import { NextResponse, type NextRequest } from 'next/server';
 import { profileFromCode } from '@/lib/google';
-import { store } from '@/lib/store';
+import { store, SITE_ORIGIN } from '@/lib/store';
 import { startSession } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const returnTo = req.cookies.get('g_return')?.value || '/';
   const back = (result: string) => {
-    const to = new URL(returnTo, req.url);
+    // back to the page they started from, on the site (the API has its own address)
+    const to = new URL(returnTo, SITE_ORIGIN || req.url);
     to.searchParams.set('signin', result);
     const res = NextResponse.redirect(to);
     res.cookies.set('g_state', '', { path: '/', maxAge: 0 });

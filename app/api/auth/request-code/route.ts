@@ -2,7 +2,7 @@
 // which is set on the account when the code is entered) and when resetting a forgotten password.
 // Logging in itself is email + password (/api/auth/login), no code.
 import { NextResponse } from 'next/server';
-import { store, IS_SERVERLESS } from '@/lib/store';
+import { store, IS_SERVERLESS, SITE_ORIGIN } from '@/lib/store';
 import { sendCode, canSendEmail } from '@/lib/mailer';
 import { fail, readJson } from '@/lib/http';
 import { startSession, publicUser } from '@/lib/session';
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const problem = passwordProblem(body.password);
     if (problem) return fail(400, problem);
   }
-  if (IS_SERVERLESS && !canSendEmail()) return fail(503, "Sign-in emails aren't set up on this site yet. Please try again later.");
+  if ((IS_SERVERLESS || SITE_ORIGIN) && !canSendEmail()) return fail(503, "Sign-in emails aren't set up on this site yet. Please try again later.");
 
   const existing = await store.findUserByEmail(email);
   if (mode === 'signup' && existing) return fail(409, 'That email already has an account. Log in instead.');

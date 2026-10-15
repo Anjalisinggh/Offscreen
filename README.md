@@ -115,29 +115,27 @@ scripts/                   generate-data.mts, upload-to-r2.mts
 data/                      wallpapers.json, categories.json (committed); db.json (local only, gitignored)
 ```
 
-## Deploying to Vercel
+## Deploying
 
-The project deploys to Vercel as a Next.js app (`vercel.json` sets the framework). Add `DATABASE_URL`, `SMTP_URL`, `MAIL_FROM`, `IMAGES_URL`, the three `R2_*` values and (optionally) `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as described above.
+Production is split in two, so a traffic spike lands on the parts that don't charge per request:
 
-## Deploying to Cloudflare Workers
+| Where | What | Address |
+|---|---|---|
+| **Cloudflare Workers** (OpenNext, `wrangler.jsonc`) | the pages and their JS/CSS; no database | offscreen.wtf, www.offscreen.wtf |
+| **Our server** (pm2, `server/ecosystem.config.cjs`) | this same app answering `/api/*`: accounts, likes, downloads, profile photos, the PostHog proxy (`/ph`); Postgres; the original files | api.offscreen.wtf |
+| **Our server** (`server/images.mjs`) | the public wallpaper images | images.offscreen.wtf |
 
-The same code also runs on Cloudflare Workers through the [OpenNext adapter](https://opennext.js.org/cloudflare) (`wrangler.jsonc`, `open-next.config.ts`).
+The browser calls `https://api.offscreen.wtf` directly with the login cookie (same site, so it's sent), and only `SITE_ORIGIN` is allowed by CORS. The pages fetch the like/download totals from `/api/counts` (cached a minute) and load who is signed in in the browser (`/api/auth/me`). Both hosts sit behind Cloudflare (orange cloud, SSL Full (strict)); images, avatars and `/api/counts` are cached there.
 
-1. **Cloudflare dashboard → Workers & Pages → Create → Import a repository**, pick this repo, and name the Worker `offscreen` (it must match `name` in `wrangler.jsonc`).
-   - Build command: `npx opennextjs-cloudflare build`
-   - Deploy command: `npx opennextjs-cloudflare deploy`
-2. **Settings → Variables and Secrets**: add the same values as on Vercel as secrets: `DATABASE_URL`, `IMAGES_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `SESSION_SECRET`, `MAIL_FROM`, `SMTP_URL` or `RESEND_API_KEY`, and `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Add `IMAGES_URL` under **Build variables** too (a few pages are pre-rendered at build time). Use the same `SESSION_SECRET` as Vercel (or leave it unset on both, so it's derived from `DATABASE_URL`) and everyone stays signed in after the move.
-3. **Plan**: sign-up and log-in hash passwords with scrypt, which needs more CPU time per request than the free plan's 10ms. Use **Workers Paid**.
-4. Every push to `main` then builds and deploys. Try the site on its `offscreen.<account>.workers.dev` address first; "Continue with Google" there needs `https://offscreen.<account>.workers.dev/api/auth/google/callback` added as a redirect URI in Google Cloud.
-5. **Domain**: add `offscreen.wtf` to Cloudflare (it gives you two nameservers to set at your registrar), then in the Worker's **Settings → Domains & Routes** add `offscreen.wtf` and `www.offscreen.wtf`. Remove the domain from Vercel once it's serving from Cloudflare.
+**API server** (`~/apps/offscreen`): `.env.production` with `DATABASE_URL`, `SESSION_SECRET`, `SMTP_URL`, `MAIL_FROM`, `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `IMAGES_URL=https://images.offscreen.wtf`, `NEXT_PUBLIC_API_URL=https://api.offscreen.wtf`, `SITE_ORIGIN=https://offscreen.wtf`, `ORIGINALS_DIR=~/data/originals`; images in `~/data/images`. Then `npm ci && npm run build && pm2 start server/ecosystem.config.cjs && pm2 save`. Postgres runs in podman on 127.0.0.1:4150. "Continue with Google" needs `https://api.offscreen.wtf/api/auth/google/callback` as a redirect URI.
 
-Optional: **Hyperdrive** keeps database connections warm close to the Worker, which makes each query faster. Create one for `DATABASE_URL` (`npx wrangler hyperdrive create offscreen-db --connection-string="…"`) and add its binding to `wrangler.jsonc` as `"hyperdrive": [{ "binding": "HYPERDRIVE", "id": "<id>" }]`; `lib/store.ts` uses it when it's there.
+**Pages**: build with `NEXT_PUBLIC_API_URL=https://api.offscreen.wtf`, `IMAGES_URL=https://images.offscreen.wtf` and `NEXT_PUBLIC_POSTHOG_KEY`, then `npm run deploy`. The build creates symlinks, which Windows only allows with Developer Mode on; otherwise build on Linux (the API server works).
 
-Building locally: `npm run preview` builds and runs the Worker, `npm run deploy` builds and uploads it. The build creates symlinks, which Windows only allows with Developer Mode on; otherwise build in WSL or a Linux container.
+`scripts/mirror-r2.mts` copies the old R2 buckets to a folder, for moving the images onto the server.
 
 ## Tech stack
 
-Next.js (App Router), React, TypeScript, Postgres (`pg`), Nodemailer or Resend, Cloudflare R2. Runs on Vercel or Cloudflare Workers. Wallpaper upload clean-up via [sharp](https://sharp.pixelplumbing.com/); profile photos are cropped in the browser.
+Next.js (App Router), React, TypeScript, Postgres (`pg`), Nodemailer or Resend, Cloudflare R2. Pages on Cloudflare Workers, API and images on our own server. Wallpaper upload clean-up via [sharp](https://sharp.pixelplumbing.com/); profile photos are cropped in the browser.
 
 ## License
 

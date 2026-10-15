@@ -390,6 +390,11 @@ function jsonStore(dir: string): Store {
 // DEPLOY_TARGET is set to "cloudflare" in wrangler.jsonc
 export const ON_CLOUDFLARE = process.env.DEPLOY_TARGET === 'cloudflare';
 export const IS_SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || ON_CLOUDFLARE);
+// On the API server, SITE_ORIGIN is the site's address (https://offscreen.wtf): the only origin
+// allowed to call the API (next.config.ts), and where sign-in with Google returns to.
+export const SITE_ORIGIN = (process.env.SITE_ORIGIN || '').replace(/\/$/, '');
+// cookies only over HTTPS, wherever the site is served over HTTPS
+export const SECURE_COOKIES = IS_SERVERLESS || !!SITE_ORIGIN;
 
 // on Vercel without DATABASE_URL the JSON file lives in /tmp (and is lost), which is only a fallback
 export const store: Store = process.env.DATABASE_URL

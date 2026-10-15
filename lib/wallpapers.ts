@@ -18,10 +18,28 @@ export const mosaicTiles = () => dedupeSeries(WALLPAPERS.filter((w) => w.publicI
   .map((w, i) => ({ w, k: (i * 37) % 101 })).sort((a, b) => a.k - b.k)
   .map(({ w }) => ({ id: w.id, title: w.title, src: tileUrl(w) }));
 
+type Counts = Awaited<ReturnType<typeof store.counts>>;
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+let cached: { at: number; counts: Promise<Counts> } | undefined;
+
+// Where the pages run without the database (Cloudflare), the totals come from the API server,
+// kept for a minute; if it can't be reached the pages still show, with the starting totals.
+function counts(): Promise<Counts> {
+  if (process.env.DATABASE_URL || !API_URL) return store.counts();
+  if (!cached || Date.now() - cached.at > 60_000) {
+    const empty: Counts = { likes: {}, downloads: {} };
+    const p = fetch(`${API_URL}/api/counts`, { signal: AbortSignal.timeout(3000) })
+      .then((r) => (r.ok ? (r.json() as Promise<Counts>) : empty))
+      .catch(() => { cached = undefined; return empty; });
+    cached = { at: Date.now(), counts: p };
+  }
+  return cached.counts;
+}
+
 // the likes/downloads numbers in wallpapers.json are just the starting totals; what people
 // actually do is added on top of them
 export async function loadWallpapers(): Promise<Wallpaper[]> {
-  const c = await store.counts();
+  const c = await counts();
   return WALLPAPERS.map((w) => ({ ...w, likes: (w.likes || 0) + (c.likes[w.id] || 0), downloads: (w.downloads || 0) + (c.downloads[w.id] || 0) }));
 }
 

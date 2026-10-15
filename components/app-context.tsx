@@ -10,6 +10,8 @@ import AuthModal, { type AuthOptions } from './auth-modal';
 
 interface AppState {
   user: PublicUser | null;
+  // false until the API has said who is signed in (pages render before that, without a user)
+  ready: boolean;
   setUser: (u: PublicUser | null) => void;
   likedIds: Set<number>;
   likeCount: (w: Pick<PublicWallpaper, 'id' | 'likes'>) => number;
@@ -37,23 +39,28 @@ const GOOGLE_RESULT: Record<string, string> = {
   'google-off': 'Google sign-in isn’t set up on this site yet.',
 };
 
-export function AppProvider({ initialUser, initialLikedIds, googleEnabled, children }: {
-  initialUser: PublicUser | null; initialLikedIds: number[]; googleEnabled: boolean; children: ReactNode;
-}) {
+export function AppProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [user, setUserState] = useState(initialUser);
+  const [user, setUserState] = useState<PublicUser | null>(null);
+  const [ready, setReady] = useState(false);
+  const [googleEnabled, setGoogleEnabled] = useState(false);
   // read by actions that run right after signing in, before React has re-rendered
-  const userRef = useRef(initialUser);
+  const userRef = useRef<PublicUser | null>(null);
   const setUser = useCallback((u: PublicUser | null) => { userRef.current = u; setUserState(u); }, []);
-  const [likedIds, setLikedIds] = useState(() => new Set(initialLikedIds));
+  const [likedIds, setLikedIds] = useState(() => new Set<number>());
   // like counts changed in this visit, so cards update without reloading the page
   const [likeOverrides, setLikeOverrides] = useState<Record<number, number>>({});
   const [toastMsg, setToastMsg] = useState<{ text: string; key: number; out: boolean } | null>(null);
   const [auth, setAuth] = useState<AuthOptions | null>(null);
   const toastTimers = useRef<number[]>([]);
 
-  // a fresh server render (navigation, router.refresh) brings the latest counts
-  useEffect(() => { setLikeOverrides({}); }, [initialLikedIds]);
+  // who is signed in, and what they've liked, comes from the API once the page has loaded
+  useEffect(() => {
+    api<{ user: PublicUser | null; likedIds: number[]; google: boolean }>('/auth/me')
+      .then((me) => { setUser(me.user); setLikedIds(new Set(me.likedIds)); setGoogleEnabled(me.google); })
+      .catch(() => { /* treated as signed out */ })
+      .finally(() => setReady(true));
+  }, [setUser]);
 
   const toast = useCallback((text: string) => {
     toastTimers.current.forEach(clearTimeout);
@@ -68,14 +75,15 @@ export function AppProvider({ initialUser, initialLikedIds, googleEnabled, child
   const openAuth = useCallback((opts: AuthOptions = {}) => setAuth(opts), []);
 
   useEffect(() => {
+    if (!ready) return;
     const params = new URLSearchParams(location.search);
     const result = params.get('signin');
     if (!result) return;
-    if ((result === 'google' || result === 'google-new') && initialUser) toast(welcome(initialUser, result === 'google-new'));
+    if ((result === 'google' || result === 'google-new') && userRef.current) toast(welcome(userRef.current, result === 'google-new'));
     else if (GOOGLE_RESULT[result]) toast(GOOGLE_RESULT[result]);
     params.delete('signin');
     history.replaceState(null, '', location.pathname + (params.size ? `?${params}` : ''));
-  }, [initialUser, toast]);
+  }, [ready, toast]);
 
   const refreshLikes = useCallback(async () => {
     try {
@@ -138,10 +146,10 @@ export function AppProvider({ initialUser, initialLikedIds, googleEnabled, child
   }, [setUser, refreshLikes, toast, router]);
 
   const value = useMemo<AppState>(() => ({
-    user, setUser, likedIds,
+    user, ready, setUser, likedIds,
     likeCount: (w) => likeOverrides[w.id] ?? w.likes,
     toast, openAuth, toggleLike, downloadWallpaper, logout,
-  }), [user, setUser, likedIds, likeOverrides, toast, openAuth, toggleLike, downloadWallpaper, logout]);
+  }), [user, ready, setUser, likedIds, likeOverrides, toast, openAuth, toggleLike, downloadWallpaper, logout]);
 
   return (
     <Ctx.Provider value={value}>

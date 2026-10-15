@@ -8,7 +8,9 @@ import 'server-only';
 
 export const googleEnabled = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
-export const callbackUrl = (req: Request) => `${new URL(req.url).origin}/api/auth/google/callback`;
+// the API's public address when it has one (behind a proxy, req.url may name the local port)
+export const callbackUrl = (req: Request) =>
+  `${(process.env.NEXT_PUBLIC_API_URL || new URL(req.url).origin).replace(/\/$/, '')}/api/auth/google/callback`;
 
 export function consentUrl(req: Request, state: string) {
   const q = new URLSearchParams({

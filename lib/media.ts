@@ -11,8 +11,14 @@
 //                        with the R2 API key, for a signed-in user's Download, valid for 5 minutes.
 //
 // Set IMAGES_URL, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY (see the README).
+//
+// On the API server the same files are on its own disk instead: IMAGES_URL points at its image
+// server (server/images.mjs) and ORIGINALS_DIR holds the originals, which are handed out through
+// a 5-minute link signed with SESSION_SECRET (app/api/originals/[id]).
 import 'server-only';
+import crypto from 'crypto';
 import { AwsClient } from 'aws4fetch';
+import { SESSION_SECRET } from './session';
 import { sizeKey, originalKey, type Size } from './image-keys';
 import type { Wallpaper } from './types';
 
@@ -30,8 +36,18 @@ export const ogTileUrl = url('ogtile');
 export const shareUrl = url('share');
 export const tileUrl = url('tile');
 
+export const ORIGINALS_DIR = process.env.ORIGINALS_DIR || '';
+export const originalPath = (w: Wallpaper) => originalKey(w.publicId!, w.filename);
+export const signOriginal = (id: number, expires: number) =>
+  crypto.createHmac('sha256', SESSION_SECRET).update(`original:${id}:${expires}`).digest('base64url');
+
 let r2: AwsClient | undefined;
 export async function downloadUrl(w: Wallpaper) {
+  if (ORIGINALS_DIR) {
+    const expires = Math.floor(Date.now() / 1000) + 300;
+    const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+    return `${base}/api/originals/${w.id}?e=${expires}&s=${signOriginal(w.id, expires)}`;
+  }
   r2 ??= new AwsClient({
     accessKeyId: process.env.R2_ACCESS_KEY_ID!, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
     service: 's3', region: 'auto',

@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useLayoutEffect, useRef, useState } from 'react';
-import { api, friendlyError } from '@/lib/client';
+import { api, apiUrl, friendlyError } from '@/lib/client';
 import type { PublicUser, PublicWallpaper } from '@/lib/types';
 import { useApp } from './app-context';
 import Avatar from './avatar';
@@ -54,7 +54,7 @@ export default function ProfileView({ user: initialUser, liked, downloaded }: {
     try {
       toast('Uploading your photo…');
       const blob = await squareAvatar(file, 256);
-      const res = await fetch('/api/me/avatar', { method: 'PUT', headers: { 'Content-Type': blob.type }, body: blob });
+      const res = await fetch(apiUrl('/me/avatar'), { method: 'PUT', credentials: 'include', headers: { 'Content-Type': blob.type }, body: blob });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || friendlyError(res.status));
       updated(data.user, 'Profile photo updated');

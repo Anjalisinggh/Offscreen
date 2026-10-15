@@ -1,5 +1,9 @@
 import type { NextConfig } from 'next';
 
+// On the API server (api.offscreen.wtf), the site at SITE_ORIGIN calls /api from the browser with
+// the login cookie; only that origin is allowed to.
+const SITE_ORIGIN = (process.env.SITE_ORIGIN || '').replace(/\/$/, '');
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // pg loads its Cloudflare socket support only on Cloudflare Workers, so the file tracer doesn't
@@ -15,8 +19,23 @@ const nextConfig: NextConfig = {
       permanent: true,
     }];
   },
-  // PostHog analytics (instrumentation-client.ts) sends events here, and they're passed on to
-  // PostHog's US servers, so ad blockers that block posthog.com don't drop them
+  async headers() {
+    if (!SITE_ORIGIN) return [];
+    return [{
+      source: '/api/:path*',
+      headers: [
+        { key: 'Access-Control-Allow-Origin', value: SITE_ORIGIN },
+        { key: 'Access-Control-Allow-Credentials', value: 'true' },
+        { key: 'Access-Control-Allow-Methods', value: 'GET, POST, PUT, DELETE, OPTIONS' },
+        { key: 'Access-Control-Allow-Headers', value: 'Content-Type' },
+        { key: 'Access-Control-Max-Age', value: '86400' },
+        { key: 'Vary', value: 'Origin' },
+      ],
+    }];
+  },
+  // PostHog analytics (instrumentation-client.ts) sends events here (on the API server, when the
+  // site has one), and they're passed on to PostHog's US servers, so ad blockers that block
+  // posthog.com don't drop them
   async rewrites() {
     return [
       { source: '/ph/static/:path*', destination: 'https://us-assets.i.posthog.com/static/:path*' },

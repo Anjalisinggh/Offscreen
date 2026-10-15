@@ -6,7 +6,7 @@ import 'server-only';
 import crypto from 'crypto';
 import { cookies } from 'next/headers';
 import type { NextResponse } from 'next/server';
-import { store, IS_SERVERLESS, type StoredUser } from './store';
+import { store, IS_SERVERLESS, SECURE_COOKIES, type StoredUser } from './store';
 import type { PublicUser } from './types';
 
 export const SESSION_SECRET = process.env.SESSION_SECRET
@@ -17,7 +17,7 @@ const sign = (v: string) => crypto.createHmac('sha256', SESSION_SECRET).update(v
 export function startSession(res: NextResponse, user: StoredUser) {
   const id = String(user.id);
   res.cookies.set('sid', `${id}.${sign(id)}`, {
-    httpOnly: true, sameSite: 'lax', secure: IS_SERVERLESS, path: '/', maxAge: 60 * 60 * 24 * 90,
+    httpOnly: true, sameSite: 'lax', secure: SECURE_COOKIES, path: '/', maxAge: 60 * 60 * 24 * 90,
   });
 }
 export function endSession(res: NextResponse) {
