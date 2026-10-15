@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { findWallpaper, loadWallpapers, publicWallpaper, similarTo } from '@/lib/wallpapers';
-import { ogUrl } from '@/lib/media';
+import { ogUrl, shareUrl } from '@/lib/media';
 import DetailView from '@/components/detail-view';
 import type { Metadata } from 'next';
 
@@ -29,5 +29,5 @@ export default async function WallpaperPage({ params }: { params: Params }) {
   const items = await loadWallpapers();
   const w = items.find((x) => x.id === id);
   if (!w) notFound();
-  return <DetailView key={w.id} w={publicWallpaper(w)} similar={similarTo(w, items).map(publicWallpaper)} />;
+  return <DetailView key={w.id} w={publicWallpaper(w)} shareImage={shareUrl(w)} similar={similarTo(w, items).map(publicWallpaper)} />;
 }

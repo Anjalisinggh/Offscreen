@@ -672,10 +672,13 @@ a.filter { display: inline-block; line-height: normal; }
 
 .toast {
   position: fixed; left: 50%; bottom: 32px; z-index: 350; transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
+  /* one line, as wide as its words need, never wider than the screen */
+  width: max-content; max-width: calc(100vw - 32px); white-space: nowrap;
   background: var(--ink); color: var(--bg); padding: 14px 24px; border-radius: 999px; font-size: 13px; font-weight: 500;
   box-shadow: 0 20px 50px rgba(0,0,0,.5); animation: toast-in .6s var(--ease-slow);
 }
-.toast::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-deep); }
+@media (max-width: 640px) { .toast { bottom: 24px; padding: 13px 20px; font-size: 12.5px; gap: 10px; } }
+.toast::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-deep); }
 .toast.out { animation: toast-out .4s var(--ease) forwards; }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 24px); } }
 @keyframes toast-out { to { opacity: 0; transform: translate(-50%, 12px); } }

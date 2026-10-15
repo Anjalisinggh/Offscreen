@@ -11,7 +11,7 @@ import Grid from './grid';
 import SectionHead, { ArrowLink } from './section-head';
 import { Camera, Desktop, Download, Heart, Phone, Share, Torch } from './icons';
 
-export default function DetailView({ w, similar }: { w: PublicWallpaper; similar: PublicWallpaper[] }) {
+export default function DetailView({ w, similar, shareImage }: { w: PublicWallpaper; similar: PublicWallpaper[]; shareImage: string }) {
   const { likedIds, likeCount, toggleLike, downloadWallpaper, toast } = useApp();
   const desktop = isDesktop(w);
   const liked = likedIds.has(w.id);
@@ -84,10 +84,30 @@ export default function DetailView({ w, similar }: { w: PublicWallpaper; similar
     setLikes(res.likes);
     setLikePop((p) => p + 1);
   };
+  // Sharing sends the wallpaper itself along with the link, so the message shows the picture
+  // rather than a bare address. The picture is fetched ahead of time, once the page has settled:
+  // phones only allow the share sheet to open straight from the tap, with no waiting in between.
+  const shareFile = useRef<File | null>(null);
+  useEffect(() => {
+    if (!navigator.canShare) return;
+    const t = setTimeout(() => {
+      fetch(shareImage).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
+        if (!blob) return;
+        const file = new File([blob], `${w.title.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.jpg`, { type: 'image/jpeg' });
+        if (navigator.canShare({ files: [file] })) shareFile.current = file;
+      }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [shareImage, w.title]);
+
   const onShare = async () => {
     const url = location.href;
-    if (navigator.share) {
-      navigator.share({ title: `${w.title} on Offscreen`, url }).catch(() => {});
+    const title = `${w.title} on Offscreen`;
+    if (shareFile.current) {
+      navigator.share({ files: [shareFile.current], title, text: `${title}\n${url}` }).catch(() => {});
+    } else if (navigator.share) {
+      // the receiving app builds its own preview from the page's share tags
+      navigator.share({ title, url }).catch(() => {});
     } else {
       try { await navigator.clipboard.writeText(url); toast('Link copied'); } catch { toast(url); }
     }

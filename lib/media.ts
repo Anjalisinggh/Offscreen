@@ -34,4 +34,6 @@ export const ogUrl = (w: Wallpaper) => signed(w.publicId!, [
   { fetch_format: 'jpg', quality: 'auto' },
 ]);
 export const ogTileUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 420, crop: 'limit' }, { fetch_format: 'jpg', quality: 'auto' }]);
+// the picture attached when someone shares a wallpaper from its page (a plain JPEG every app takes)
+export const shareUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 1000, crop: 'limit' }, { fetch_format: 'jpg', quality: 'auto' }]);
 export const downloadUrl = (w: Wallpaper) => signed(w.publicId!, [{ flags: 'attachment' }], { format: w.filename.split('.').pop()! });
