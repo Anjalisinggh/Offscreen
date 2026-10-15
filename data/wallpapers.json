@@ -759,28 +759,6 @@
     "publicId": "offscreen/dark-dreamscape-51-51"
   },
   {
-    "id": 52,
-    "title": "Forget the Past",
-    "filename": "motivational-dreamscape-52-52.png",
-    "category": "Motivational",
-    "tags": [
-      "anime",
-      "quote",
-      "line",
-      "art",
-      "phone"
-    ],
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-09-11T10:11:56.300Z",
-    "source": "motivational-dreamscape-52-52.png",
-    "width": 864,
-    "height": 1821,
-    "device": "phone",
-    "publicId": "offscreen/motivational-dreamscape-52-52"
-  },
-  {
     "id": 53,
     "title": "Two Shadows",
     "filename": "vintage-dreamscape-53-53.png",
@@ -2722,28 +2700,6 @@
     "height": 1844,
     "device": "phone",
     "publicId": "offscreen/go-get-that-dream-146"
-  },
-  {
-    "id": 147,
-    "title": "Go Get That Dream, Golden Hour",
-    "filename": "go-get-that-dream-golden-hour-147.png",
-    "category": "Motivational",
-    "tags": [
-      "quote",
-      "leopard",
-      "red",
-      "golden",
-      "phone"
-    ],
-    "source": "go-get-that-dream-golden-hour-147.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-14T10:13:40.662Z",
-    "width": 853,
-    "height": 1844,
-    "device": "phone",
-    "publicId": "offscreen/go-get-that-dream-golden-hour-147"
   },
   {
     "id": 148,
