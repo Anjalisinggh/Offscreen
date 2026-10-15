@@ -1,41 +1,42 @@
-// Wallpaper images live on Cloudinary, uploaded as "authenticated" assets: nothing can be fetched
-// from them without a URL signed with the API secret, so only the sizes the site signs here exist.
-//   thumb   (520px)  grid/rail cards
-//   display (1100px) the wallpaper page and collection tiles
-//   og      (1200x630) the picture shown when a link is shared (Open Graph / Twitter cards)
-//   download          the original file, signed only for a signed-in user's Download
-// f_auto/q_auto let Cloudinary send AVIF or WebP, whichever the browser supports.
+// Wallpaper images live on Cloudflare R2, in two buckets:
+//   offscreen-images     public, served from IMAGES_URL (https://images.offscreen.wtf). Holds only
+//                        the smaller sizes, made once at upload by scripts/upload-to-r2.mts:
+//     thumb   (520px)  grid/rail cards
+//     display (1100px) the wallpaper page and collection tiles
+//     og      (1200x630) the picture shown when a link is shared (Open Graph / Twitter cards)
+//     ogtile  (420px)  the phones in the site-wide card (app/opengraph-image.tsx)
+//     share   (1000px) the picture attached when someone shares a wallpaper from its page
+//     tile    (120x120) the squares that draw "404" on the not-found page
+//   offscreen-originals  private. The original file is only reachable through a link signed here
+//                        with the R2 API key, for a signed-in user's Download, valid for 5 minutes.
 //
-// Set CLOUDINARY_URL (cloudinary://API_KEY:API_SECRET@CLOUD_NAME, from the Cloudinary dashboard).
-// Upload with `npm run upload-images` (scripts/upload-to-cloudinary.mts).
+// Set IMAGES_URL, R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY (see the README).
 import 'server-only';
-import { v2 as cloudinary } from 'cloudinary';
+import { AwsClient } from 'aws4fetch';
+import { sizeKey, originalKey, type Size } from './image-keys';
 import type { Wallpaper } from './types';
 
-export const configured = () => !!process.env.CLOUDINARY_URL;
-if (!configured()) console.warn('CLOUDINARY_URL is not set: wallpaper images will not load.');
+const IMAGES_URL = (process.env.IMAGES_URL || '').replace(/\/$/, '');
+const ORIGINALS_BUCKET = process.env.R2_ORIGINALS_BUCKET || 'offscreen-originals';
 
-type Step = Record<string, string | number>;
-function signed(publicId: string, transformation: Step[], extra: Step = {}) {
-  return cloudinary.url(publicId, {
-    type: 'authenticated', sign_url: true, secure: true, transformation, ...extra,
+export const configured = () => !!IMAGES_URL;
+if (!configured()) console.warn('IMAGES_URL is not set: wallpaper images will not load.');
+
+const url = (size: Size) => (w: Wallpaper) => `${IMAGES_URL}/${sizeKey(w.publicId!, size)}`;
+export const thumbUrl = url('thumb');
+export const displayUrl = url('display');
+export const ogUrl = url('og');
+export const ogTileUrl = url('ogtile');
+export const shareUrl = url('share');
+export const tileUrl = url('tile');
+
+let r2: AwsClient | undefined;
+export async function downloadUrl(w: Wallpaper) {
+  r2 ??= new AwsClient({
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+    service: 's3', region: 'auto',
   });
+  const u = new URL(`https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${ORIGINALS_BUCKET}/${originalKey(w.publicId!, w.filename)}`);
+  u.searchParams.set('X-Amz-Expires', '300');
+  return (await r2.sign(u.toString(), { aws: { signQuery: true } })).url;
 }
-
-export const thumbUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 520, crop: 'limit' }, { fetch_format: 'auto', quality: 'auto' }]);
-export const displayUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 1100, crop: 'limit' }, { fetch_format: 'auto', quality: 'auto' }]);
-// link previews are landscape and want a plain JPEG: a desktop wallpaper fills the card, a tall
-// phone one is shown whole on a gradient of its own main colours. ogTileUrl is the small phone-shaped
-// version the site-wide card (app/opengraph-image.tsx) is built from.
-export const ogUrl = (w: Wallpaper) => signed(w.publicId!, [
-  w.device === 'desktop'
-    ? { width: 1200, height: 630, crop: 'fill', gravity: 'auto' }
-    : { width: 1200, height: 630, crop: 'pad', background: 'auto:predominant_gradient:2:diagonal_desc' },
-  { fetch_format: 'jpg', quality: 'auto' },
-]);
-export const ogTileUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 420, crop: 'limit' }, { fetch_format: 'jpg', quality: 'auto' }]);
-// the picture attached when someone shares a wallpaper from its page (a plain JPEG every app takes)
-export const shareUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 1000, crop: 'limit' }, { fetch_format: 'jpg', quality: 'auto' }]);
-// a small square crop, for the squares that draw "404" on the not-found page
-export const tileUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 120, height: 120, crop: 'fill', gravity: 'auto' }, { fetch_format: 'auto', quality: 'auto' }]);
-export const downloadUrl = (w: Wallpaper) => signed(w.publicId!, [{ flags: 'attachment' }], { format: w.filename.split('.').pop()! });

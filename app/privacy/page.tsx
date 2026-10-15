@@ -68,7 +68,7 @@ export default function Privacy() {
         <ul>
           <li><b>Vercel</b> hosts the website.</li>
           <li><b>Neon</b> hosts the database that holds accounts, likes and downloads.</li>
-          <li><b>Cloudinary</b> stores and delivers the wallpaper images.</li>
+          <li><b>Cloudflare</b> stores and delivers the wallpaper images.</li>
           <li>An <b>email provider</b> sends sign-in codes.</li>
           <li><b>Google</b> provides “Continue with Google”, Google Analytics and AdSense.</li>
         </ul>

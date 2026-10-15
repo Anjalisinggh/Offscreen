@@ -15,7 +15,7 @@ Thumbs.db
 .vercel
 .env*.local
 
-# wallpaper images live on Cloudinary (see media.js), never in this repo
+# wallpaper images live on Cloudflare R2 (see lib/media.ts), never in this repo
 public/images/
 public/thumbs/
 public/thumbs-avif/

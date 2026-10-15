@@ -1,6 +1,6 @@
 // Cloudflare Workers config for the site, built with the OpenNext adapter (open-next.config.ts).
 // `npm run preview` runs the built Worker locally; `npm run deploy` builds and uploads it.
-// Secrets (DATABASE_URL, CLOUDINARY_URL, SESSION_SECRET, …) are set with `npx wrangler secret put`,
+// Secrets (DATABASE_URL, R2_SECRET_ACCESS_KEY, SESSION_SECRET, …) are set with `npx wrangler secret put`,
 // not here; see the README.
 {
 	"$schema": "node_modules/wrangler/config-schema.json",

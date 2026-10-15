@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "generate-data": "node scripts/generate-data.mts",
-    "upload-images": "node scripts/upload-to-cloudinary.mts",
+    "upload-images": "node scripts/upload-to-r2.mts",
     "typecheck": "tsc --noEmit",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
@@ -21,7 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
-    "cloudinary": "^2.11.0",
+    "aws4fetch": "^1.0.20",
     "next": "^16.3.8",
     "nodemailer": "^10.0.13",
     "pg": "^8.23.1",

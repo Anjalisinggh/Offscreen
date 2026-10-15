@@ -1,5 +1,5 @@
-// Records the download against the signed-in user, then hands over a signed Cloudinary URL for
-// the original and what to name it; this is the only place a URL for the original is given out.
+// Records the download against the signed-in user, then hands over a 5-minute signed R2 link for
+// the original and what to name it; this is the only place a link to the original is given out.
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { store } from '@/lib/store';
@@ -19,5 +19,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (!base) return fail(404, 'Not found');
   await store.recordDownload(user.id, id);
   const item = (await loadWallpapers()).find((w) => w.id === id)!;
-  return NextResponse.json({ url: downloadUrl(base), name: downloadName(base), downloads: item.downloads });
+  return NextResponse.json({ url: await downloadUrl(base), name: downloadName(base), downloads: item.downloads });
 }

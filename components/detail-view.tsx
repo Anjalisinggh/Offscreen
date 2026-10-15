@@ -61,7 +61,7 @@ export default function DetailView({ w, similar, shareImage }: { w: PublicWallpa
   // ambient glow tinted by the wallpaper's own colour
   useEffect(() => {
     const probe = new Image();
-    probe.crossOrigin = 'anonymous'; // the image is on Cloudinary; needed to read its pixels
+    probe.crossOrigin = 'anonymous'; // the image is on R2 (images.offscreen.wtf); needed to read its pixels
     probe.onload = () => {
       try {
         const c = document.createElement('canvas');

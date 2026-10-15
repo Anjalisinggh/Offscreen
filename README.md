@@ -4,7 +4,7 @@
 
 **Live:** [offscreen.wtf](https://offscreen.wtf)
 
-Offscreen is a small wallpaper gallery. Browse, like and download phone and desktop wallpapers, organized into collections by mood — Retro, Dark, Minimal, Motivational, Cute, Abstract, Nature, Pink, Vintage, Psychedelic. The wallpaper list lives in `data/wallpapers.json` and the images on Cloudinary; accounts, likes and downloads live in a Postgres database.
+Offscreen is a small wallpaper gallery. Browse, like and download phone and desktop wallpapers, organized into collections by mood — Retro, Dark, Minimal, Motivational, Cute, Abstract, Nature, Pink, Vintage, Psychedelic. The wallpaper list lives in `data/wallpapers.json` and the images on Cloudflare R2; accounts, likes and downloads live in a Postgres database.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-3b1f2c) ![TypeScript](https://img.shields.io/badge/TypeScript-5-c25a7c) ![License](https://img.shields.io/badge/license-MIT-c25a7c)
 
@@ -17,7 +17,7 @@ Offscreen is a small wallpaper gallery. Browse, like and download phone and desk
 - **Phone and desktop wallpapers**, detected automatically by image aspect ratio. Each wallpaper opens in a realistic preview — an iPhone mockup with a live lock screen clock, or a MacBook mockup with a menu bar and dock.
 - **Collections and search** by style, plus tag-based discovery ("you might also like").
 - **Light and dark themes**, remembered per browser.
-- **Fast to load.** Pages are rendered on the server, and every wallpaper is served from Cloudinary as a small thumbnail for grid cards and a mid-size image for the wallpaper page, in AVIF or WebP; the original file is only sent for the actual Download.
+- **Fast to load.** Pages are rendered on the server, and every wallpaper is served from Cloudflare R2 as a small thumbnail for grid cards and a mid-size image for the wallpaper page, in WebP; the original file is only sent for the actual Download.
 
 ## Getting started
 
@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-Then open **http://localhost:3000**. Copy `.env.example` to `.env` and fill in what you need; at minimum `CLOUDINARY_URL`, or no images load.
+Then open **http://localhost:3000**. Copy `.env.example` to `.env` and fill in what you need; at minimum `IMAGES_URL`, or no images load.
 
 With no `DATABASE_URL`, accounts, likes and downloads are kept in `data/db.json` (gitignored), and with no `SMTP_URL` the sign-up code is printed in the terminal instead of emailed, so local development needs nothing else.
 
@@ -70,11 +70,21 @@ Codes are sent over SMTP. Set `SMTP_URL` and `MAIL_FROM`:
 
 `MAIL_FROM` is the sender, e.g. `Offscreen <you@gmail.com>`. Note the `@` in a Gmail address is written `%40` inside the URL. On Vercel without `SMTP_URL`, sign-up shows "Sign-in emails aren't set up on this site yet".
 
-## Images (Cloudinary)
+## Images (Cloudflare R2)
 
-Wallpaper images live on Cloudinary, not in this repo. Set `CLOUDINARY_URL` (Cloudinary dashboard → API Keys → "API environment variable") locally in `.env` and on Vercel.
+Wallpaper images live in two Cloudflare R2 buckets, not in this repo (R2's free tier covers 10 GB and has no charge for traffic):
 
-They're uploaded as **authenticated** assets, so nothing can be fetched from Cloudinary without a URL signed with the API secret. The server signs exactly three kinds of URL (`lib/media.ts`): a 520px card thumbnail, an 1100px preview for the wallpaper page, and — only for a signed-in user pressing Download — the original. Cloudinary picks AVIF or WebP for the previews. Each image is re-encoded without its metadata before upload. Right-click "Save image" and dragging are turned off on wallpaper images, and the previews it would save are only the smaller sizes anyway.
+- **`offscreen-images`** (public, at `https://images.offscreen.wtf`): only the smaller sizes the site shows, made once at upload with sharp: a 520px card thumbnail, an 1100px preview, a 1200×630 link-preview picture, a 1000px picture for sharing, and small tiles. WebP for the site, JPEG where other apps take the picture.
+- **`offscreen-originals`** (private): the original files. The server signs a 5-minute link to one (`lib/media.ts`) only for a signed-in user pressing Download.
+
+Each image is re-encoded without its metadata before upload. Right-click "Save image" and dragging are turned off on wallpaper images, and the previews it would save are only the smaller sizes anyway.
+
+Setting it up (once):
+
+1. `npx wrangler login`, then `npx wrangler r2 bucket create offscreen-images` and `npx wrangler r2 bucket create offscreen-originals`.
+2. `npx wrangler r2 bucket domain add offscreen-images --domain images.offscreen.wtf --zone-id <zone id>` (the domain must be on Cloudflare), and `npx wrangler r2 bucket cors set <bucket> --file r2-cors.json` on both buckets, so the site can read the pictures' pixels and fetch Downloads.
+3. Cloudflare dashboard → **R2 → Manage API tokens → Create API token**, "Object Read & Write" on those two buckets. Put the account ID, access key ID and secret in `.env` as `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, with `IMAGES_URL=https://images.offscreen.wtf`, and add the same four on Vercel.
+4. `npm run upload-images` uploads every wallpaper in `data/wallpapers.json` from its source file in the parent folder. Re-running skips what's already there; `--force` re-uploads everything.
 
 ## Adding your own wallpapers
 
@@ -84,7 +94,7 @@ Drop new images into the parent folder of this project, then run:
 npm run generate-data
 ```
 
-This uploads each new image to Cloudinary (without its metadata), detects phone vs. desktop by aspect ratio, and appends it to `data/wallpapers.json`. The source file is renamed to the wallpaper's own file name, so no tool- or camera-given name is kept. Edit titles, tags and collections in `data/wallpapers.json` (a phone and desktop version of the same artwork share a `series`), then commit.
+This uploads each new image to Cloudflare R2 (without its metadata), detects phone vs. desktop by aspect ratio, and appends it to `data/wallpapers.json`. The source file is renamed to the wallpaper's own file name, so no tool- or camera-given name is kept. Edit titles, tags and collections in `data/wallpapers.json` (a phone and desktop version of the same artwork share a `series`), then commit.
 
 ## Project structure
 
@@ -99,15 +109,15 @@ lib/
   store.ts                 Accounts, passwords, photos, codes, likes, downloads: Postgres or data/db.json
   session.ts, password.ts  Login cookie and password hashing
   mailer.ts                Sends codes over SMTP
-  media.ts                 Signed Cloudinary URLs
+  media.ts                 Image URLs on R2, signed Download links
   wallpapers.ts            The wallpaper library, sorting, search and "similar"
-scripts/                   generate-data.mts, upload-to-cloudinary.mts
+scripts/                   generate-data.mts, upload-to-r2.mts
 data/                      wallpapers.json, categories.json (committed); db.json (local only, gitignored)
 ```
 
 ## Deploying to Vercel
 
-The project deploys to Vercel as a Next.js app (`vercel.json` sets the framework). Add `DATABASE_URL`, `SMTP_URL`, `MAIL_FROM`, `CLOUDINARY_URL` and (optionally) `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as described above.
+The project deploys to Vercel as a Next.js app (`vercel.json` sets the framework). Add `DATABASE_URL`, `SMTP_URL`, `MAIL_FROM`, `IMAGES_URL`, the three `R2_*` values and (optionally) `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` as described above.
 
 ## Deploying to Cloudflare Workers
 
@@ -116,7 +126,7 @@ The same code also runs on Cloudflare Workers through the [OpenNext adapter](htt
 1. **Cloudflare dashboard → Workers & Pages → Create → Import a repository**, pick this repo, and name the Worker `offscreen` (it must match `name` in `wrangler.jsonc`).
    - Build command: `npx opennextjs-cloudflare build`
    - Deploy command: `npx opennextjs-cloudflare deploy`
-2. **Settings → Variables and Secrets**: add the same values as on Vercel as secrets: `DATABASE_URL`, `CLOUDINARY_URL`, `SESSION_SECRET`, `MAIL_FROM`, `SMTP_URL` or `RESEND_API_KEY`, and `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Add `CLOUDINARY_URL` under **Build variables** too (a few pages are pre-rendered at build time). Use the same `SESSION_SECRET` as Vercel (or leave it unset on both, so it's derived from `DATABASE_URL`) and everyone stays signed in after the move.
+2. **Settings → Variables and Secrets**: add the same values as on Vercel as secrets: `DATABASE_URL`, `IMAGES_URL`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `SESSION_SECRET`, `MAIL_FROM`, `SMTP_URL` or `RESEND_API_KEY`, and `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Add `IMAGES_URL` under **Build variables** too (a few pages are pre-rendered at build time). Use the same `SESSION_SECRET` as Vercel (or leave it unset on both, so it's derived from `DATABASE_URL`) and everyone stays signed in after the move.
 3. **Plan**: sign-up and log-in hash passwords with scrypt, which needs more CPU time per request than the free plan's 10ms. Use **Workers Paid**.
 4. Every push to `main` then builds and deploys. Try the site on its `offscreen.<account>.workers.dev` address first; "Continue with Google" there needs `https://offscreen.<account>.workers.dev/api/auth/google/callback` added as a redirect URI in Google Cloud.
 5. **Domain**: add `offscreen.wtf` to Cloudflare (it gives you two nameservers to set at your registrar), then in the Worker's **Settings → Domains & Routes** add `offscreen.wtf` and `www.offscreen.wtf`. Remove the domain from Vercel once it's serving from Cloudflare.
@@ -127,7 +137,7 @@ Building locally: `npm run preview` builds and runs the Worker, `npm run deploy`
 
 ## Tech stack
 
-Next.js (App Router), React, TypeScript, Postgres (`pg`), Nodemailer or Resend, Cloudinary. Runs on Vercel or Cloudflare Workers. Wallpaper upload clean-up via [sharp](https://sharp.pixelplumbing.com/); profile photos are cropped in the browser.
+Next.js (App Router), React, TypeScript, Postgres (`pg`), Nodemailer or Resend, Cloudflare R2. Runs on Vercel or Cloudflare Workers. Wallpaper upload clean-up via [sharp](https://sharp.pixelplumbing.com/); profile photos are cropped in the browser.
 
 ## License
 

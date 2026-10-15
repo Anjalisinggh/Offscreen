@@ -1,12 +1,12 @@
-// Imports new images from the parent folder: uploads each to Cloudinary (without its metadata)
-// and adds it to data/wallpapers.json. Needs CLOUDINARY_URL in .env.
+// Imports new images from the parent folder: uploads each to Cloudflare R2 (without its metadata)
+// and adds it to data/wallpapers.json. Needs the R2_* settings in .env.
 // Safe to re-run: wallpapers that were already imported (matched by source filename) are left
 // untouched, so titles, categories and tags edited by hand are kept.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { configured, uploadWallpaper, type Item } from './upload-to-cloudinary.mts';
+import { configured, uploadWallpaper, type Item } from './upload-to-r2.mts';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC_DIR = path.join(ROOT, '..');
@@ -36,7 +36,7 @@ function guessCategory(f: string) {
 }
 
 if (!configured()) {
-  console.error('Set CLOUDINARY_URL in .env first.');
+  console.error('Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY in .env first.');
   process.exit(1);
 }
 fs.mkdirSync(DATA_DIR, { recursive: true });
