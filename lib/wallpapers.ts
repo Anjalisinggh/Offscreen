@@ -4,14 +4,19 @@ import 'server-only';
 import wallpapersJson from '@/data/wallpapers.json';
 import categoriesJson from '@/data/categories.json';
 import { store } from './store';
-import { thumbUrl, displayUrl } from './media';
+import { thumbUrl, displayUrl, tileUrl } from './media';
 import type { Wallpaper, PublicWallpaper, Category } from './types';
 
 const WALLPAPERS = wallpapersJson as Wallpaper[];
 export const categories: Category[] = categoriesJson;
 
 export const findWallpaper = (id: number) => WALLPAPERS.find((w) => w.id === id);
-export const wallpaperIds = WALLPAPERS.map((w) => w.id);
+
+// the squares that draw "404" on the not-found page: every wallpaper, in a fixed mixed-up order
+// (phone/desktop pairs once), so neighbouring squares rarely look alike
+export const mosaicTiles = () => dedupeSeries(WALLPAPERS.filter((w) => w.publicId))
+  .map((w, i) => ({ w, k: (i * 37) % 101 })).sort((a, b) => a.k - b.k)
+  .map(({ w }) => ({ id: w.id, title: w.title, src: tileUrl(w) }));
 
 // the likes/downloads numbers in wallpapers.json are just the starting totals; what people
 // actually do is added on top of them

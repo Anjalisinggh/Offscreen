@@ -388,66 +388,28 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .home-cta-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 
 /* ---------------- 404 ---------------- */
-/* a full-screen blossom scene over the whole page (top bar and footer included): the painting in
-   public/404-bg.webp, a soft wash behind the words so they stay readable, and drifting petals */
-.nf404 {
-  --nf-ink: #5a2a3e; --nf-em: #a0486c; --nf-sub: #6f4353; --nf-btn: #5c2a3e; --nf-btn-ink: #fff;
-  --nf-wash: rgba(255, 228, 234, .5); --nf-shade: none;
-  position: fixed; inset: 0; z-index: 200; overflow: hidden; color: var(--nf-ink);
-  background: #f3c6d0 url('/404-bg.webp') center / cover no-repeat;
-  display: flex; align-items: center; justify-content: center;
+/* "404" drawn in small squares of real wallpapers (components/mosaic-404.tsx), centred, with a
+   plain headline underneath, both on the centre line. */
+.nf { padding: clamp(30px, 8vh, 90px) 0 clamp(20px, 5vh, 50px); }
+.mosaic {
+  --t: clamp(15px, calc((100vw - 2 * var(--gutter) - 16 * 3px) / 17), 46px);
+  display: grid; grid-template-columns: repeat(17, var(--t)); grid-template-rows: repeat(7, var(--t)); gap: 3px;
+  justify-content: center;
 }
-/* night: the same painting, dimmed and tinted plum */
-:root[data-theme="dark"] .nf404 {
-  --nf-ink: #fbe6ee; --nf-em: #f7b6cb; --nf-sub: #ecd0da; --nf-btn: #f7d1dd; --nf-btn-ink: #2a1520;
-  --nf-wash: rgba(30, 12, 24, .5);
-  --nf-shade: linear-gradient(180deg, rgba(24, 9, 20, .78), rgba(54, 20, 44, .62));
+.mosaic-tile {
+  position: relative; display: block; border-radius: 3px; overflow: hidden; background: var(--surface);
+  animation: tile-pop .55s var(--ease-slow) var(--d) both; transition: transform .35s var(--ease), box-shadow .35s var(--ease);
 }
-.nf404::before { content: ''; position: absolute; inset: 0; background: var(--nf-shade); pointer-events: none; }
-body:has(.nf404) { overflow: hidden; }
-.nf404-scene { position: absolute; inset: 0; pointer-events: none; }
-.nf404-petal {
-  position: absolute; border-radius: 85% 12% 85% 12%; transform: rotate(var(--turn));
-  background: linear-gradient(140deg, #ffe3ea 0%, #f7a5bb 55%, #ea7f9f 100%);
-  box-shadow: inset -2px -2px 6px rgba(214, 84, 124, .25);
-  animation: nf-petal-0 10s ease-in-out infinite alternate;
-}
-.nf404-petal.a1 { animation-name: nf-petal-1; }
-.nf404-petal.a2 { animation-name: nf-petal-2; }
-@keyframes nf-petal-0 { to { transform: translate(26px, 34px) rotate(calc(var(--turn) + 70deg)); } }
-@keyframes nf-petal-1 { to { transform: translate(-30px, 22px) rotate(calc(var(--turn) - 90deg)); } }
-@keyframes nf-petal-2 { to { transform: translate(14px, -26px) rotate(calc(var(--turn) + 120deg)); } }
+@keyframes tile-pop { from { opacity: 0; transform: scale(.2) rotate(-12deg); } }
+.mosaic-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: tile-swap .6s var(--ease) both; }
+@keyframes tile-swap { from { opacity: 0; } }
+/* pointing at a square lifts it up so the wallpaper can be seen */
+.mosaic-tile:hover { transform: scale(2.2); z-index: 3; border-radius: 5px; box-shadow: 0 12px 28px -8px rgba(59, 31, 44, .55); }
 
-/* the same light/dark switch as the top bar, pinned to the corner */
-.nf404-theme { position: absolute; right: clamp(20px, 3vw, 44px); top: clamp(18px, 3vh, 32px); z-index: 2; }
-
-.nf404-copy { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 22px; margin-top: 4vh; }
-.nf404-copy::before { /* the wash behind the words */
-  content: ''; position: absolute; inset: -18% -16%; z-index: -1; border-radius: 50%;
-  background: radial-gradient(closest-side, var(--nf-wash), transparent); filter: blur(12px);
-}
-.nf404-copy h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(40px, 5.6vw, 80px); line-height: 1; letter-spacing: -.02em; margin: 0 0 18px; color: var(--nf-ink); animation: nf-rise .9s .15s var(--ease-slow) both; }
-.nf404-copy h1 em { font-weight: 400; color: var(--nf-em); }
-.nf404-copy p { font-size: clamp(15px, 1.35vw, 19px); color: var(--nf-sub); margin: 0 0 30px; animation: nf-rise .9s .25s var(--ease-slow) both; }
-.nf404-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px 22px; animation: nf-rise .9s .35s var(--ease-slow) both; }
-.nf404-btn {
-  display: inline-flex; align-items: center; gap: 8px; padding: 14px 34px; border-radius: 999px; font-size: 14.5px; font-weight: 600;
-  border: 1px solid var(--nf-btn); background: transparent; color: var(--nf-ink);
-  transition: transform .4s var(--ease), background .4s var(--ease), color .4s var(--ease), box-shadow .4s var(--ease);
-}
-.nf404-btn.solid { background: var(--nf-btn); color: var(--nf-btn-ink); }
-.nf404-btn:hover { transform: translateY(-2px); background: var(--nf-btn); color: var(--nf-btn-ink); box-shadow: 0 14px 30px rgba(92, 42, 62, .22); }
-.nf404-code { margin-top: 34px; font-size: 11px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--nf-sub); animation: nf-rise .9s .45s var(--ease-slow) both; }
-@keyframes nf-rise { from { opacity: 0; transform: translateY(18px); } }
-@media (max-width: 640px) {
-  /* a tall screen shows the middle of the wide painting; lean toward the sun and the big bloom */
-  .nf404 { background-position: 68% center; }
-  .nf404-btn { padding: 13px 26px; font-size: 13.5px; }
-  .nf404-code { margin-top: 26px; font-size: 10px; letter-spacing: .24em; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .nf404-petal, .nf404-copy h1, .nf404-copy p, .nf404-actions, .nf404-code { animation: none; }
-}
+.nf-foot { margin-top: clamp(50px, 9vh, 100px); display: flex; justify-content: center; }
+.nf-foot h1 { text-align: center; font-family: var(--serif); font-weight: 400; font-size: clamp(38px, 5.2vw, 76px); line-height: 1; letter-spacing: -.015em; margin: 0; }
+.nf-foot h1 em { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .mosaic-tile, .mosaic-tile img { animation: none; } }
 
 /* ---------------- privacy policy and other long reads ---------------- */
 .legal { max-width: 700px; padding-bottom: 40px; color: var(--muted); font-size: 16px; line-height: 1.75; }

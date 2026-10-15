@@ -36,4 +36,6 @@ export const ogUrl = (w: Wallpaper) => signed(w.publicId!, [
 export const ogTileUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 420, crop: 'limit' }, { fetch_format: 'jpg', quality: 'auto' }]);
 // the picture attached when someone shares a wallpaper from its page (a plain JPEG every app takes)
 export const shareUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 1000, crop: 'limit' }, { fetch_format: 'jpg', quality: 'auto' }]);
+// a small square crop, for the squares that draw "404" on the not-found page
+export const tileUrl = (w: Wallpaper) => signed(w.publicId!, [{ width: 120, height: 120, crop: 'fill', gravity: 'auto' }, { fetch_format: 'auto', quality: 'auto' }]);
 export const downloadUrl = (w: Wallpaper) => signed(w.publicId!, [{ flags: 'attachment' }], { format: w.filename.split('.').pop()! });
