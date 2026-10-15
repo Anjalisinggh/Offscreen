@@ -15,6 +15,16 @@ const nextConfig: NextConfig = {
       permanent: true,
     }];
   },
+  // PostHog analytics (instrumentation-client.ts) sends events here, and they're passed on to
+  // PostHog's US servers, so ad blockers that block posthog.com don't drop them
+  async rewrites() {
+    return [
+      { source: '/ph/static/:path*', destination: 'https://us-assets.i.posthog.com/static/:path*' },
+      { source: '/ph/:path*', destination: 'https://us.i.posthog.com/:path*' },
+    ];
+  },
+  // PostHog's API paths end in a slash; keep Next from redirecting them away
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;

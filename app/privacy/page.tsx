@@ -43,12 +43,13 @@ export default function Privacy() {
         <ul>
           <li><b>Sign-in cookie</b> (<code>sid</code>): keeps you signed in for up to 90 days. It’s only set when you sign in, and signing out removes it.</li>
           <li><b>Theme</b>: whether you picked light or dark mode is remembered in your browser’s local storage. It never leaves your device.</li>
-          <li><b>Analytics and advertising cookies</b> set by Google, described below.</li>
+          <li><b>Analytics and advertising cookies</b> set by Google and PostHog, described below.</li>
         </ul>
         <p>You can delete or block cookies in your browser’s settings. The site still works without them, though you’ll need to sign in again.</p>
 
         <h2>Analytics</h2>
         <p>To understand which pages and wallpapers people visit, we use <b>Google Analytics</b>, which uses cookies to measure visits and how the site is used. Google processes this data under its own privacy policy. You can opt out with the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics opt-out add-on</a>.</p>
+        <p>We also use <b>PostHog</b> to see how the site is used: which pages are viewed, what’s clicked, and how people move between pages. PostHog stores an identifier for your browser in a cookie and local storage so visits can be counted, and it may record sessions with text you type hidden.</p>
 
         <h2>Advertising</h2>
         <p>Offscreen shows ads served by <b>Google AdSense</b>, which keep the site free.</p>
@@ -66,6 +67,7 @@ export default function Privacy() {
           <li><b>Neon</b> hosts the database that holds accounts, likes and downloads.</li>
           <li><b>Cloudflare</b> stores and delivers the wallpaper images.</li>
           <li>An <b>email provider</b> sends sign-in codes.</li>
+          <li><b>PostHog</b> measures how the site is used.</li>
           <li><b>Google</b> provides “Continue with Google”, Google Analytics and AdSense.</li>
         </ul>
         <p>These providers may process data in countries other than your own.</p>
