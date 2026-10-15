@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   // app/opengraph-image.tsx, and each wallpaper page swaps in its own (app/wallpaper/[id])
   openGraph: { title: TITLE, description: DESCRIPTION, siteName: 'Offscreen', type: 'website' },
   twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
+  // Google AdSense's ownership check (the same account as the script in <head> and public/ads.txt)
+  other: { 'google-adsense-account': 'ca-pub-8700115074348091' },
 };
 export const viewport: Viewport = { themeColor: '#faf3f1' };
 
