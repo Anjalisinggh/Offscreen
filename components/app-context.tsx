@@ -43,7 +43,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUserState] = useState<PublicUser | null>(null);
   const [ready, setReady] = useState(false);
-  const [googleEnabled, setGoogleEnabled] = useState(false);
+  // shown from the start: waiting on /auth/me (or it failing, say behind a blocker) mustn't hide
+  // the button; if Google sign-in is off, the API sends people back with a message instead
+  const [googleEnabled, setGoogleEnabled] = useState(true);
   // read by actions that run right after signing in, before React has re-rendered
   const userRef = useRef<PublicUser | null>(null);
   const setUser = useCallback((u: PublicUser | null) => { userRef.current = u; setUserState(u); }, []);
