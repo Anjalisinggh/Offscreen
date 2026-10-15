@@ -34,5 +34,6 @@ export async function currentUser(): Promise<StoredUser | null> {
 
 export const publicUser = (u: StoredUser | null): PublicUser | null => u && {
   id: u.id, name: u.name, email: u.email, createdAt: u.createdAt,
-  avatar: u.avatarUpdatedAt ? `/api/avatars/${u.id}?v=${new Date(u.avatarUpdatedAt).getTime()}` : null,
+  // on the API server's own address: the pages (another host) don't serve photos
+  avatar: u.avatarUpdatedAt ? `${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '')}/api/avatars/${u.id}?v=${new Date(u.avatarUpdatedAt).getTime()}` : null,
 };
