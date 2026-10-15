@@ -48,11 +48,7 @@ export default function Privacy() {
         <p>You can delete or block cookies in your browser’s settings. The site still works without them, though you’ll need to sign in again.</p>
 
         <h2>Analytics</h2>
-        <p>To understand which pages and wallpapers people visit, we use two tools:</p>
-        <ul>
-          <li><b>Vercel Web Analytics</b>, which counts page views, countries, devices and the sites visitors came from. It doesn’t use cookies and doesn’t identify you.</li>
-          <li><b>Google Analytics</b>, which uses cookies to measure visits and how the site is used. Google processes this data under its own privacy policy. You can opt out with the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics opt-out add-on</a>.</li>
-        </ul>
+        <p>To understand which pages and wallpapers people visit, we use <b>Google Analytics</b>, which uses cookies to measure visits and how the site is used. Google processes this data under its own privacy policy. You can opt out with the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics opt-out add-on</a>.</p>
 
         <h2>Advertising</h2>
         <p>Offscreen shows ads served by <b>Google AdSense</b>, which keep the site free.</p>

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import Script from 'next/script';
-import { Analytics } from '@vercel/analytics/next';
 import { store } from '@/lib/store';
 import { currentUser, publicUser } from '@/lib/session';
 import { libraryCount } from '@/lib/wallpapers';
@@ -63,9 +62,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <Footer count={libraryCount()} />
         </AppProvider>
         <Motion />
-        {/* visitor counts, top pages, countries and referrers, shown under Analytics on Vercel */}
-        {process.env.VERCEL && <Analytics />}
-        {/* the same visits, sent to Google Analytics (the "Off Screen" web stream) */}
+        {/* visits, sent to Google Analytics (the "Off Screen" web stream) */}
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
         <Script id="ga-init" strategy="afterInteractive">{GA_SCRIPT}</Script>
       </body>
