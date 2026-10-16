@@ -96,6 +96,8 @@ npm run generate-data
 
 This uploads each new image to Cloudflare R2 (without its metadata), detects phone vs. desktop by aspect ratio, and appends it to `data/wallpapers.json`. The source file is renamed to the wallpaper's own file name, so no tool- or camera-given name is kept. Edit titles, tags and collections in `data/wallpapers.json` (a phone and desktop version of the same artwork share a `series`), then commit.
 
+Since the images moved to our own server, run it with `OUT_DIR=<folder>` instead: the sizes and originals are written to `<folder>/images/…` and `<folder>/originals/…` rather than uploaded to R2. Copy those into `~/data/images` and `~/data/originals` on the API server, then pull, rebuild and restart `offscreen-api` there and redeploy the pages.
+
 ## Project structure
 
 ```

@@ -27,7 +27,7 @@ const TYPES = { webp: 'image/webp', jpg: 'image/jpeg', png: 'image/png', jpeg: '
 
 export interface Item { id: number; filename: string; source?: string; device?: string; publicId?: string; [k: string]: unknown }
 
-export const configured = () => !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+export const configured = () => !!process.env.OUT_DIR || !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
 export const publicIdFor = (filename: string) => `${FOLDER}/${filename.replace(/\.[^.]+$/, '')}`;
 
 let client: AwsClient | undefined;
@@ -35,7 +35,16 @@ function r2(method: 'PUT' | 'HEAD', bucket: string, key: string, body?: Buffer, 
   client ??= new AwsClient({ accessKeyId: process.env.R2_ACCESS_KEY_ID!, secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!, service: 's3', region: 'auto' });
   return client.fetch(`https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${bucket}/${key}`, { method, body: body && new Uint8Array(body), headers });
 }
+// With OUT_DIR set, the files are written to <OUT_DIR>/images/… and <OUT_DIR>/originals/… instead,
+// the same layout as ~/data/images and ~/data/originals on the API server, ready to copy there.
+const OUT_DIR = process.env.OUT_DIR;
 async function put(bucket: string, key: string, body: Buffer, cache: string) {
+  if (OUT_DIR) {
+    const file = path.join(OUT_DIR, bucket === ORIGINALS_BUCKET ? 'originals' : 'images', key);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, body);
+    return;
+  }
   const res = await r2('PUT', bucket, key, body, { 'content-type': TYPES[key.split('.').pop()!], 'cache-control': cache });
   if (!res.ok) throw new Error(`${key}: R2 said ${res.status} ${await res.text()}`);
 }
