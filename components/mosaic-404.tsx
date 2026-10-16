@@ -4,7 +4,7 @@
 // square is a link to the wallpaper it shows.
 import Link from 'next/link';
 import { useEffect, useState, type CSSProperties } from 'react';
-import { prefersReducedMotion } from '@/lib/client';
+import { prefersReducedMotion, wallpaperPath } from '@/lib/client';
 
 export interface MosaicTile { id: number; title: string; src: string }
 
@@ -43,7 +43,7 @@ export default function Mosaic404({ pool }: { pool: MosaicTile[] }) {
       {CELLS.map((cell, i) => {
         const w = shown[i];
         return (
-          <Link key={i} className="mosaic-tile" href={`/wallpaper/${w.id}`} title={w.title} tabIndex={-1}
+          <Link key={i} className="mosaic-tile" href={wallpaperPath(w)} title={w.title} tabIndex={-1}
             style={{ gridColumn: cell.col, gridRow: cell.row, '--d': `${(ORDER[i] * 0.9).toFixed(2)}s` } as CSSProperties}>
             {/* keyed by wallpaper, so a newly arrived one fades in over the old */}
             {/* eslint-disable-next-line @next/next/no-img-element */}

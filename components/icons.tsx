@@ -8,7 +8,8 @@ export const Download = () => <Svg><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14" /><
 export const Share = () => <Svg><path d="M12 15V4M8 8l4-4 4 4M6 12v7h12v-7" /></Svg>;
 export const Arrow = () => <Svg><path d="M5 12h14M13 6l6 6-6 6" /></Svg>;
 export const Close = () => <Svg><path d="M6 6l12 12M18 6L6 18" /></Svg>;
-export const Search = () => <Svg><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></Svg>;
+export const Menu = () => <Svg><path d="M4 8h16M4 16h16" /></Svg>;
+export const Search =() => <Svg><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></Svg>;
 export const Torch = () => <Svg><path d="M9 3h6v5l-2 3v10h-2V11L9 8z" /></Svg>;
 export const Camera = () => <Svg><rect x="3.5" y="7" width="17" height="12" rx="2" /><circle cx="12" cy="13" r="3.2" /><path d="M9 7l1.5-2.5h3L15 7" /></Svg>;
 export const Desktop = () => <Svg><rect x="3" y="4.5" width="18" height="12" rx="1.5" /><path d="M1.5 19.5h21" /></Svg>;

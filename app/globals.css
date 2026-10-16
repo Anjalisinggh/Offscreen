@@ -180,10 +180,27 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 }
 .profile-chip span:last-child { font-size: 13px; font-weight: 500; }
 
+/* phones: Explore, Collections, Search and Liked move into a menu that drops down under the bar */
+.menu-btn, .phone-menu { display: none; }
 @media (max-width: 820px) {
-  .main-nav { display: none; }
+  .main-nav, .search-btn { display: none; }
   .topbar-inner { gap: 16px; justify-content: space-between; }
+  .topbar-actions { gap: 10px; }
+  .menu-btn { display: flex; }
+  .topbar:has(.phone-menu:not([hidden])) { background: rgba(var(--bg-rgb), .97); }
+  .phone-menu:not([hidden]) {
+    display: flex; flex-direction: column; padding: 4px var(--gutter) 18px;
+    border-top: 1px solid var(--line); animation: menu-in .35s var(--ease);
+  }
+  .phone-menu a {
+    font-family: var(--serif); font-size: 30px; line-height: 1; padding: 14px 0; color: var(--muted);
+    border-bottom: 1px solid var(--line); transition: color .3s var(--ease);
+  }
+  .phone-menu a:last-child { border-bottom: 0; }
+  .phone-menu a.active, .phone-menu a:hover { color: var(--ink); }
+  .phone-menu a.active { font-style: italic; }
 }
+@keyframes menu-in { from { opacity: 0; transform: translateY(-8px); } }
 
 /* ---------------- layout & page transitions ---------------- */
 #app {
@@ -558,6 +575,22 @@ a.filter { display: inline-block; line-height: normal; }
 @media (max-width: 900px) {
   .detail { grid-template-columns: 1fr; }
   .phone { height: min(560px, 70vh); }
+}
+
+/* phones: Download stuck to the bottom of the screen on a wallpaper's page (components/detail-view.tsx) */
+.dl-dock { display: none; }
+@media (max-width: 900px) {
+  .dl-dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; display: flex; gap: 10px;
+    padding: 12px var(--gutter) calc(12px + env(safe-area-inset-bottom));
+    background: rgba(var(--bg-rgb), .86); backdrop-filter: blur(18px) saturate(1.2); border-top: 1px solid var(--line);
+    transform: translateY(110%); transition: transform .45s var(--ease);
+  }
+  .dl-dock.shown { transform: none; }
+  .dl-dock .btn.accent { flex: 1; }
+  .dl-dock-like { flex: none; width: 54px; padding: 0; }
+  body:has(.dl-dock.shown) .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+  body:has(.dl-dock) .site-footer { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 }
 
 /* ---------------- search ---------------- */

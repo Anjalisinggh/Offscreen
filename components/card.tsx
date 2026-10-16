@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, type CSSProperties } from 'react';
-import { fmt, isDesktop, ratio } from '@/lib/client';
+import { fmt, isDesktop, ratio, wallpaperPath } from '@/lib/client';
 import type { PublicWallpaper } from '@/lib/types';
 import { useApp } from './app-context';
 import { Download, Heart } from './icons';
@@ -14,7 +14,7 @@ export default function Card({ w, i }: { w: PublicWallpaper; i: number }) {
 
   return (
     <article className="card reveal" style={{ '--i': i % 8 } as CSSProperties}
-      onClick={(e) => { if (!(e.target as Element).closest('button')) router.push(`/wallpaper/${w.id}`); }}>
+      onClick={(e) => { if (!(e.target as Element).closest('button')) router.push(wallpaperPath(w)); }}>
       <div className="card-media" style={{ '--ar': ratio(w) } as CSSProperties}>
         {w.featured && <span className="badge">Featured</span>}
         {/* eslint-disable-next-line @next/next/no-img-element */}

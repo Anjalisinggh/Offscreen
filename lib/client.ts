@@ -41,7 +41,12 @@ export async function api<T = unknown>(path: string, opts: RequestInit = {}): Pr
 export const ratio = (w: Pick<PublicWallpaper, 'width' | 'height'>) => (w.width && w.height ? `${w.width} / ${w.height}` : '9 / 16');
 // a collection's own page: /dark-wallpapers, /pink-wallpapers…
 export const moodPath = (category: string) => `/${category.toLowerCase()}-wallpapers`;
-export const isDesktop = (w: Pick<PublicWallpaper, 'device'>) => w.device === 'desktop';
+// a wallpaper's own page: /wallpaper/115-pink-sunset (the number is what finds it; the words are
+// for people and search engines, and old /wallpaper/115 links redirect here)
+export const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
+  .replace(/[’']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+export const wallpaperPath = (w: { id: number; title: string }) => `/wallpaper/${w.id}${slugify(w.title) ? `-${slugify(w.title)}` : ''}`;
+export const isDesktop =(w: Pick<PublicWallpaper, 'device'>) => w.device === 'desktop';
 export const initial = (name?: string) => (name || '?').trim().charAt(0).toUpperCase();
 export const pad = (n: number) => String(n).padStart(2, '0');
 export const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n));

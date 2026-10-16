@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { categories, dedupeSeries, loadWallpapers, publicWallpaper, sortWallpapers } from '@/lib/wallpapers';
-import { isDesktop } from '@/lib/client';
+import { isDesktop, wallpaperPath } from '@/lib/client';
 import type { PublicWallpaper } from '@/lib/types';
 import Grid from '@/components/grid';
 import CountUp from '@/components/count-up';
@@ -28,7 +28,7 @@ export default async function Home() {
   const downloads = all.reduce((s, w) => s + w.downloads, 0);
 
   const heroCol = (col: PublicWallpaper[], copy: number) => col.map((w) => (
-    <Link key={`${copy}-${w.id}`} href={`/wallpaper/${w.id}`} tabIndex={-1}>
+    <Link key={`${copy}-${w.id}`} href={wallpaperPath(w)} tabIndex={-1}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={w.thumb} alt="" draggable={false} />
     </Link>

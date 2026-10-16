@@ -23,6 +23,17 @@ export default function DetailView({ w, similar, shareImage }: { w: PublicWallpa
   const seg = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const device = useRef<HTMLDivElement>(null);
+  const actions = useRef<HTMLDivElement>(null);
+  // phones: the mockup fills the first screen, so Download also sits in a bar stuck to the bottom,
+  // tucked away while the page's own Download button is on screen
+  const [dockShown, setDockShown] = useState(true);
+  useEffect(() => {
+    const el = actions.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setDockShown(!e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   // live clock on the lock screen / menu bar (set after mount so server and browser agree)
   useEffect(() => {
@@ -179,7 +190,7 @@ export default function DetailView({ w, similar, shareImage }: { w: PublicWallpa
             <div><strong><CountUp value={w.downloads} /></strong><small>Downloads</small></div>
             <div><strong>{timeAgo(w.createdAt)}</strong><small>Added</small></div>
           </div>
-          <div className="actions reveal">
+          <div className="actions reveal" ref={actions}>
             <button className="btn accent" onClick={() => downloadWallpaper(w.id)}><Download /> Download</button>
             <button className={`btn${liked ? ' liked' : ''}`} onClick={onLike}>
               <Heart key={likePop} className={likePop ? 'pop' : undefined} /> <span>{liked ? 'Liked' : 'Like'}</span>
@@ -198,6 +209,13 @@ export default function DetailView({ w, similar, shareImage }: { w: PublicWallpa
           link={<ArrowLink href={moodPath(w.category)}>{`More ${w.category}`}</ArrowLink>} />
         <Grid items={similar} empty={<div className="empty-state">No similar wallpapers yet.</div>} />
       </section>
+
+      <div className={`dl-dock${dockShown ? ' shown' : ''}`} aria-hidden={!dockShown}>
+        <button className="btn accent" tabIndex={dockShown ? 0 : -1} onClick={() => downloadWallpaper(w.id)}><Download /> Download</button>
+        <button className={`btn dl-dock-like${liked ? ' liked' : ''}`} tabIndex={dockShown ? 0 : -1} aria-label={liked ? 'Liked' : 'Like'} onClick={onLike}>
+          <Heart key={likePop} className={likePop ? 'pop' : undefined} />
+        </button>
+      </div>
     </>
   );
 }

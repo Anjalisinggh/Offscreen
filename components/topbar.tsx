@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type MouseEvent } from 'react';
 import { useApp } from './app-context';
 import Avatar from './avatar';
-import { Moon, Search, Sun } from './icons';
+import { Close, Menu, Moon, Search, Sun } from './icons';
 import { prefersReducedMotion } from '@/lib/client';
 
 const NAV = [
@@ -45,6 +45,21 @@ export default function Topbar() {
   const router = useRouter();
   const { user, openAuth } = useApp();
   const [scrolled, setScrolled] = useState(false);
+  // phones: the nav links don't fit in the bar, so they open from a menu button instead
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => setMenuOpen(false), [pathname]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    // composedPath, not target.closest: the tapped icon may already have been swapped out (☰ → ✕)
+    const onClick = (e: globalThis.MouseEvent) => {
+      if (!e.composedPath().some((n) => n instanceof Element && n.classList.contains('topbar'))) setMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('click', onClick);
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('click', onClick); };
+  }, [menuOpen]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30);
@@ -54,7 +69,7 @@ export default function Topbar() {
   }, [pathname]);
 
   return (
-    <header className={`topbar${scrolled ? ' scrolled' : ''}`}>
+    <header className={`topbar${scrolled || menuOpen ? ' scrolled' : ''}`}>
       <div className="topbar-inner">
         <Link href="/" className="logo" aria-label="Offscreen home"><em>Off</em>screen</Link>
         <nav className="main-nav">
@@ -66,7 +81,11 @@ export default function Topbar() {
           <button className="icon-btn theme-btn" aria-label="Switch light or dark theme" onClick={toggleTheme}>
             <Moon /><Sun />
           </button>
-          <button className="icon-btn" aria-label="Search" onClick={() => router.push('/search')}><Search /></button>
+          <button className="icon-btn search-btn" aria-label="Search" onClick={() => router.push('/search')}><Search /></button>
+          <button className="icon-btn menu-btn" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="phone-menu"
+            onClick={() => setMenuOpen((o) => !o)}>
+            {menuOpen ? <Close /> : <Menu />}
+          </button>
           <div>
             {user
               ? <Link href="/profile" className="profile-chip"><Avatar user={user} className="profile-avatar" /><span>{user.name.split(' ')[0]}</span></Link>
@@ -74,6 +93,11 @@ export default function Topbar() {
           </div>
         </div>
       </div>
+      <nav id="phone-menu" className="phone-menu" hidden={!menuOpen} aria-label="Menu">
+        {NAV.map(([href, label]) => (
+          <Link key={href} href={href} className={pathname === href ? 'active' : ''}>{label}</Link>
+        ))}
+      </nav>
     </header>
   );
 }
