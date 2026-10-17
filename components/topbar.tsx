@@ -9,6 +9,7 @@ import { prefersReducedMotion } from '@/lib/client';
 
 const NAV = [
   ['/explore', 'Explore'],
+  ['/recent', 'Recent'],
   ['/categories', 'Collections'],
   ['/search', 'Search'],
   ['/likes', 'Liked'],
