@@ -76,34 +76,41 @@ export function SponsorTile() {
 
   return (
     <div className={`sp-feat reveal${s ? '' : ' sp-open'}`}>
-      <div className="sp-feat-box">
-        <span className="sp-feat-label">{s ? 'Sponsored' : 'Sponsor'}</span>
-        <div className="sp-feat-id">
-          <Logo s={s} />
-          <div>
-            <b>{s ? s.name : 'Your brand here'}</b>
-            <span className="sp-feat-status">{s ? s.tagline : <><i />{openSlots} of {SPONSOR_SLOTS} slots open</>}</span>
-          </div>
-        </div>
-        <div className="sp-feat-actions">
-          <a className="sp-feat-btn primary" {...linkProps(s)}>{s ? 'Visit site' : 'DM to book'} <Arrow /></a>
-          <button className="sp-feat-btn" onClick={copy} aria-label="Copy link"><Share /> Copy link</button>
+      <span className="sp-aside-label">{s ? 'Sponsored' : 'Ad space · open'}</span>
+      <div className="sp-feat-id">
+        <Logo s={s} />
+        <div className="sp-feat-text">
+          <b>{s ? s.name : 'Your brand here'}</b>
+          <span className="sp-feat-status">{s ? s.tagline : <><i />{openSlots} of {SPONSOR_SLOTS} slots open</>}</span>
         </div>
       </div>
-      <Link className="sp-feat-become" href="/sponsor">Become a sponsor</Link>
+      <div className="sp-feat-actions">
+        <a className="sp-aside-btn" {...linkProps(s)}>{s ? 'Visit site' : 'DM to book'} <Arrow /></a>
+        <button className="sp-feat-copy" onClick={copy} aria-label="Copy link" title="Copy link"><Share /></button>
+      </div>
+      <Link className="sp-feat-more" href="/sponsor">How sponsoring works <Arrow /></Link>
     </div>
   );
 }
 
-// one card beside a wallpaper's Download button: the sponsors take turns by wallpaper, so each is seen
+// one card under a wallpaper's Download button: the sponsors take turns by wallpaper, so each is seen.
+// While no slot is booked it says so and leads to the sponsor page
 export function SponsorAside({ seed }: { seed: number }) {
   const s = booked.length ? booked[seed % booked.length] : undefined;
-  return (
-    <div className="sp-aside reveal">
-      <Slim s={s} slot={0} />
-      {!s && <Link className="sp-aside-more" href="/sponsor">Sponsor Offscreen</Link>}
-    </div>
+  const inner = (
+    <>
+      <span className="sp-aside-label">{s ? 'Sponsored' : 'Ad space · open'}</span>
+      <Logo s={s} />
+      <span className="sp-aside-text">
+        <b>{s ? s.name : 'Your brand here'}</b>
+        <span>{s ? s.tagline : 'Reach people choosing what’s on their screen.'}</span>
+      </span>
+      <span className="sp-aside-btn">{s ? 'Visit' : 'Book'} <Arrow /></span>
+    </>
   );
+  return s
+    ? <a className="sp-aside reveal" {...linkProps(s)} aria-label={`Sponsored: ${s.name}`}>{inner}</a>
+    : <Link className="sp-aside sp-open reveal" href="/sponsor" aria-label="Ad space open: sponsor Offscreen">{inner}</Link>;
 }
 
 // "Sponsored by …" in the corner of every page: a small deck of cards, one per sponsor slot (booked
