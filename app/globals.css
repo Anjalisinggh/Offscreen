@@ -184,7 +184,8 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .menu-btn, .phone-menu { display: none; }
 @media (max-width: 820px) {
   .main-nav, .search-btn { display: none; }
-  .topbar-inner { gap: 16px; justify-content: space-between; }
+  .topbar-inner { gap: 12px; }
+  .logo { margin-right: auto; }
   .topbar-actions { gap: 10px; }
   .menu-btn { display: flex; }
   .topbar:has(.phone-menu:not([hidden])) { background: rgba(var(--bg-rgb), .97); }

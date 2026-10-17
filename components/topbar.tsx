@@ -71,6 +71,11 @@ export default function Topbar() {
   return (
     <header className={`topbar${scrolled || menuOpen ? ' scrolled' : ''}`}>
       <div className="topbar-inner">
+        {/* phones only: the menu button leads the bar, before the logo */}
+        <button className="icon-btn menu-btn" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="phone-menu"
+          onClick={() => setMenuOpen((o) => !o)}>
+          {menuOpen ? <Close /> : <Menu />}
+        </button>
         <Link href="/" className="logo" aria-label="Offscreen home"><em>Off</em>screen</Link>
         <nav className="main-nav">
           {NAV.map(([href, label]) => (
@@ -82,10 +87,6 @@ export default function Topbar() {
             <Moon /><Sun />
           </button>
           <button className="icon-btn search-btn" aria-label="Search" onClick={() => router.push('/search')}><Search /></button>
-          <button className="icon-btn menu-btn" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} aria-controls="phone-menu"
-            onClick={() => setMenuOpen((o) => !o)}>
-            {menuOpen ? <Close /> : <Menu />}
-          </button>
           <div>
             {user
               ? <Link href="/profile" className="profile-chip"><Avatar user={user} className="profile-avatar" /><span>{user.name.split(' ')[0]}</span></Link>
