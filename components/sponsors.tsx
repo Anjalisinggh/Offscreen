@@ -22,27 +22,31 @@ function Logo({ s, className = '' }: { s?: Sponsor; className?: string }) {
     : <span className={`sp-logo sp-logo-empty ${className}`} aria-hidden="true">?</span>;
 }
 
-// a slim, horizontal card: logo, name and one line, and where it goes
-function Slim({ s, slot, i = 0 }: { s?: Sponsor; slot: number; i?: number }) {
-  return (
-    <a className={`sp-slim reveal${s ? '' : ' sp-open'}`} style={{ '--i': i } as CSSProperties} {...linkProps(s)}
-      aria-label={s ? `Sponsored: ${s.name}` : 'Sponsor slot open: message us on X to book it'}>
+// an outlined card with its label on the top edge: logo, name and one line, and a button. A booked
+// slot links to the sponsor; an open one to the sponsor page, or straight to a DM on the sponsor page itself
+function Card({ s, label, toPage, i = 0 }: { s?: Sponsor; label: string; toPage?: boolean; i?: number }) {
+  const inner = (
+    <>
+      <span className="sp-aside-label">{s ? 'Sponsored' : label}</span>
       <Logo s={s} />
-      <span className="sp-slim-body">
-        <span className="sp-slim-tag">{s ? 'Sponsored' : `Slot ${String(slot + 1).padStart(2, '0')} · Open`}</span>
-        <b>{s ? s.name : <>Your brand, <em>here</em></>}</b>
-        <span className="sp-slim-line">{s ? s.tagline : 'Seen by people who care about what’s on their screen.'}</span>
+      <span className="sp-aside-text">
+        <b>{s ? s.name : 'Your brand here'}</b>
+        <span>{s ? s.tagline : 'Reach people choosing what’s on their screen.'}</span>
       </span>
-      <span className="sp-slim-go" aria-hidden="true"><Arrow /></span>
-    </a>
+      <span className="sp-aside-btn">{s ? 'Visit' : 'Book'} <Arrow /></span>
+    </>
   );
+  const style = { '--i': i } as CSSProperties;
+  if (s) return <a className="sp-aside reveal" style={style} {...linkProps(s)} aria-label={`Sponsored: ${s.name}`}>{inner}</a>;
+  if (toPage) return <Link className="sp-aside sp-open reveal" style={style} href="/sponsor" aria-label="Ad space open: sponsor Offscreen">{inner}</Link>;
+  return <a className="sp-aside sp-open reveal" style={style} {...linkProps()} aria-label="Sponsor slot open: message us on X to book it">{inner}</a>;
 }
 
 // every slot side by side, booked or open (the sponsor page shows these)
 export default function Sponsors() {
   return (
     <div className="sp-row">
-      {Array.from({ length: SPONSOR_SLOTS }, (_, k) => <Slim key={k} s={booked[k]} slot={k} i={k} />)}
+      {Array.from({ length: SPONSOR_SLOTS }, (_, k) => <Card key={k} s={booked[k]} label={`Slot ${String(k + 1).padStart(2, '0')} · open`} i={k} />)}
     </div>
   );
 }
@@ -96,21 +100,7 @@ export function SponsorTile() {
 // one card under a wallpaper's Download button: the sponsors take turns by wallpaper, so each is seen.
 // While no slot is booked it says so and leads to the sponsor page
 export function SponsorAside({ seed }: { seed: number }) {
-  const s = booked.length ? booked[seed % booked.length] : undefined;
-  const inner = (
-    <>
-      <span className="sp-aside-label">{s ? 'Sponsored' : 'Ad space · open'}</span>
-      <Logo s={s} />
-      <span className="sp-aside-text">
-        <b>{s ? s.name : 'Your brand here'}</b>
-        <span>{s ? s.tagline : 'Reach people choosing what’s on their screen.'}</span>
-      </span>
-      <span className="sp-aside-btn">{s ? 'Visit' : 'Book'} <Arrow /></span>
-    </>
-  );
-  return s
-    ? <a className="sp-aside reveal" {...linkProps(s)} aria-label={`Sponsored: ${s.name}`}>{inner}</a>
-    : <Link className="sp-aside sp-open reveal" href="/sponsor" aria-label="Ad space open: sponsor Offscreen">{inner}</Link>;
+  return <Card s={booked.length ? booked[seed % booked.length] : undefined} label="Ad space · open" toPage />;
 }
 
 // "Sponsored by …" in the corner of every page: a small deck of cards, one per sponsor slot (booked

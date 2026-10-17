@@ -466,31 +466,8 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 
 /* a slim, horizontal card: under a wallpaper's Download button, and the row on the sponsor page */
 .sp-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.sp-slim {
-  position: relative; display: flex; align-items: center; gap: 16px; padding: 16px 18px;
-  border-radius: 6px; border: 1px solid var(--line-strong); overflow: hidden; isolation: isolate;
-  background: linear-gradient(120deg, rgba(var(--accent-rgb), .12), rgba(var(--accent-rgb), .02) 60%), var(--bg-2);
-  transition: transform .6s var(--ease-slow), border-color .4s var(--ease), box-shadow .6s var(--ease-slow);
-}
-.sp-slim::before {
-  content: ''; position: absolute; width: 160px; height: 160px; right: -60px; top: -80px; z-index: -1; border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--accent-rgb), .25), transparent 70%); filter: blur(10px);
-}
-.sp-slim:hover { transform: translateY(-3px); border-color: rgba(var(--accent-rgb), .55); box-shadow: 0 20px 40px -28px rgba(var(--accent-rgb), .7); }
-.sp-slim.sp-open { border-style: dashed; }
-.sp-slim-body { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.sp-slim-tag { font-size: 9px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
-.sp-open .sp-slim-tag::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 50%; background: #4fb477; animation: sp-blink 2.4s var(--ease) infinite; }
-.sp-slim-body b { font-family: var(--serif); font-weight: 400; font-size: 22px; line-height: 1.1; color: var(--ink); }
-.sp-slim-body b em { color: var(--accent); }
-.sp-slim-line { font-size: 12.5px; line-height: 1.4; color: var(--muted); }
-.sp-slim-go {
-  flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line-strong);
-  display: flex; align-items: center; justify-content: center; color: var(--ink);
-  transition: background .4s var(--ease), color .4s var(--ease), border-color .4s var(--ease);
-}
-.sp-slim-go svg { width: 14px; height: 14px; }
-.sp-slim:hover .sp-slim-go { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+/* in a row the cards only need room above for their labels */
+.sp-row > .sp-aside { margin: 9px 0 0; }
 /* a quiet, outlined card with its label sitting on the top edge, like the rest of the panel */
 .sp-aside {
   position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px;
@@ -572,18 +549,12 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
     margin: 0 calc(-1 * var(--gutter)); padding: 0 var(--gutter);
   }
   .sp-row::-webkit-scrollbar { display: none; }
-  .sp-row > .sp-slim { flex: 0 0 min(82%, 340px); scroll-snap-align: center; }
+  .sp-row > .sp-aside { flex: 0 0 min(86%, 360px); scroll-snap-align: center; }
   /* on a wallpaper's page the Download bar takes the bottom of the screen, so the note steps aside */
   body:has(.dl-dock.shown) .sp-float { opacity: 0; pointer-events: none; }
 }
 @media (max-width: 640px) {
   .hero-backed { margin-bottom: 22px; }
-  .sp-slim { padding: 13px 14px; gap: 12px; }
-  .sp-slim:hover { transform: none; }
-  .sp-slim .sp-logo { width: 44px; height: 44px; border-radius: 11px; font-size: 20px; }
-  .sp-slim-body b { font-size: 19px; }
-  .sp-slim-line { font-size: 11.5px; }
-  .sp-slim-go { width: 30px; height: 30px; }
 
   /* the grid tile is a narrow column on a phone: everything stacks */
   .grid-col > .grid-slot, .grid-flow > .grid-slot { margin-bottom: 22px; }
@@ -798,8 +769,8 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 .legal ul { padding-left: 20px; }
 .legal li { margin-bottom: 8px; }
 .legal b { color: var(--ink); font-weight: 600; }
-.legal a:not(.link-arrow):not(.btn):not(.sp-slim) { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }
-:root[data-theme="dark"] .legal a:not(.link-arrow):not(.btn):not(.sp-slim) { color: var(--accent); }
+.legal a:not(.link-arrow):not(.btn):not(.sp-aside) { color: var(--accent-deep); text-decoration: underline; text-underline-offset: 3px; }
+:root[data-theme="dark"] .legal a:not(.link-arrow):not(.btn):not(.sp-aside) { color: var(--accent); }
 .legal code { font-family: var(--mono); font-size: .9em; padding: 1px 6px; border-radius: 4px; background: var(--surface); color: var(--ink); }
 .legal-back { margin-top: 48px; }
 /* the page ends on a short link, so the usual gap above the footer reads as empty space */
