@@ -9,9 +9,10 @@ export const metadata = {
   alternates: { canonical: '/privacy' },
 };
 
-// where to reach us: the project's GitHub page for now (a contact email can replace it later)
-const CONTACT = 'https://github.com/Anjalisinggh/Offscreen/issues';
-const UPDATED = '15 October 2026';
+// where to reach us: a message on X for now (a contact email can replace it later)
+const CONTACT = 'https://x.com/anjalisinggh12';
+const X_HANDLE = '@anjalisinggh12';
+const UPDATED = '17 October 2026';
 
 export default function Privacy() {
   return (
@@ -75,16 +76,16 @@ export default function Privacy() {
         <p>Account details, likes and downloads are kept for as long as your account exists. Sign-in codes expire within minutes. When an account is deleted, its likes, downloads and profile photo are deleted with it.</p>
 
         <h2>Your choices and rights</h2>
-        <p>You can ask us to show you, correct or delete the information we hold about you, including deleting your account entirely. Open a request on <a href={CONTACT} target="_blank" rel="noopener">our GitHub page</a> saying what you’d like done, and we’ll reply there within 30 days. Please don’t post your email address or other personal details in it; we’ll confirm your account with you privately. Depending on where you live, you may also have the right to object to or restrict how your data is used, and to complain to your local data protection authority.</p>
+        <p>You can ask us to show you, correct or delete the information we hold about you, including deleting your account entirely. Send a direct message to <a href={CONTACT} target="_blank" rel="noopener">{X_HANDLE} on X</a> saying what you’d like done, and we’ll reply within 30 days. Please don’t post your email address or other personal details publicly; we’ll confirm your account with you in private messages. Depending on where you live, you may also have the right to object to or restrict how your data is used, and to complain to your local data protection authority.</p>
 
         <h2>Children</h2>
-        <p>Offscreen isn’t aimed at children under 13, and we don’t knowingly collect information from them. If you think a child has created an account, let us know through <a href={CONTACT} target="_blank" rel="noopener">our GitHub page</a> and we’ll delete it.</p>
+        <p>Offscreen isn’t aimed at children under 13, and we don’t knowingly collect information from them. If you think a child has created an account, message <a href={CONTACT} target="_blank" rel="noopener">{X_HANDLE} on X</a> and we’ll delete it.</p>
 
         <h2>Changes to this policy</h2>
         <p>If what we collect or how we use it changes, we’ll update this page and the date at the top.</p>
 
         <h2>Contact</h2>
-        <p>Questions about this policy or your data: <a href={CONTACT} target="_blank" rel="noopener">open a request on our GitHub page</a>.</p>
+        <p>Questions about this policy or your data: <a href={CONTACT} target="_blank" rel="noopener">message {X_HANDLE} on X</a>.</p>
 
         <p className="legal-back"><Link className="link-arrow" href="/">Back to the gallery</Link></p>
       </article>
