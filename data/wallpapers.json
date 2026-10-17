@@ -4355,28 +4355,6 @@
     "publicId": "offscreen/blade-of-fire-229"
   },
   {
-    "id": 230,
-    "title": "Blade of Fire, Gold",
-    "filename": "blade-of-fire-gold-230.png",
-    "category": "Dark",
-    "tags": [
-      "sword",
-      "fire",
-      "warrior",
-      "gold",
-      "phone"
-    ],
-    "source": "blade-of-fire-gold-230.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-17T16:21:38.135Z",
-    "width": 853,
-    "height": 1844,
-    "device": "phone",
-    "publicId": "offscreen/blade-of-fire-gold-230"
-  },
-  {
     "id": 231,
     "title": "Sakura Dragon",
     "filename": "sakura-dragon-wide-231.png",
