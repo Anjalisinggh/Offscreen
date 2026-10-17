@@ -435,7 +435,7 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .mosaic-tile, .mosaic-tile img { animation: none; } }
 
 /* ---------------- privacy policy and other long reads ---------------- */
-.legal { padding-bottom: 40px; color: var(--muted); font-size: 16px; line-height: 1.75; }
+.legal { color: var(--muted); font-size: 16px; line-height: 1.75; }
 .legal h2 { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.1; color: var(--ink); margin: 52px 0 14px; }
 .legal h2:first-child { margin-top: 0; }
 .legal p, .legal ul { margin: 0 0 14px; }
@@ -446,6 +446,9 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 :root[data-theme="dark"] .legal a:not(.link-arrow) { color: var(--accent); }
 .legal code { font-family: var(--mono); font-size: .9em; padding: 1px 6px; border-radius: 4px; background: var(--surface); color: var(--ink); }
 .legal-back { margin-top: 48px; }
+/* the page ends on a short link, so the usual gap above the footer reads as empty space */
+#app:has(.legal) { padding-bottom: 0; min-height: 0; }
+body:has(.legal) .site-footer { margin-top: 72px; }
 
 /* ---------------- collections ---------------- */
 .coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; }
