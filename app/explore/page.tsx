@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { categories, dedupeSeries, filterWallpapers, loadWallpapers, publicWallpaper, sortWallpapers } from '@/lib/wallpapers';
 import { moodPath } from '@/lib/client';
 import Grid from '@/components/grid';
+import { SponsorTile } from '@/components/sponsors';
 import type { Metadata } from 'next';
 
 type Params = Promise<{ category?: string; sort?: string; device?: string }>;
@@ -59,7 +60,7 @@ export default async function Explore({ searchParams }: { searchParams: Params }
           </Link>
         ))}
       </div>
-      <Grid items={items} empty={<div className="empty-state"><h3>Nothing here <em>yet</em></h3>This collection is waiting for its first wallpaper.</div>} />
+      <Grid items={items} slot={{ at: 0, node: <SponsorTile />, est: 300 }} empty={<div className="empty-state"><h3>Nothing here <em>yet</em></h3>This collection is waiting for its first wallpaper.</div>} />
     </>
   );
 }

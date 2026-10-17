@@ -20,7 +20,9 @@ export default function Footer({ count }: { count: number }) {
       const left = m.actualBoundingBoxLeft, width = left + m.actualBoundingBoxRight;
       const top = m.actualBoundingBoxAscent, height = top + m.actualBoundingBoxDescent;
       if (!width || !height) return;
-      svg.setAttribute('viewBox', `${-left} ${-top} ${width} ${height}`);
+      // the letters' outline (the svg's stroke) sits half outside the ink, so leave room for it
+      const pad = (parseFloat(getComputedStyle(text).strokeWidth) || 0) / 2 + 1;
+      svg.setAttribute('viewBox', `${-left - pad} ${-top - pad} ${width + pad * 2} ${height + pad * 2}`);
       grad.setAttribute('y1', String(-top));
       grad.setAttribute('y2', String(m.actualBoundingBoxDescent));
     };
@@ -50,6 +52,7 @@ export default function Footer({ count }: { count: number }) {
             <Link href="/explore?device=desktop">Desktop wallpapers</Link>
             <Link href="/search">Search</Link>
             <Link href="/about">About us</Link>
+            <Link href="/sponsor">Sponsor us</Link>
           </div>
           <div className="foot-col">
             <h4>For you</h4>

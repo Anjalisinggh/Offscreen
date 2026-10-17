@@ -6,6 +6,7 @@ import Grid from '@/components/grid';
 import CountUp from '@/components/count-up';
 import SearchForm from '@/components/search-form';
 import SectionHead, { ArrowLink } from '@/components/section-head';
+import { SponsorBacked, SponsorTile } from '@/components/sponsors';
 import { Arrow } from '@/components/icons';
 
 // the home page's search title leads with what the site has, not only its tagline
@@ -57,6 +58,8 @@ export default async function Home() {
     <>
       <section className="hero" data-reveal>
         <div className="hero-copy">
+          {/* the sponsors, first thing in the hero (lib/sponsors.ts) */}
+          <SponsorBacked />
           <span className="eyebrow">A curated wallpaper gallery</span>
           <h1>
             <span className="line-mask" style={{ '--i': 0 } as React.CSSProperties}><span>Wallpapers</span></span>
@@ -78,7 +81,7 @@ export default async function Home() {
 
       <section className="section">
         <SectionHead num="01" eyebrow="Most downloaded" title={<>The ones people <em>keep</em></>} link={<ArrowLink href="/explore?sort=downloads">View all</ArrowLink>} />
-        <Grid items={mostDownloaded} />
+        <Grid items={mostDownloaded} slot={{ at: 0, node: <SponsorTile />, est: 300 }} />
       </section>
 
       <section className="section">

@@ -6,6 +6,8 @@ const SITE_ORIGIN = (process.env.SITE_ORIGIN || '').replace(/\/$/, '');
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // the dev-only Next.js badge goes bottom right, out of the way of the sponsor cards (bottom left)
+  devIndicators: { position: 'bottom-right' },
   // pg loads its Cloudflare socket support only on Cloudflare Workers, so the file tracer doesn't
   // see it; include it so the Cloudflare build (OpenNext) can bundle it
   outputFileTracingIncludes: { '/**/*': ['./node_modules/pg-cloudflare/**/*'] },

@@ -5,6 +5,7 @@ import { libraryCount } from '@/lib/wallpapers';
 import { AppProvider } from '@/components/app-context';
 import Topbar from '@/components/topbar';
 import Footer from '@/components/footer';
+import { SponsorFloat } from '@/components/sponsors';
 import Main from '@/components/main';
 import Motion from '@/components/motion';
 import ThemeScript from '@/components/theme-script';
@@ -73,6 +74,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Topbar />
           <Main>{children}</Main>
           <Footer count={libraryCount()} />
+          <SponsorFloat />
         </AppProvider>
         <Motion />
         {/* visits, sent to Google Analytics (the "Off Screen" web stream) */}

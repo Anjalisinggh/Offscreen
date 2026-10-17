@@ -8,6 +8,7 @@ import type { PublicWallpaper } from '@/lib/types';
 import { useApp } from './app-context';
 import CountUp from './count-up';
 import Grid from './grid';
+import { SponsorAside } from './sponsors';
 import SectionHead, { ArrowLink } from './section-head';
 import { Camera, Desktop, Download, Heart, Phone, Share, Torch } from './icons';
 
@@ -197,6 +198,7 @@ export default function DetailView({ w, similar, shareImage }: { w: PublicWallpa
             </button>
             <button className="btn" onClick={onShare}><Share /> Share</button>
           </div>
+          <SponsorAside seed={w.id} />
           <div className="meta-block reveal">
             <h4>Tags</h4>
             <div className="tags">{w.tags.map((t) => <Link key={t} className="tag" href={`/search?q=${encodeURIComponent(t)}`}>{t}</Link>)}</div>
