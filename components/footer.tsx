@@ -62,18 +62,14 @@ export default function Footer({ count }: { count: number }) {
             <Link href="/likes">Your likes</Link>
             <Link href="/profile">Profile</Link>
           </div>
-          <div className="foot-col">
-            <h4>Moods</h4>
-            <Link href="/pink-wallpapers">Pink</Link>
-            <Link href="/dark-wallpapers">Dark</Link>
-            <Link href="/vintage-wallpapers">Vintage</Link>
-            <Link href="/minimal-wallpapers">Minimal</Link>
-          </div>
         </div>
 
         <div className="foot-meta">
           <span>© 2026 Offscreen</span>
-          <Link href="/privacy">Privacy policy</Link>
+          <span className="foot-meta-links">
+            <Link href="/contact">Contact</Link>
+            <Link href="/privacy">Privacy policy</Link>
+          </span>
         </div>
       </div>
 
