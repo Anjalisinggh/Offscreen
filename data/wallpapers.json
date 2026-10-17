@@ -1104,29 +1104,6 @@
     "publicId": "offscreen/too-lazy-to-explain-68"
   },
   {
-    "id": 69,
-    "title": "Too Lazy to Explain",
-    "filename": "too-lazy-to-explain-wide-69.png",
-    "source": "a_moody_cinematic_grainy_low_light_close_up_sce_desktop_1920x1080.png",
-    "category": "Dark",
-    "tags": [
-      "car",
-      "night",
-      "quote",
-      "grainy",
-      "desktop"
-    ],
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-09-28T15:09:51.578Z",
-    "width": 1920,
-    "height": 1080,
-    "device": "desktop",
-    "series": "too-lazy-orange",
-    "publicId": "offscreen/too-lazy-to-explain-wide-69"
-  },
-  {
     "id": 70,
     "title": "Focus, Follow the Plan",
     "filename": "focus-follow-the-plan-70.png",
@@ -3607,28 +3584,6 @@
     "publicId": "offscreen/sakura-kitsune-189"
   },
   {
-    "id": 190,
-    "title": "Ink Ronin",
-    "filename": "ink-ronin-wide-190.png",
-    "category": "Minimal",
-    "tags": [
-      "ink",
-      "swordsman",
-      "monochrome",
-      "sumi-e",
-      "desktop"
-    ],
-    "source": "ink-ronin-wide-190.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-17T16:20:49.289Z",
-    "width": 1672,
-    "height": 941,
-    "device": "desktop",
-    "publicId": "offscreen/ink-ronin-wide-190"
-  },
-  {
     "id": 191,
     "title": "Hanuman in Meditation",
     "filename": "hanuman-in-meditation-wide-191.png",
@@ -4003,28 +3958,6 @@
     "publicId": "offscreen/moonlit-lotus-lake-wide-207"
   },
   {
-    "id": 208,
-    "title": "Petal Kittens, Soft",
-    "filename": "petal-kittens-soft-wide-208.png",
-    "category": "Cute",
-    "tags": [
-      "cats",
-      "flowers",
-      "pink",
-      "minimal",
-      "desktop"
-    ],
-    "source": "petal-kittens-soft-wide-208.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-17T16:21:14.563Z",
-    "width": 1672,
-    "height": 941,
-    "device": "desktop",
-    "publicId": "offscreen/petal-kittens-soft-wide-208"
-  },
-  {
     "id": 209,
     "title": "Wild Stallion",
     "filename": "wild-stallion-209.png",
@@ -4334,50 +4267,6 @@
     "publicId": "offscreen/meadow-at-golden-hour-wide-222"
   },
   {
-    "id": 223,
-    "title": "The Good Shepherd",
-    "filename": "the-good-shepherd-wide-223.png",
-    "category": "Pink",
-    "tags": [
-      "jesus",
-      "mary",
-      "lamb",
-      "faith",
-      "desktop"
-    ],
-    "source": "the-good-shepherd-wide-223.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-17T16:21:31.022Z",
-    "width": 1672,
-    "height": 941,
-    "device": "desktop",
-    "publicId": "offscreen/the-good-shepherd-wide-223"
-  },
-  {
-    "id": 224,
-    "title": "Grace in Pink",
-    "filename": "grace-in-pink-wide-224.png",
-    "category": "Pink",
-    "tags": [
-      "jesus",
-      "mary",
-      "clouds",
-      "faith",
-      "desktop"
-    ],
-    "source": "grace-in-pink-wide-224.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-17T16:21:32.074Z",
-    "width": 1672,
-    "height": 941,
-    "device": "desktop",
-    "publicId": "offscreen/grace-in-pink-wide-224"
-  },
-  {
     "id": 225,
     "title": "Sleeping Lamb",
     "filename": "sleeping-lamb-wide-225.png",
@@ -4643,28 +4532,6 @@
     "publicId": "offscreen/violet-falls-wide-236"
   },
   {
-    "id": 237,
-    "title": "Ink Ronin in the Storm",
-    "filename": "ink-ronin-in-the-storm-wide-237.png",
-    "category": "Minimal",
-    "tags": [
-      "ink",
-      "swordsman",
-      "monochrome",
-      "storm",
-      "desktop"
-    ],
-    "source": "ink-ronin-in-the-storm-wide-237.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-17T16:21:45.658Z",
-    "width": 1672,
-    "height": 941,
-    "device": "desktop",
-    "publicId": "offscreen/ink-ronin-in-the-storm-wide-237"
-  },
-  {
     "id": 238,
     "title": "Red Rain",
     "filename": "red-rain-wide-238.png",
@@ -4729,28 +4596,6 @@
     "height": 941,
     "device": "desktop",
     "publicId": "offscreen/sunset-hug-wide-240"
-  },
-  {
-    "id": 241,
-    "title": "Heavenly Embrace",
-    "filename": "heavenly-embrace-wide-241.png",
-    "category": "Pink",
-    "tags": [
-      "jesus",
-      "mary",
-      "clouds",
-      "faith",
-      "desktop"
-    ],
-    "source": "heavenly-embrace-wide-241.png",
-    "likes": 0,
-    "downloads": 0,
-    "featured": false,
-    "createdAt": "2026-10-17T16:21:49.391Z",
-    "width": 1672,
-    "height": 941,
-    "device": "desktop",
-    "publicId": "offscreen/heavenly-embrace-wide-241"
   },
   {
     "id": 242,
