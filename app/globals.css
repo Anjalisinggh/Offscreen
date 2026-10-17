@@ -227,6 +227,7 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 }
 .page-head h1 em { color: var(--accent); }
 .page-head p { color: var(--muted); max-width: 520px; margin: 18px 0 0; }
+.page-head-wide p { max-width: none; }
 
 /* ---------------- reveal animations ---------------- */
 .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s var(--ease-slow), transform .7s var(--ease-slow); transition-delay: calc(var(--i, 0) * 45ms); }
@@ -434,7 +435,7 @@ body.loaded .preloader { transform: translateY(-100%); visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .mosaic-tile, .mosaic-tile img { animation: none; } }
 
 /* ---------------- privacy policy and other long reads ---------------- */
-.legal { max-width: 700px; padding-bottom: 40px; color: var(--muted); font-size: 16px; line-height: 1.75; }
+.legal { padding-bottom: 40px; color: var(--muted); font-size: 16px; line-height: 1.75; }
 .legal h2 { font-family: var(--serif); font-weight: 400; font-size: 32px; line-height: 1.1; color: var(--ink); margin: 52px 0 14px; }
 .legal h2:first-child { margin-top: 0; }
 .legal p, .legal ul { margin: 0 0 14px; }

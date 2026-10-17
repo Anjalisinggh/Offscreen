@@ -16,7 +16,7 @@ const UPDATED = '15 October 2026';
 export default function Privacy() {
   return (
     <>
-      <div className="page-head">
+      <div className="page-head page-head-wide">
         <span className="eyebrow reveal">Last updated {UPDATED}</span>
         <h1><span className="line-mask"><span>Privacy <em>policy</em></span></span></h1>
         <p className="reveal">Offscreen (offscreen.wtf) is a wallpaper gallery. This page explains what we store about you, which outside services see your visit, and what you can do about it.</p>

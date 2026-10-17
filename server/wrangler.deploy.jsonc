@@ -1,6 +1,9 @@
-// Uploads the pages Worker bundled by server/build-pages.sh, as is (the deploy resets the routes to
-// fail closed, so server/fail-open.sh sets them back):
-//   npx wrangler deploy -c server/wrangler.deploy.jsonc && bash server/fail-open.sh
+// Uploads the pages Worker bundled by server/build-pages.sh, as is. Ship new code without touching
+// the routes (which server/watchdog.mjs moves between the Worker and the API server):
+//   npx wrangler versions upload -c server/wrangler.deploy.jsonc
+//   npx wrangler versions deploy <version id>@100% -c server/wrangler.deploy.jsonc -y
+// `wrangler deploy` also re-attaches the routes to the Worker and resets them to fail closed; after
+// one, run `bash server/fail-open.sh` (the watchdog moves traffic off again if the limit is hit).
 {
 	"name": "offscreen",
 	"main": "../.deploy/worker.js",
@@ -17,10 +20,12 @@
 	"services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "offscreen" }],
 	"vars": { "DEPLOY_TARGET": "cloudflare" },
 	"workers_dev": false,
-	// Routes, not custom domains: the DNS records point at the API server (84.32.64.46), and each
-	// route is set to "fail open" (server/fail-open.sh), so past the free plan's daily request limit
-	// Cloudflare skips the Worker and the server answers instead. The
-	// .well-known/acme-challenge/* routes (no Worker) let the server's Caddy renew its certificate.
+	// Routes, not custom domains: the DNS records point at the API server (84.32.64.46), so past the
+	// free plan's daily request limit the server can answer instead of the Worker. Each route is set
+	// to "fail open" (server/fail-open.sh), but that didn't take effect when the limit was hit on
+	// 17 Oct 2026, so server/watchdog.mjs detaches the Worker when it answers 1027 and attaches it
+	// again the next UTC day. The .well-known/acme-challenge/* routes (no Worker) let the server's
+	// Caddy renew its certificate.
 	"routes": [
 		{ "pattern": "offscreen.wtf/*", "zone_name": "offscreen.wtf" },
 		{ "pattern": "www.offscreen.wtf/*", "zone_name": "offscreen.wtf" }
