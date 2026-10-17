@@ -49,6 +49,16 @@ export default function Grid({ items, empty }: { items: PublicWallpaper[]; empty
   }, [items, width, gap, mobile]);
 
   if (!hasItems) return <div className="grid">{empty}</div>;
+  // before the width is known (the server's HTML, and the first paint), every card is still put out,
+  // in plain CSS columns: crawlers that don't run JavaScript see the wallpapers and their links, and
+  // the cards are hidden until they reveal anyway, by which time the measured columns have replaced it
+  if (!width) {
+    return (
+      <div className="grid grid-flow" ref={ref}>
+        {items.map((w, i) => <Card key={w.id} w={w} i={i} />)}
+      </div>
+    );
+  }
   return (
     <div className="grid" ref={ref} style={{ display: 'flex', gap, alignItems: 'flex-start' }}>
       {columns.map((col, c) => (

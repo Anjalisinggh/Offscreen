@@ -19,7 +19,8 @@ export const mosaicTiles = () => dedupeSeries(WALLPAPERS.filter((w) => w.publicI
   .map(({ w }) => ({ id: w.id, title: w.title, src: tileUrl(w) }));
 
 type Counts = Awaited<ReturnType<typeof store.counts>>;
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
+// COUNTS_API_URL lets local development read the live counts without pointing the whole site at the API
+const API_URL = (process.env.COUNTS_API_URL || process.env.NEXT_PUBLIC_API_URL || '').replace(/\/$/, '');
 let cached: { at: number; counts: Promise<Counts> } | undefined;
 
 // Where the pages run without the database (Cloudflare), the totals come from the API server,
@@ -35,6 +36,9 @@ function counts(): Promise<Counts> {
   }
   return cached.counts;
 }
+
+// how many accounts there are, or null when that isn't known (the API server couldn't be reached)
+export const memberCount = async () => (await counts()).members ?? null;
 
 // the likes/downloads numbers in wallpapers.json are just the starting totals; what people
 // actually do is added on top of them

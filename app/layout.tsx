@@ -8,11 +8,25 @@ import Footer from '@/components/footer';
 import Main from '@/components/main';
 import Motion from '@/components/motion';
 import ThemeScript from '@/components/theme-script';
+import JsonLd from '@/components/json-ld';
 import { SITE_URL } from './sitemap';
 import './globals.css';
 
 const TITLE = 'Offscreen · A collection for your screen';
-const DESCRIPTION = 'A collection for your screen. Wallpapers for phone and desktop, picked by mood.';
+const DESCRIPTION = 'Aesthetic wallpapers for iPhone, Android and desktop, picked by mood: dark, minimal, motivational, cute, retro and more. Preview each one on a lock screen and download it.';
+
+// who runs the site and how to search it, for search engines (Google can show a search box for it)
+const SITE_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'Organization', '@id': `${SITE_URL}/#org`, name: 'Offscreen', url: SITE_URL, logo: `${SITE_URL}/pwa-icon/512` },
+    {
+      '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: 'Offscreen', url: SITE_URL, description: DESCRIPTION,
+      publisher: { '@id': `${SITE_URL}/#org` },
+      potentialAction: { '@type': 'SearchAction', target: `${SITE_URL}/search?q={search_term_string}`, 'query-input': 'required name=search_term_string' },
+    },
+  ],
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -48,6 +62,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&family=Anton&display=swap" rel="stylesheet" />
       </head>
       <body>
+        <JsonLd data={SITE_LD} />
         <div className="preloader" aria-hidden="true">
           <div className="preloader-mark"><span>Off</span>screen</div>
           <div className="preloader-line"></div>

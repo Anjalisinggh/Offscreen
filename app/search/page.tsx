@@ -4,7 +4,9 @@ import { moodSearch } from '@/lib/mood-search';
 import Grid from '@/components/grid';
 import SearchForm from '@/components/search-form';
 
-export const metadata = { title: 'Search · Offscreen' };
+// search results are a reshuffle of pages that are indexed already, so they're kept out of search
+// engines (the links on them are still followed)
+export const metadata = { title: 'Search · Offscreen', robots: { index: false, follow: true } };
 
 const SUGGESTIONS = ['calm', 'sad', 'cozy', 'motivated', 'dark', 'pink', 'retro', 'desktop'];
 

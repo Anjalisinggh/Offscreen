@@ -41,3 +41,6 @@ next-env.d.ts
 .open-next/
 .wrangler/
 .dev.vars*
+
+# the pages Worker bundle built on the server (server/build-pages.sh), deployed as is
+/.deploy/

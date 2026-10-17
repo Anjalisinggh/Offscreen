@@ -46,6 +46,9 @@ export const moodPath = (category: string) => `/${category.toLowerCase()}-wallpa
 export const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '')
   .replace(/[’']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 export const wallpaperPath = (w: { id: number; title: string }) => `/wallpaper/${w.id}${slugify(w.title) ? `-${slugify(w.title)}` : ''}`;
+// an image's alt text, from what's known about it: its title, collection and kind, e.g.
+// "Easier Than You Think, psychedelic phone wallpaper"
+export const imageAlt = (w: Pick<PublicWallpaper, 'title' | 'category' | 'device'>) => `${w.title}, ${w.category.toLowerCase()} ${w.device} wallpaper`;
 export const isDesktop =(w: Pick<PublicWallpaper, 'device'>) => w.device === 'desktop';
 export const initial = (name?: string) => (name || '?').trim().charAt(0).toUpperCase();
 export const pad = (n: number) => String(n).padStart(2, '0');

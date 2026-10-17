@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { categories, dedupeSeries, filterWallpapers, findWallpaper, loadWallpapers, publicWallpaper, sortWallpapers } from '@/lib/wallpapers';
-import { moodPath } from '@/lib/client';
+import { moodPath, wallpaperPath } from '@/lib/client';
+import { SITE_URL } from '@/app/sitemap';
+import JsonLd, { breadcrumbs } from '@/components/json-ld';
 import { ogUrl } from '@/lib/media';
 import Grid from '@/components/grid';
 
@@ -50,8 +52,25 @@ export default async function MoodPage({ params }: { params: Params }) {
   const items = sortWallpapers(dedupeSeries(filterWallpapers(all, { category: c.name })), 'trending');
   const filter = (device: string) => `/explore?category=${encodeURIComponent(c.name)}&device=${device}`;
 
+  // the collection and the wallpapers in it, for search engines and AI search
+  const ld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'CollectionPage', name: `${c.name} wallpapers`, url: `${SITE_URL}${moodPath(c.name)}`,
+        description: BLURB[c.name], isPartOf: { '@id': `${SITE_URL}/#website` },
+        mainEntity: {
+          '@type': 'ItemList', numberOfItems: items.length,
+          itemListElement: items.map((w, i) => ({ '@type': 'ListItem', position: i + 1, name: w.title, url: `${SITE_URL}${wallpaperPath(w)}` })),
+        },
+      },
+      breadcrumbs(SITE_URL, [{ name: 'Home', path: '/' }, { name: `${c.name} wallpapers`, path: moodPath(c.name) }]),
+    ],
+  };
+
   return (
     <>
+      <JsonLd data={ld} />
       <div className="page-head">
         <span className="eyebrow reveal">Collection · {items.length} wallpapers</span>
         <h1><span className="line-mask"><span><em>{c.name}</em> wallpapers</span></span></h1>

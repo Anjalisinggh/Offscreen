@@ -11,7 +11,11 @@ type Params = Promise<{ category?: string; sort?: string; device?: string }>;
 export async function generateMetadata({ searchParams }: { searchParams: Params }): Promise<Metadata> {
   const { category } = await searchParams;
   const c = categories.find((x) => x.name.toLowerCase() === category?.toLowerCase());
-  return { title: 'Explore · Offscreen', alternates: { canonical: c ? moodPath(c.name) : '/explore' } };
+  return {
+    title: 'Explore all wallpapers · Offscreen',
+    description: 'Every wallpaper on Offscreen for iPhone, Android and desktop: trending, most loved, most downloaded and new arrivals.',
+    alternates: { canonical: c ? moodPath(c.name) : '/explore' },
+  };
 }
 const SORT_LABEL: Record<string, string> = { trending: 'Trending', popular: 'Most loved', downloads: 'Most downloaded', new: 'New arrivals', featured: 'Featured' };
 

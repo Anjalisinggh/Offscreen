@@ -4,7 +4,8 @@ import { fmt, prefersReducedMotion } from '@/lib/client';
 
 // counts from 0 up to `value` once, easing out over 0.9s. The page itself carries the real number
 // (for search engines and link previews); the count starts before the browser first paints it.
-export default function CountUp({ value }: { value: number }) {
+// `exact` shows every digit (1,276) instead of the short form (1.3k)
+export default function CountUp({ value, exact }: { value: number; exact?: boolean }) {
   const [n, setN] = useState(value);
   useLayoutEffect(() => {
     if (prefersReducedMotion() || !value) { setN(value); return; }
@@ -19,5 +20,5 @@ export default function CountUp({ value }: { value: number }) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [value]);
-  return <>{fmt(n)}</>;
+  return <>{exact ? n.toLocaleString('en') : fmt(n)}</>;
 }

@@ -3,7 +3,7 @@
 // wallpaper only), with a live clock, a cursor-following tilt and a glow in the image's colour.
 import Link from 'next/link';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { clockTime, fmt, isDesktop, moodPath, prefersReducedMotion, timeAgo } from '@/lib/client';
+import { clockTime, fmt, imageAlt, isDesktop, moodPath, prefersReducedMotion, timeAgo } from '@/lib/client';
 import type { PublicWallpaper } from '@/lib/types';
 import { useApp } from './app-context';
 import CountUp from './count-up';
@@ -125,7 +125,7 @@ export default function DetailView({ w, similar, shareImage }: { w: PublicWallpa
   };
 
   const time = now ? clockTime(now) : '';
-  const image = <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={w.display} alt={w.title} draggable={false} /></>;
+  const image = <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={w.display} alt={imageAlt(w)} draggable={false} fetchPriority="high" /></>;
   const segButtons = (main: string, other: string) => (
     <div className="seg" ref={seg}>
       <span className="seg-pill" style={{ width: pill.width, transform: `translateX(${pill.x}px)` }}></span>

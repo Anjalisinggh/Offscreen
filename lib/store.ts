@@ -44,7 +44,8 @@ export interface Store {
   likedIds(userId: number): Promise<number[]>;
   recordDownload(userId: number, wid: number): Promise<void>;
   downloadedIds(userId: number): Promise<number[]>;
-  counts(): Promise<{ likes: Tally; downloads: Tally }>;
+  // per-wallpaper like/download totals, and how many accounts there are (shown on /about)
+  counts(): Promise<{ likes: Tally; downloads: Tally; members?: number }>;
   setAvatar(userId: number, data: Buffer | null): Promise<void>;
   getAvatar(userId: number): Promise<Buffer | null>;
   saveCode(c: { email: string; codeHash: string; purpose: CodePurpose; name: string; passwordHash: string | null; ttlMs: number }): Promise<void>;
@@ -209,11 +210,12 @@ function postgresStore(url: string): Store {
     },
     async counts() {
       await init();
-      const [l, d] = await Promise.all([
+      const [l, d, u] = await Promise.all([
         q('SELECT wallpaper_id, count(*)::int AS n FROM likes GROUP BY wallpaper_id'),
         q('SELECT wallpaper_id, count(*)::int AS n FROM downloads GROUP BY wallpaper_id'),
+        q('SELECT count(*)::int AS n FROM users'),
       ]);
-      return { likes: toMap(l.rows), downloads: toMap(d.rows) };
+      return { likes: toMap(l.rows), downloads: toMap(d.rows), members: u.rows[0].n as number };
     },
     async setAvatar(userId, data) {
       await init();
@@ -342,7 +344,7 @@ function jsonStore(dir: string): Store {
     },
     async counts() {
       const db = load();
-      return { likes: tally(db.likes), downloads: tally(db.downloads) };
+      return { likes: tally(db.likes), downloads: tally(db.downloads), members: db.users.length };
     },
     async setAvatar(userId, data) {
       const db = load();

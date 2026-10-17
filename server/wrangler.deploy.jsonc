@@ -1,5 +1,6 @@
-// Uploads the pages Worker bundled by server/build-pages.sh, as is:
-//   npx wrangler deploy -c server/wrangler.deploy.jsonc
+// Uploads the pages Worker bundled by server/build-pages.sh, as is (the deploy resets the routes to
+// fail closed, so server/fail-open.sh sets them back):
+//   npx wrangler deploy -c server/wrangler.deploy.jsonc && bash server/fail-open.sh
 {
 	"name": "offscreen",
 	"main": "../.deploy/worker.js",
@@ -16,9 +17,13 @@
 	"services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "offscreen" }],
 	"vars": { "DEPLOY_TARGET": "cloudflare" },
 	"workers_dev": false,
+	// Routes, not custom domains: the DNS records point at the API server (84.32.64.46), and each
+	// route is set to "fail open" (server/fail-open.sh), so past the free plan's daily request limit
+	// Cloudflare skips the Worker and the server answers instead. The
+	// .well-known/acme-challenge/* routes (no Worker) let the server's Caddy renew its certificate.
 	"routes": [
-		{ "pattern": "offscreen.wtf", "custom_domain": true },
-		{ "pattern": "www.offscreen.wtf", "custom_domain": true }
+		{ "pattern": "offscreen.wtf/*", "zone_name": "offscreen.wtf" },
+		{ "pattern": "www.offscreen.wtf/*", "zone_name": "offscreen.wtf" }
 	],
 	"observability": { "enabled": true }
 }

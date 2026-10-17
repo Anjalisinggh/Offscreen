@@ -8,6 +8,12 @@ import SearchForm from '@/components/search-form';
 import SectionHead, { ArrowLink } from '@/components/section-head';
 import { Arrow } from '@/components/icons';
 
+// the home page's search title leads with what the site has, not only its tagline
+export const metadata = {
+  title: 'Offscreen · Aesthetic wallpapers for phone and desktop',
+  alternates: { canonical: '/' },
+};
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {

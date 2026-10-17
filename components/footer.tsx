@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
-import { GitHub, Globe, Instagram, XLogo } from './icons';
+import { Globe, Instagram, XLogo } from './icons';
 
 export default function Footer({ count }: { count: number }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -37,7 +37,6 @@ export default function Footer({ count }: { count: number }) {
             <p className="foot-tagline">A collection for your screen. Wallpapers for phone and desktop, picked by mood.</p>
             <p className="foot-status"><span className="foot-dot"></span><span>{count} wallpapers</span> · New every Sunday</p>
             <div className="foot-icons">
-              <a href="https://github.com/Anjalisinggh/Offscreen" target="_blank" rel="noopener" aria-label="Offscreen on GitHub"><GitHub /></a>
               <a href="https://instagram.com/anjalisinggh.12" target="_blank" rel="noopener" aria-label="Instagram"><Instagram /></a>
               <a href="https://x.com/anjalisinggh12" target="_blank" rel="noopener" aria-label="X (Twitter)"><XLogo /></a>
               <a href="https://anjali.monster" target="_blank" rel="noopener" aria-label="Portfolio"><Globe /></a>
@@ -50,6 +49,7 @@ export default function Footer({ count }: { count: number }) {
             <Link href="/categories">Collections</Link>
             <Link href="/explore?device=desktop">Desktop wallpapers</Link>
             <Link href="/search">Search</Link>
+            <Link href="/about">About us</Link>
           </div>
           <div className="foot-col">
             <h4>For you</h4>

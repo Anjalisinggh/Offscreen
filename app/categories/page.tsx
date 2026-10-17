@@ -3,7 +3,11 @@ import { categories, dedupeSeries, loadWallpapers, publicWallpaper } from '@/lib
 import { moodPath, pad } from '@/lib/client';
 import { Arrow } from '@/components/icons';
 
-export const metadata = { title: 'Collections · Offscreen' };
+export const metadata = {
+  title: 'Wallpaper collections by mood · Offscreen',
+  description: 'Browse wallpapers by feeling: dark, minimal, motivational, cute, retro, nature, pink, vintage, abstract and psychedelic, for phone and desktop.',
+  alternates: { canonical: '/categories' },
+};
 
 export default async function Categories() {
   const all = dedupeSeries((await loadWallpapers()).map(publicWallpaper));
